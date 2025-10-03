@@ -51,10 +51,9 @@
   * {
     border-color: hsl(var(--color-border));
   }
-  
+
   body {
     background-color: hsl(var(--color-background));
     color: hsl(var(--color-foreground));
   }
 }
-
