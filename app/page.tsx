@@ -174,14 +174,14 @@ export default function Home() {
               {mode === "focus" ? "Time to focus..." : "Take a break"}
             </motion.div>
             
-            <div className="relative overflow-hidden">
+            <div className="relative">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${mm}:${ss}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15, ease: "easeInOut" }}
                   className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter"
                   style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}
                 >
