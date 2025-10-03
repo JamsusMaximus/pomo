@@ -149,70 +149,80 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-      <div className="w-full max-w-lg">
-        <div className="text-center space-y-8">
+      <div className="w-full max-w-2xl">
+        <div className="flex flex-col items-center space-y-12">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="text-center"
           >
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
               Pomodoro
             </h1>
-            <div className="mt-3 text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Cycles completed: {cyclesCompleted}
             </div>
           </motion.div>
           
-          <div className="relative flex items-center justify-center">
-            {/* Circular Progress Ring */}
-            <svg className="absolute w-80 h-80 sm:w-96 sm:h-96 -rotate-90" viewBox="0 0 200 200">
+          {/* Circular Progress Timer */}
+          <div className="relative flex items-center justify-center w-full">
+            <svg className="w-[400px] h-[400px] sm:w-[480px] sm:h-[480px] -rotate-90" viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
+                  <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.6" />
+                </linearGradient>
+              </defs>
+              
               {/* Background circle */}
               <circle
                 cx="100"
                 cy="100"
-                r="90"
+                r="85"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="4"
-                className="text-secondary opacity-30"
+                strokeWidth="8"
+                className="text-secondary opacity-20"
               />
+              
               {/* Animated progress circle */}
               <motion.circle
                 cx="100"
                 cy="100"
-                r="90"
+                r="85"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="4"
+                stroke="url(#progressGradient)"
+                strokeWidth="8"
                 strokeLinecap="round"
-                className="text-primary"
-                initial={{ strokeDasharray: "565.48", strokeDashoffset: "0" }}
+                initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
                 animate={{ 
-                  strokeDashoffset: `${565.48 * (1 - percent / 100)}`
+                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
               />
             </svg>
             
-            {/* Timer content */}
-            <div className="relative z-10 flex flex-col items-center">
+            {/* Timer content - positioned absolutely in center */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.div
-                className="inline-block px-4 py-1.5 mb-6 rounded-full text-sm font-medium bg-secondary"
+                className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary"
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 {mode === "focus" ? "Time to focus..." : "Take a break"}
               </motion.div>
               
-              <div className="text-7xl sm:text-8xl font-semibold tabular-nums tracking-tighter"
+              <div className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
                    style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
                 {mm}:{ss}
               </div>
             </div>
           </div>
           
-          <div className="flex gap-3 justify-center pt-8">
+          {/* Controls */}
+          <div className="flex gap-3 justify-center">
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
               <Button
                 onClick={start}
