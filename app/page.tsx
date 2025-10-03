@@ -6,10 +6,18 @@ import { Progress } from "@/components/ui/progress";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 
+function formatTime(seconds: number): { mm: string; ss: string } {
+  const mm = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const ss = (seconds % 60).toString().padStart(2, "0");
+  return { mm, ss };
+}
+
 export default function Home() {
-  const [duration, setDuration] = useState(FOCUS_DEFAULT);
   const [remaining, setRemaining] = useState(FOCUS_DEFAULT);
   const [isRunning, setIsRunning] = useState(false);
+  const durationRef = useRef(FOCUS_DEFAULT);
   const startedAtRef = useRef<number | null>(null);
   const pausedAtRef = useRef<number | null>(null);
 
@@ -18,26 +26,26 @@ export default function Home() {
     const tick = () => {
       if (!startedAtRef.current) return;
       const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
-      const next = Math.max(duration - elapsed, 0);
+      const next = Math.max(durationRef.current - elapsed, 0);
       setRemaining(next);
       if (next === 0) setIsRunning(false);
     };
     const id = setInterval(tick, 1000);
     tick();
     return () => clearInterval(id);
-  }, [isRunning, duration]);
+  }, [isRunning]);
 
   const start = () => {
     if (isRunning) return;
     const now = Date.now();
-    if (pausedAtRef.current) {
+    if (pausedAtRef.current && startedAtRef.current) {
       // Resume: shift startedAt by the paused duration
       const pausedDuration = now - pausedAtRef.current;
-      if (startedAtRef.current) startedAtRef.current += pausedDuration;
+      startedAtRef.current += pausedDuration;
       pausedAtRef.current = null;
     } else {
       startedAtRef.current = now;
-      setRemaining(duration);
+      setRemaining(durationRef.current);
     }
     setIsRunning(true);
   };
@@ -52,14 +60,11 @@ export default function Home() {
     setIsRunning(false);
     startedAtRef.current = null;
     pausedAtRef.current = null;
-    setRemaining(duration);
+    setRemaining(durationRef.current);
   };
 
-  const percent = (remaining / duration) * 100;
-  const mm = Math.floor(remaining / 60)
-    .toString()
-    .padStart(2, "0");
-  const ss = (remaining % 60).toString().padStart(2, "0");
+  const percent = (remaining / durationRef.current) * 100;
+  const { mm, ss } = formatTime(remaining);
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
@@ -76,13 +81,29 @@ export default function Home() {
           <Progress value={percent} className="h-2.5 sm:h-3" />
           
           <div className="flex gap-3 justify-center pt-2">
-            <Button onClick={start} size="lg" className="min-w-[100px]">
+            <Button
+              onClick={start}
+              size="lg"
+              className="min-w-[100px]"
+              disabled={isRunning}
+            >
               Start
             </Button>
-            <Button variant="secondary" onClick={pause} size="lg" className="min-w-[100px]">
+            <Button
+              variant="secondary"
+              onClick={pause}
+              size="lg"
+              className="min-w-[100px]"
+              disabled={!isRunning}
+            >
               Pause
             </Button>
-            <Button variant="outline" onClick={reset} size="lg" className="min-w-[100px]">
+            <Button
+              variant="outline"
+              onClick={reset}
+              size="lg"
+              className="min-w-[100px]"
+            >
               Reset
             </Button>
           </div>
