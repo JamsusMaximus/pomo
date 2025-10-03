@@ -174,20 +174,37 @@ export default function Home() {
               {mode === "focus" ? "Time to focus..." : "Take a break"}
             </motion.div>
             
-            <div className="relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${mm}:${ss}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15, ease: "easeInOut" }}
-                  className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter"
-                  style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {mm}:{ss}
-                </motion.div>
-              </AnimatePresence>
+            <div className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter flex justify-center items-center gap-2"
+                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
+              <div className="relative inline-block min-w-[2ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={mm}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="inline-block"
+                  >
+                    {mm}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              <span>:</span>
+              <div className="relative inline-block min-w-[2ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ss}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="inline-block"
+                  >
+                    {ss}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
           
