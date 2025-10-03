@@ -174,34 +174,66 @@ export default function Home() {
               {mode === "focus" ? "Time to focus..." : "Take a break"}
             </motion.div>
             
-            <div className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter flex justify-center items-center gap-2"
+            <div className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter flex justify-center items-center"
                  style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
-              <div className="relative inline-block min-w-[2ch]">
+              {/* Minutes - tens digit */}
+              <div className="relative inline-block min-w-[1ch]">
                 <AnimatePresence mode="wait">
                   <motion.span
-                    key={mm}
+                    key={mm[0]}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15, ease: "easeInOut" }}
                     className="inline-block"
                   >
-                    {mm}
+                    {mm[0]}
                   </motion.span>
                 </AnimatePresence>
               </div>
-              <span>:</span>
-              <div className="relative inline-block min-w-[2ch]">
+              {/* Minutes - ones digit */}
+              <div className="relative inline-block min-w-[1ch]">
                 <AnimatePresence mode="wait">
                   <motion.span
-                    key={ss}
+                    key={mm[1]}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15, ease: "easeInOut" }}
                     className="inline-block"
                   >
-                    {ss}
+                    {mm[1]}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              <span className="mx-1">:</span>
+              {/* Seconds - tens digit */}
+              <div className="relative inline-block min-w-[1ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ss[0]}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="inline-block"
+                  >
+                    {ss[0]}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              {/* Seconds - ones digit */}
+              <div className="relative inline-block min-w-[1ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ss[1]}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="inline-block"
+                  >
+                    {ss[1]}
                   </motion.span>
                 </AnimatePresence>
               </div>
