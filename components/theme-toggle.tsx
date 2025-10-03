@@ -4,9 +4,29 @@ import { Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "./theme-provider";
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Only render after mount to avoid SSR mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full"
+        aria-label="Toggle theme"
+      >
+        <Sun className="h-5 w-5" />
+      </Button>
+    );
+  }
 
   return (
     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
