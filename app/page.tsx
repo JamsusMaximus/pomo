@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
@@ -165,91 +164,55 @@ export default function Home() {
             </div>
           </motion.div>
           
-          <div>
-            <motion.div
-              className="inline-block px-4 py-1.5 mb-6 rounded-full text-sm font-medium bg-secondary"
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {mode === "focus" ? "Time to focus..." : "Take a break"}
-            </motion.div>
+          <div className="relative flex items-center justify-center">
+            {/* Circular Progress Ring */}
+            <svg className="absolute w-80 h-80 sm:w-96 sm:h-96 -rotate-90" viewBox="0 0 200 200">
+              {/* Background circle */}
+              <circle
+                cx="100"
+                cy="100"
+                r="90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="4"
+                className="text-secondary opacity-30"
+              />
+              {/* Animated progress circle */}
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="text-primary"
+                initial={{ strokeDasharray: "565.48", strokeDashoffset: "0" }}
+                animate={{ 
+                  strokeDashoffset: `${565.48 * (1 - percent / 100)}`
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
+            </svg>
             
-            <div className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter flex justify-center items-center"
-                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
-              {/* Minutes - tens digit */}
-              <div className="relative inline-block min-w-[1ch]">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={mm[0]}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, ease: "easeInOut" }}
-                    className="inline-block"
-                  >
-                    {mm[0]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-              {/* Minutes - ones digit */}
-              <div className="relative inline-block min-w-[1ch]">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={mm[1]}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, ease: "easeInOut" }}
-                    className="inline-block"
-                  >
-                    {mm[1]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-              <span className="mx-1">:</span>
-              {/* Seconds - tens digit */}
-              <div className="relative inline-block min-w-[1ch]">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={ss[0]}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, ease: "easeInOut" }}
-                    className="inline-block"
-                  >
-                    {ss[0]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-              {/* Seconds - ones digit */}
-              <div className="relative inline-block min-w-[1ch]">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={ss[1]}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, ease: "easeInOut" }}
-                    className="inline-block"
-                  >
-                    {ss[1]}
-                  </motion.span>
-                </AnimatePresence>
+            {/* Timer content */}
+            <div className="relative z-10 flex flex-col items-center">
+              <motion.div
+                className="inline-block px-4 py-1.5 mb-6 rounded-full text-sm font-medium bg-secondary"
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {mode === "focus" ? "Time to focus..." : "Take a break"}
+              </motion.div>
+              
+              <div className="text-7xl sm:text-8xl font-semibold tabular-nums tracking-tighter"
+                   style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
+                {mm}:{ss}
               </div>
             </div>
           </div>
           
-          <div className="relative h-2.5 sm:h-3 bg-secondary rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              initial={{ width: "100%" }}
-              animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            />
-          </div>
-          
-          <div className="flex gap-3 justify-center pt-2">
+          <div className="flex gap-3 justify-center pt-8">
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
               <Button
                 onClick={start}
