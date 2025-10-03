@@ -1,9 +1,10 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { useTimer } from "@/hooks/useTimer";
+  "use client";
+  
+  import { useState, useEffect } from "react";
+  import { motion } from "framer-motion";
+  import { Button } from "@/components/ui/button";
+  import { useTimer } from "@/hooks/useTimer";
+  import { ThemeToggle } from "@/components/theme-toggle";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
@@ -98,6 +99,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+      {/* Theme Toggle - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center space-y-12">
           {/* Header */}
