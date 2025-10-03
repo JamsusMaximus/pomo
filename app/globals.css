@@ -57,7 +57,9 @@
   body {
     background-color: hsl(var(--color-background));
     color: hsl(var(--color-foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   h1,

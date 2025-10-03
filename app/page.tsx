@@ -108,7 +108,8 @@ export default function Home() {
             <div className="text-center space-y-3">
               <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">Pomodoro</h1>
               <p className="text-base text-muted-foreground">
-                Cycles completed: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+                Cycles completed:{" "}
+                <span className="font-semibold text-foreground">{cyclesCompleted}</span>
               </p>
             </div>
 
