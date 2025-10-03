@@ -48,27 +48,7 @@ export function useTimer({
     breakDurationRef.current = breakDuration;
   }, [focusDuration, breakDuration]);
 
-  // Reconcile timer when tab becomes visible again
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && isRunning && startedAtRef.current) {
-        // Recalculate remaining time based on actual elapsed time
-        const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
-        const next = Math.max(durationRef.current - elapsed, 0);
-        setRemaining(next);
-
-        // If timer expired while tab was hidden, handle completion
-        if (next === 0) {
-          setIsRunning(false);
-          handleTimerComplete();
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isRunning, handleTimerComplete]);
-
+  // Define handleTimerComplete before it's used
   const handleTimerComplete = useCallback(() => {
     if (modeRef.current === "focus") {
       // Focus finished → switch to break
@@ -102,6 +82,27 @@ export function useTimer({
       pausedAtRef.current = null;
     }
   }, [autoStartBreak, onModeChange, onCycleComplete]);
+
+  // Reconcile timer when tab becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && isRunning && startedAtRef.current) {
+        // Recalculate remaining time based on actual elapsed time
+        const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
+        const next = Math.max(durationRef.current - elapsed, 0);
+        setRemaining(next);
+
+        // If timer expired while tab was hidden, handle completion
+        if (next === 0) {
+          setIsRunning(false);
+          handleTimerComplete();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isRunning, handleTimerComplete]);
 
   // Main timer tick
   useEffect(() => {
