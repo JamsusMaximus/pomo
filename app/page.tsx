@@ -167,43 +167,27 @@ export default function Home() {
           
           <div>
             <motion.div
-              className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary"
+              className="inline-block px-4 py-1.5 mb-6 rounded-full text-sm font-medium bg-secondary"
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
               {mode === "focus" ? "Time to focus..." : "Take a break"}
             </motion.div>
             
-            <div className="text-7xl sm:text-8xl md:text-9xl font-mono font-light tabular-nums tracking-tight flex justify-center items-center gap-1">
-              <div className="relative inline-block" style={{ width: "2.5ch" }}>
-                <AnimatePresence mode="popLayout">
-                  <motion.span
-                    key={mm}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute inset-0"
-                  >
-                    {mm}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-              <span>:</span>
-              <div className="relative inline-block" style={{ width: "2.5ch" }}>
-                <AnimatePresence mode="popLayout">
-                  <motion.span
-                    key={ss}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute inset-0"
-                  >
-                    {ss}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
+            <div className="relative overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${mm}:${ss}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="text-8xl sm:text-9xl font-semibold tabular-nums tracking-tighter"
+                  style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {mm}:{ss}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
           
