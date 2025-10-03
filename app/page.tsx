@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useTimer } from "@/hooks/useTimer";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
@@ -47,14 +48,28 @@ function savePreferences(prefs: PersistedPreferences) {
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
-  const [mode, setMode] = useState<Mode>("focus");
-  const [remaining, setRemaining] = useState(FOCUS_DEFAULT);
-  const [isRunning, setIsRunning] = useState(false);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
-  const durationRef = useRef(FOCUS_DEFAULT);
-  const startedAtRef = useRef<number | null>(null);
-  const pausedAtRef = useRef<number | null>(null);
+
+  const {
+    remaining,
+    duration,
+    mode,
+    isRunning,
+    start,
+    pause,
+    reset,
+  } = useTimer({
+    focusDuration,
+    breakDuration,
+    autoStartBreak: false,
+    onModeChange: () => {
+      // Mode changes are handled by the hook, we just need to sync to localStorage
+    },
+    onCycleComplete: () => {
+      setCyclesCompleted((prev) => prev + 1);
+    },
+  });
 
   // Hydrate from localStorage on mount
   useEffect(() => {
@@ -62,10 +77,7 @@ export default function Home() {
     if (prefs) {
       setFocusDuration(prefs.focusDuration);
       setBreakDuration(prefs.breakDuration);
-      setMode(prefs.lastMode);
       setCyclesCompleted(prefs.cyclesCompleted);
-      durationRef.current = prefs.lastMode === "focus" ? prefs.focusDuration : prefs.breakDuration;
-      setRemaining(durationRef.current);
     }
     setIsHydrated(true);
   }, []);
@@ -81,70 +93,7 @@ export default function Home() {
     });
   }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
 
-  useEffect(() => {
-    if (!isRunning) return;
-    const tick = () => {
-      if (!startedAtRef.current) return;
-      const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
-      const next = Math.max(durationRef.current - elapsed, 0);
-      setRemaining(next);
-      
-      if (next === 0) {
-        setIsRunning(false);
-        // Auto-switch modes
-        if (mode === "focus") {
-          // Focus finished → switch to break
-          setMode("break");
-          durationRef.current = breakDuration;
-          setRemaining(breakDuration);
-        } else {
-          // Break finished → switch to focus and increment cycles
-          setMode("focus");
-          durationRef.current = focusDuration;
-          setRemaining(focusDuration);
-          setCyclesCompleted((prev) => prev + 1);
-        }
-        // Reset timing refs for next session
-        startedAtRef.current = null;
-        pausedAtRef.current = null;
-      }
-    };
-    const id = setInterval(tick, 1000);
-    tick();
-    return () => clearInterval(id);
-  }, [isRunning, mode, focusDuration, breakDuration]);
-
-  const start = () => {
-    if (isRunning) return;
-    const now = Date.now();
-    if (pausedAtRef.current && startedAtRef.current) {
-      // Resume: shift startedAt by the paused duration
-      const pausedDuration = now - pausedAtRef.current;
-      startedAtRef.current += pausedDuration;
-      pausedAtRef.current = null;
-    } else {
-      startedAtRef.current = now;
-      setRemaining(durationRef.current);
-    }
-    setIsRunning(true);
-  };
-
-  const pause = () => {
-    if (!isRunning) return;
-    setIsRunning(false);
-    pausedAtRef.current = Date.now();
-  };
-
-  const reset = () => {
-    setIsRunning(false);
-    startedAtRef.current = null;
-    pausedAtRef.current = null;
-    setMode("focus");
-    durationRef.current = focusDuration;
-    setRemaining(focusDuration);
-  };
-
-  const percent = (remaining / durationRef.current) * 100;
+  const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
 
   return (
