@@ -6,8 +6,16 @@ import { Progress } from "@/components/ui/progress";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
+const STORAGE_KEY = "pomo-preferences";
 
 type Mode = "focus" | "break";
+
+interface PersistedPreferences {
+  focusDuration: number;
+  breakDuration: number;
+  lastMode: Mode;
+  cyclesCompleted: number;
+}
 
 function formatTime(seconds: number): { mm: string; ss: string } {
   const mm = Math.floor(seconds / 60)
@@ -17,14 +25,61 @@ function formatTime(seconds: number): { mm: string; ss: string } {
   return { mm, ss };
 }
 
+function loadPreferences(): PersistedPreferences | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePreferences(prefs: PersistedPreferences) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    // Silently fail if localStorage is disabled
+  }
+}
+
 export default function Home() {
+  const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
+  const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [mode, setMode] = useState<Mode>("focus");
   const [remaining, setRemaining] = useState(FOCUS_DEFAULT);
   const [isRunning, setIsRunning] = useState(false);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
   const durationRef = useRef(FOCUS_DEFAULT);
   const startedAtRef = useRef<number | null>(null);
   const pausedAtRef = useRef<number | null>(null);
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    const prefs = loadPreferences();
+    if (prefs) {
+      setFocusDuration(prefs.focusDuration);
+      setBreakDuration(prefs.breakDuration);
+      setMode(prefs.lastMode);
+      setCyclesCompleted(prefs.cyclesCompleted);
+      durationRef.current = prefs.lastMode === "focus" ? prefs.focusDuration : prefs.breakDuration;
+      setRemaining(durationRef.current);
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Persist to localStorage when preferences change
+  useEffect(() => {
+    if (!isHydrated) return; // Don't save initial values before hydration
+    savePreferences({
+      focusDuration,
+      breakDuration,
+      lastMode: mode,
+      cyclesCompleted,
+    });
+  }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -40,13 +95,13 @@ export default function Home() {
         if (mode === "focus") {
           // Focus finished → switch to break
           setMode("break");
-          durationRef.current = BREAK_DEFAULT;
-          setRemaining(BREAK_DEFAULT);
+          durationRef.current = breakDuration;
+          setRemaining(breakDuration);
         } else {
           // Break finished → switch to focus and increment cycles
           setMode("focus");
-          durationRef.current = FOCUS_DEFAULT;
-          setRemaining(FOCUS_DEFAULT);
+          durationRef.current = focusDuration;
+          setRemaining(focusDuration);
           setCyclesCompleted((prev) => prev + 1);
         }
         // Reset timing refs for next session
@@ -57,7 +112,7 @@ export default function Home() {
     const id = setInterval(tick, 1000);
     tick();
     return () => clearInterval(id);
-  }, [isRunning, mode]);
+  }, [isRunning, mode, focusDuration, breakDuration]);
 
   const start = () => {
     if (isRunning) return;
@@ -85,8 +140,8 @@ export default function Home() {
     startedAtRef.current = null;
     pausedAtRef.current = null;
     setMode("focus");
-    durationRef.current = FOCUS_DEFAULT;
-    setRemaining(FOCUS_DEFAULT);
+    durationRef.current = focusDuration;
+    setRemaining(focusDuration);
   };
 
   const percent = (remaining / durationRef.current) * 100;
