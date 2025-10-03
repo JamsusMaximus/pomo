@@ -90,106 +90,121 @@ export default function Home() {
   const { mm, ss } = formatTime(remaining);
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12 sm:px-8 lg:px-12">
       {/* Theme Toggle - Fixed Position */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-2xl">
-        <div className="flex flex-col items-center space-y-12">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">Pomodoro</h1>
-            <div className="text-sm text-muted-foreground">Cycles completed: {cyclesCompleted}</div>
-          </motion.div>
+      <div className="w-full max-w-3xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="bg-card rounded-2xl shadow-lg border border-border p-8 sm:p-12"
+        >
+          <div className="flex flex-col items-center space-y-16">
+            {/* Header */}
+            <div className="text-center space-y-3">
+              <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">Pomodoro</h1>
+              <p className="text-base text-muted-foreground">
+                Cycles completed:{" "}
+                <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+              </p>
+            </div>
 
-          {/* Circular Progress Timer */}
-          <div className="relative flex items-center justify-center w-full">
-            <svg
-              className="w-[400px] h-[400px] sm:w-[480px] sm:h-[480px] -rotate-90"
-              viewBox="0 0 200 200"
-            >
-              <defs>
-                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
-                  <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.6" />
-                </linearGradient>
-              </defs>
-
-              {/* Background circle */}
-              <circle
-                cx="100"
-                cy="100"
-                r="85"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className="text-secondary opacity-20"
-              />
-
-              {/* Animated progress circle */}
-              <motion.circle
-                cx="100"
-                cy="100"
-                r="85"
-                fill="none"
-                stroke="url(#progressGradient)"
-                strokeWidth="8"
-                strokeLinecap="round"
-                initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
-                animate={{
-                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
-                }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              />
-            </svg>
-
-            {/* Timer content - positioned absolutely in center */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
-                style={{
-                  fontFamily:
-                    'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
-                  fontVariantNumeric: "tabular-nums",
-                }}
+            {/* Circular Progress Timer */}
+            <div className="relative flex items-center justify-center w-full">
+              <svg
+                className="w-[380px] h-[380px] sm:w-[460px] sm:h-[460px] -rotate-90"
+                viewBox="0 0 200 200"
               >
-                {mm}:{ss}
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
+                    <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
+                  </linearGradient>
+                </defs>
+
+                {/* Background circle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="85"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  className="text-muted opacity-25"
+                />
+
+                {/* Animated progress circle */}
+                <motion.circle
+                  cx="100"
+                  cy="100"
+                  r="85"
+                  fill="none"
+                  stroke="url(#progressGradient)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
+                  animate={{
+                    strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
+                  }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                />
+              </svg>
+
+              {/* Timer content - positioned absolutely in center */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
+                  style={{
+                    fontFamily:
+                      'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {mm}:{ss}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Controls */}
-          <div className="flex gap-3 justify-center">
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button onClick={start} size="lg" className="min-w-[100px]" disabled={isRunning}>
-                Start
-              </Button>
-            </motion.div>
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button
-                variant="secondary"
-                onClick={pause}
-                size="lg"
-                className="min-w-[100px]"
-                disabled={!isRunning}
-              >
-                Pause
-              </Button>
-            </motion.div>
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button variant="outline" onClick={reset} size="lg" className="min-w-[100px]">
-                Reset
-              </Button>
-            </motion.div>
+            {/* Controls */}
+            <div className="flex flex-wrap gap-4 justify-center w-full">
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button
+                  onClick={start}
+                  size="lg"
+                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
+                  disabled={isRunning}
+                >
+                  Start
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button
+                  variant="secondary"
+                  onClick={pause}
+                  size="lg"
+                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
+                  disabled={!isRunning}
+                >
+                  Pause
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button
+                  variant="outline"
+                  onClick={reset}
+                  size="lg"
+                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
+                >
+                  Reset
+                </Button>
+              </motion.div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </main>
   );
