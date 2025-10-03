@@ -2,19 +2,29 @@
 
 import { Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
-import { useTheme } from "./theme-provider";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Only render after mount to avoid SSR mismatch
   useEffect(() => {
     setMounted(true);
+    // Get theme from document
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
   }, []);
 
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem("pomo-theme", newTheme);
+  };
+
+  // Show placeholder during SSR
   if (!mounted) {
     return (
       <Button
