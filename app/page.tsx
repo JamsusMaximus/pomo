@@ -107,7 +107,7 @@ export default function Home() {
           
           <div>
             <div className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary">
-              {mode === "focus" ? "🎯 Focus Time" : "☕ Break Time"}
+              {mode === "focus" ? "Time to focus..." : "Take a break"}
             </div>
             <div className="text-7xl sm:text-8xl md:text-9xl font-mono font-light tabular-nums tracking-tight">
               {mm}:{ss}
