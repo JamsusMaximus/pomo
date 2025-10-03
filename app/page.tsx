@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -151,52 +152,102 @@ export default function Home() {
     <main className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       <div className="w-full max-w-lg">
         <div className="text-center space-y-8">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
               Pomodoro
             </h1>
             <div className="mt-3 text-sm text-muted-foreground">
               Cycles completed: {cyclesCompleted}
             </div>
-          </div>
+          </motion.div>
           
           <div>
-            <div className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary">
+            <motion.div
+              className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary"
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               {mode === "focus" ? "Time to focus..." : "Take a break"}
-            </div>
-            <div className="text-7xl sm:text-8xl md:text-9xl font-mono font-light tabular-nums tracking-tight">
-              {mm}:{ss}
+            </motion.div>
+            
+            <div className="text-7xl sm:text-8xl md:text-9xl font-mono font-light tabular-nums tracking-tight flex justify-center items-center gap-1">
+              <div className="relative inline-block" style={{ width: "2.5ch" }}>
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={mm}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0"
+                  >
+                    {mm}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              <span>:</span>
+              <div className="relative inline-block" style={{ width: "2.5ch" }}>
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={ss}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0"
+                  >
+                    {ss}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
           
-          <Progress value={percent} className="h-2.5 sm:h-3" />
+          <div className="relative h-2.5 sm:h-3 bg-secondary rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              initial={{ width: "100%" }}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            />
+          </div>
           
           <div className="flex gap-3 justify-center pt-2">
-            <Button
-              onClick={start}
-              size="lg"
-              className="min-w-[100px]"
-              disabled={isRunning}
-            >
-              Start
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={pause}
-              size="lg"
-              className="min-w-[100px]"
-              disabled={!isRunning}
-            >
-              Pause
-            </Button>
-            <Button
-              variant="outline"
-              onClick={reset}
-              size="lg"
-              className="min-w-[100px]"
-            >
-              Reset
-            </Button>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button
+                onClick={start}
+                size="lg"
+                className="min-w-[100px]"
+                disabled={isRunning}
+              >
+                Start
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button
+                variant="secondary"
+                onClick={pause}
+                size="lg"
+                className="min-w-[100px]"
+                disabled={!isRunning}
+              >
+                Pause
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button
+                variant="outline"
+                onClick={reset}
+                size="lg"
+                className="min-w-[100px]"
+              >
+                Reset
+              </Button>
+            </motion.div>
           </div>
         </div>
       </div>
