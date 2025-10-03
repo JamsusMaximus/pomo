@@ -67,7 +67,7 @@ export function useTimer({
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isRunning]);
+  }, [isRunning, handleTimerComplete]);
 
   const handleTimerComplete = useCallback(() => {
     if (modeRef.current === "focus") {
