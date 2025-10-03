@@ -151,15 +151,7 @@ export default function Home() {
             </svg>
 
             {/* Timer content - positioned absolutely in center */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.div
-                className="inline-block px-4 py-1.5 mb-4 rounded-full text-sm font-medium bg-secondary"
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                {mode === "focus" ? "Time to focus..." : "Take a break"}
-              </motion.div>
-
+            <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
                 style={{
