@@ -1,10 +1,10 @@
-  "use client";
-  
-  import { useState, useEffect } from "react";
-  import { motion } from "framer-motion";
-  import { Button } from "@/components/ui/button";
-  import { useTimer } from "@/hooks/useTimer";
-  import { ThemeToggle } from "@/components/theme-toggle";
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useTimer } from "@/hooks/useTimer";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
@@ -52,15 +52,7 @@ export default function Home() {
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  const {
-    remaining,
-    duration,
-    mode,
-    isRunning,
-    start,
-    pause,
-    reset,
-  } = useTimer({
+  const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
     breakDuration,
     autoStartBreak: false,
@@ -103,7 +95,7 @@ export default function Home() {
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      
+
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center space-y-12">
           {/* Header */}
@@ -113,24 +105,23 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="text-center"
           >
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">
-              Pomodoro
-            </h1>
-            <div className="text-sm text-muted-foreground">
-              Cycles completed: {cyclesCompleted}
-            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">Pomodoro</h1>
+            <div className="text-sm text-muted-foreground">Cycles completed: {cyclesCompleted}</div>
           </motion.div>
-          
+
           {/* Circular Progress Timer */}
           <div className="relative flex items-center justify-center w-full">
-            <svg className="w-[400px] h-[400px] sm:w-[480px] sm:h-[480px] -rotate-90" viewBox="0 0 200 200">
+            <svg
+              className="w-[400px] h-[400px] sm:w-[480px] sm:h-[480px] -rotate-90"
+              viewBox="0 0 200 200"
+            >
               <defs>
                 <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
                   <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.6" />
                 </linearGradient>
               </defs>
-              
+
               {/* Background circle */}
               <circle
                 cx="100"
@@ -141,7 +132,7 @@ export default function Home() {
                 strokeWidth="8"
                 className="text-secondary opacity-20"
               />
-              
+
               {/* Animated progress circle */}
               <motion.circle
                 cx="100"
@@ -152,13 +143,13 @@ export default function Home() {
                 strokeWidth="8"
                 strokeLinecap="round"
                 initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
-                animate={{ 
-                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`
+                animate={{
+                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
               />
             </svg>
-            
+
             {/* Timer content - positioned absolutely in center */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.div
@@ -168,23 +159,24 @@ export default function Home() {
               >
                 {mode === "focus" ? "Time to focus..." : "Take a break"}
               </motion.div>
-              
-              <div className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
-                   style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif', fontVariantNumeric: 'tabular-nums' }}>
+
+              <div
+                className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
+                style={{
+                  fontFamily:
+                    'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {mm}:{ss}
               </div>
             </div>
           </div>
-          
+
           {/* Controls */}
           <div className="flex gap-3 justify-center">
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button
-                onClick={start}
-                size="lg"
-                className="min-w-[100px]"
-                disabled={isRunning}
-              >
+              <Button onClick={start} size="lg" className="min-w-[100px]" disabled={isRunning}>
                 Start
               </Button>
             </motion.div>
@@ -200,12 +192,7 @@ export default function Home() {
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button
-                variant="outline"
-                onClick={reset}
-                size="lg"
-                className="min-w-[100px]"
-              >
+              <Button variant="outline" onClick={reset} size="lg" className="min-w-[100px]">
                 Reset
               </Button>
             </motion.div>
@@ -215,4 +202,3 @@ export default function Home() {
     </main>
   );
 }
-
