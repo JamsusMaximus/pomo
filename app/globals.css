@@ -2,48 +2,50 @@
 
 @layer theme {
   :root {
-    --color-background: 0 0% 100%;
-    --color-foreground: 0 0% 3.9%;
+    /* Light theme - minimal neutral */
+    --color-background: 0 0% 98%;
+    --color-foreground: 222 47% 11%;
     --color-card: 0 0% 100%;
-    --color-card-foreground: 0 0% 3.9%;
+    --color-card-foreground: 222 47% 11%;
     --color-popover: 0 0% 100%;
-    --color-popover-foreground: 0 0% 3.9%;
-    --color-primary: 0 0% 9%;
-    --color-primary-foreground: 0 0% 98%;
-    --color-secondary: 0 0% 96.1%;
-    --color-secondary-foreground: 0 0% 9%;
-    --color-muted: 0 0% 96.1%;
-    --color-muted-foreground: 0 0% 45.1%;
-    --color-accent: 0 0% 96.1%;
-    --color-accent-foreground: 0 0% 9%;
-    --color-destructive: 0 84.2% 60.2%;
-    --color-destructive-foreground: 0 0% 98%;
-    --color-border: 0 0% 89.8%;
-    --color-input: 0 0% 89.8%;
-    --color-ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --color-popover-foreground: 222 47% 11%;
+    --color-primary: 222 47% 11%;
+    --color-primary-foreground: 210 40% 98%;
+    --color-secondary: 210 40% 96%;
+    --color-secondary-foreground: 222 47% 11%;
+    --color-muted: 210 40% 96%;
+    --color-muted-foreground: 215 16% 47%;
+    --color-accent: 210 40% 96%;
+    --color-accent-foreground: 222 47% 11%;
+    --color-destructive: 0 84% 60%;
+    --color-destructive-foreground: 210 40% 98%;
+    --color-border: 214 32% 91%;
+    --color-input: 214 32% 91%;
+    --color-ring: 222 47% 11%;
+    --radius: 1rem;
   }
 
   .dark {
-    --color-background: 0 0% 3.9%;
-    --color-foreground: 0 0% 98%;
-    --color-card: 0 0% 3.9%;
-    --color-card-foreground: 0 0% 98%;
-    --color-popover: 0 0% 3.9%;
-    --color-popover-foreground: 0 0% 98%;
-    --color-primary: 0 0% 98%;
-    --color-primary-foreground: 0 0% 9%;
-    --color-secondary: 0 0% 14.9%;
-    --color-secondary-foreground: 0 0% 98%;
-    --color-muted: 0 0% 14.9%;
-    --color-muted-foreground: 0 0% 63.9%;
-    --color-accent: 0 0% 14.9%;
-    --color-accent-foreground: 0 0% 98%;
-    --color-destructive: 0 62.8% 30.6%;
-    --color-destructive-foreground: 0 0% 98%;
-    --color-border: 0 0% 14.9%;
-    --color-input: 0 0% 14.9%;
-    --color-ring: 0 0% 83.1%;
+    /* Dark theme - cohesive slate */
+    --color-background: 222 47% 11%;
+    --color-foreground: 210 40% 98%;
+    --color-card: 217 33% 17%;
+    --color-card-foreground: 210 40% 98%;
+    --color-popover: 217 33% 17%;
+    --color-popover-foreground: 210 40% 98%;
+    --color-primary: 210 40% 98%;
+    --color-primary-foreground: 222 47% 11%;
+    --color-secondary: 217 33% 17%;
+    --color-secondary-foreground: 210 40% 98%;
+    --color-muted: 215 28% 17%;
+    --color-muted-foreground: 217 19% 60%;
+    --color-accent: 217 33% 24%;
+    --color-accent-foreground: 210 40% 98%;
+    --color-destructive: 0 72% 51%;
+    --color-destructive-foreground: 210 40% 98%;
+    --color-border: 217 33% 24%;
+    --color-input: 217 33% 24%;
+    --color-ring: 224 64% 33%;
   }
 }
 
@@ -55,5 +57,16 @@
   body {
     background-color: hsl(var(--color-background));
     color: hsl(var(--color-foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
