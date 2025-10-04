@@ -251,10 +251,10 @@ export default function ProfilePage() {
                       <div className="w-0.5 h-4 bg-orange-600 dark:bg-orange-400"></div>
                     </div>
 
-                    {/* Pokemon-style XP bar */}
-                    <div className="relative h-6 w-full overflow-hidden rounded-full bg-slate-700 dark:bg-slate-800 shadow-inner border-2 border-slate-600 dark:border-slate-700">
+                    {/* XP progress bar */}
+                    <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted/30 border border-border">
                       <div
-                        className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 transition-all duration-500 ease-out shadow-lg"
+                        className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500 ease-out"
                         style={{ width: `${levelInfo.progress}%` }}
                       />
                     </div>
