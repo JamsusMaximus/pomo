@@ -1,6 +1,8 @@
 /**
  * Level system utilities
- * Exponential progression: 2^(level-1) pomos needed for next level
+ * Simple doubling progression:
+ * Level 1: 0, Level 2: 2, Level 3: 4, Level 4: 8, Level 5: 16, etc.
+ * Each level threshold = 2^(level-1) for level >= 2
  */
 
 export interface LevelInfo {
@@ -12,25 +14,16 @@ export interface LevelInfo {
 }
 
 /**
- * Calculate the total pomos needed to reach a specific level
+ * Calculate the total pomos threshold for a specific level
  * Level 1: 0 pomos (starting level)
  * Level 2: 2 pomos
- * Level 3: 6 pomos (2 + 4)
- * Level 4: 14 pomos (2 + 4 + 8)
- * Level N: sum of 2^i for i from 0 to N-2
+ * Level 3: 4 pomos
+ * Level 4: 8 pomos
+ * Level N: 2^(N-1) pomos
  */
 export function getTotalPomosForLevel(level: number): number {
   if (level <= 1) return 0;
-  // Sum of geometric series: 2^0 + 2^1 + 2^2 + ... + 2^(N-2) = 2^(N-1) - 1
-  return Math.pow(2, level - 1) - 2;
-}
-
-/**
- * Calculate pomos needed to go from one level to the next
- */
-export function getPomosNeededForLevel(level: number): number {
-  if (level <= 1) return 2; // Level 1->2 needs 2 pomos
-  return Math.pow(2, level - 1); // Level N needs 2^(N-1) pomos
+  return Math.pow(2, level - 1);
 }
 
 /**
@@ -39,8 +32,8 @@ export function getPomosNeededForLevel(level: number): number {
 export function getLevelInfo(completedPomos: number): LevelInfo {
   let currentLevel = 1;
 
-  // Find the current level
-  while (getTotalPomosForLevel(currentLevel + 1) <= completedPomos) {
+  // Find the current level (highest level where threshold <= completedPomos)
+  while (currentLevel < 100 && getTotalPomosForLevel(currentLevel + 1) <= completedPomos) {
     currentLevel++;
   }
 
