@@ -329,15 +329,14 @@ export default function Home() {
 
           {/* Controls */}
           <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-            {/* Start button - always visible */}
+            {/* Start/Pause button - transforms based on state */}
             <motion.div className="w-full" whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
               <Button
-                onClick={start}
+                onClick={isRunning ? pause : start}
                 size="lg"
                 className="w-full py-6 text-lg font-semibold"
-                disabled={isRunning}
               >
-                Start
+                {isRunning ? "Pause" : "Start"}
               </Button>
             </motion.div>
 
@@ -355,29 +354,16 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* Pause and Reset buttons - fade in when timer is running */}
+            {/* Reset button - fade in when timer is running */}
             {isRunning && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="flex gap-3 w-full"
+                className="w-full"
               >
-                <motion.div
-                  className="flex-1"
-                  whileTap={{ scale: 0.98 }}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Button variant="secondary" onClick={pause} size="default" className="w-full">
-                    Pause
-                  </Button>
-                </motion.div>
-                <motion.div
-                  className="flex-1"
-                  whileTap={{ scale: 0.98 }}
-                  whileHover={{ scale: 1.01 }}
-                >
+                <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
                   <Button variant="outline" onClick={reset} size="default" className="w-full">
                     Reset
                   </Button>
