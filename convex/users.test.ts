@@ -11,11 +11,12 @@ describe("users", () => {
   });
 
   describe("ensureUser", () => {
-    test("should create a new user when authenticated", async () => {
+    test("should create a new user with auto-generated username when authenticated", async () => {
       const asUser = t.withIdentity({ subject: "clerk_user_123" });
 
       const userId = await asUser.mutation(api.users.ensureUser, {
-        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
         avatarUrl: "https://example.com/avatar.jpg",
       });
 
@@ -34,11 +35,13 @@ describe("users", () => {
       const asUser = t.withIdentity({ subject: "clerk_user_456" });
 
       const userId1 = await asUser.mutation(api.users.ensureUser, {
-        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
       });
 
       const userId2 = await asUser.mutation(api.users.ensureUser, {
-        username: "testuser",
+        firstName: "Different",
+        lastName: "Name",
       });
 
       expect(userId1).toBe(userId2);
@@ -47,43 +50,57 @@ describe("users", () => {
     test("should throw error if not authenticated", async () => {
       await expect(
         t.mutation(api.users.ensureUser, {
-          username: "testuser",
+          firstName: "Test",
+          lastName: "User",
         })
       ).rejects.toThrow("Not authenticated");
     });
 
-    test("should throw error if username is empty", async () => {
-      const asUser = t.withIdentity({ subject: "clerk_user_789" });
+    test("should generate username with numbers if duplicate exists", async () => {
+      const user1 = t.withIdentity({ subject: "clerk_user_789" });
+      const user2 = t.withIdentity({ subject: "clerk_user_790" });
 
-      await expect(
-        asUser.mutation(api.users.ensureUser, {
-          username: "",
-        })
-      ).rejects.toThrow("Username cannot be empty");
+      await user1.mutation(api.users.ensureUser, {
+        firstName: "James",
+        lastName: "McAulay",
+      });
+
+      await user2.mutation(api.users.ensureUser, {
+        firstName: "James",
+        lastName: "McAulay",
+      });
+
+      const user1Data = await user1.query(api.users.me, {});
+      const user2Data = await user2.query(api.users.me, {});
+
+      expect(user1Data?.username).toBe("jamesmcaulay");
+      expect(user2Data?.username).toBe("jamesmcaulay1");
     });
 
-    test("should trim whitespace from username", async () => {
+    test("should sanitize username (remove non-alphanumeric)", async () => {
       const asUser = t.withIdentity({ subject: "clerk_user_101" });
 
       await asUser.mutation(api.users.ensureUser, {
-        username: "  testuser  ",
+        firstName: "John-Paul",
+        lastName: "O'Connor",
       });
 
       const user = await asUser.query(api.users.me, {});
-      expect(user?.username).toBe("testuser");
+      expect(user?.username).toBe("johnpauloconnor");
     });
 
     test("should work without avatarUrl (optional)", async () => {
       const asUser = t.withIdentity({ subject: "clerk_user_102" });
 
       const userId = await asUser.mutation(api.users.ensureUser, {
-        username: "testuser",
+        firstName: "Test",
       });
 
       expect(userId).toBeDefined();
 
       const user = await asUser.query(api.users.me, {});
       expect(user?.avatarUrl).toBeUndefined();
+      expect(user?.username).toBe("test");
     });
 
     test("should prevent clerkId spoofing - different users get different records", async () => {
@@ -91,11 +108,11 @@ describe("users", () => {
       const user2 = t.withIdentity({ subject: "clerk_user_bob" });
 
       const userId1 = await user1.mutation(api.users.ensureUser, {
-        username: "alice",
+        firstName: "Alice",
       });
 
       const userId2 = await user2.mutation(api.users.ensureUser, {
-        username: "bob",
+        firstName: "Bob",
       });
 
       // Different users should get different IDs
@@ -117,7 +134,8 @@ describe("users", () => {
       const asUser = t.withIdentity({ subject: "clerk_user_me_1" });
 
       await asUser.mutation(api.users.ensureUser, {
-        username: "currentuser",
+        firstName: "Current",
+        lastName: "User",
         avatarUrl: "https://example.com/me.jpg",
       });
 
@@ -145,7 +163,8 @@ describe("users", () => {
       const asUser = t.withIdentity({ subject: "clerk_user_get_1" });
 
       const userId = await asUser.mutation(api.users.ensureUser, {
-        username: "targetuser",
+        firstName: "Target",
+        lastName: "User",
       });
 
       const user = await asUser.query(api.users.getUser, { userId });
@@ -158,7 +177,8 @@ describe("users", () => {
       const asUser = t.withIdentity({ subject: "clerk_user_get_2" });
 
       const userId = await asUser.mutation(api.users.ensureUser, {
-        username: "someuser",
+        firstName: "Some",
+        lastName: "User",
       });
 
       // Try to access without auth
@@ -170,7 +190,8 @@ describe("users", () => {
       const user2 = t.withIdentity({ subject: "clerk_user_2" });
 
       const user1Id = await user1.mutation(api.users.ensureUser, {
-        username: "user1",
+        firstName: "User",
+        lastName: "One",
       });
 
       // User 2 can query user 1's info (useful for social features)
@@ -178,7 +199,7 @@ describe("users", () => {
         userId: user1Id,
       });
 
-      expect(user1Info?.username).toBe("user1");
+      expect(user1Info?.username).toBe("userone");
     });
   });
 });

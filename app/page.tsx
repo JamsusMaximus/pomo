@@ -121,7 +121,8 @@ export default function Home() {
   useEffect(() => {
     if (isSignedIn && user) {
       ensureUser({
-        username: user.username || user.firstName || "Anonymous",
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
         avatarUrl: user.imageUrl,
       }).catch((err) => {
         console.error("Failed to ensure user:", err);
