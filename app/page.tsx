@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -51,6 +52,7 @@ export default function Home() {
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [currentTag, setCurrentTag] = useState("");
 
   const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
@@ -167,6 +169,18 @@ export default function Home() {
                   {mm}:{ss}
                 </div>
               </div>
+            </div>
+
+            {/* Tag Input */}
+            <div className="w-full max-w-md">
+              <Input
+                type="text"
+                placeholder="Tag this pomodoro (e.g., coding, research)"
+                value={currentTag}
+                onChange={(e) => setCurrentTag(e.target.value)}
+                className="h-12 text-base rounded-2xl text-center"
+                disabled={isRunning}
+              />
             </div>
 
             {/* Controls */}
