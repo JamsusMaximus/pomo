@@ -194,48 +194,67 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Level Card */}
-        {stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05 }}
-            className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg border border-orange-500/20 p-6 mb-8"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-orange-500 rounded-xl">
-                  <Award className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold">
-                    Level {getLevelInfo(stats.total.count).currentLevel}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {getLevelTitle(getLevelInfo(stats.total.count).currentLevel)}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {stats.total.count}
-                </p>
-                <p className="text-xs text-muted-foreground">Total Pomodoros</p>
-              </div>
-            </div>
+        {stats &&
+          (() => {
+            const levelInfo = getLevelInfo(stats.total.count);
+            const currentPomos = stats.total.count;
+            const rangeStart = levelInfo.pomosForCurrentLevel;
+            const rangeEnd = levelInfo.pomosForNextLevel;
+            const positionInRange = currentPomos - rangeStart;
+            const totalRange = rangeEnd - rangeStart;
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Progress to Level {getLevelInfo(stats.total.count).currentLevel + 1}
-                </span>
-                <span className="font-medium">
-                  {getLevelInfo(stats.total.count).pomosRemaining} pomos remaining
-                </span>
-              </div>
-              <Progress value={getLevelInfo(stats.total.count).progress} className="h-3" />
-            </div>
-          </motion.div>
-        )}
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.05 }}
+                className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg border border-orange-500/20 p-6 mb-8"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-orange-500 rounded-xl">
+                      <Award className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Level {levelInfo.currentLevel}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {getLevelTitle(levelInfo.currentLevel)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                      {currentPomos}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Total Pomodoros</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Progress to Level {levelInfo.currentLevel + 1}
+                    </span>
+                    <span className="font-medium">{levelInfo.pomosRemaining} remaining</span>
+                  </div>
+
+                  {/* Linear range progress bar */}
+                  <div className="relative">
+                    <Progress value={levelInfo.progress} className="h-3" />
+
+                    {/* Range labels */}
+                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                      <span className="font-medium">{rangeStart}</span>
+                      <span className="font-bold text-orange-600 dark:text-orange-400">
+                        {currentPomos}
+                      </span>
+                      <span className="font-medium">{rangeEnd}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
 
         {/* Stats Grid */}
         <motion.div
