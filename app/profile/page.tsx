@@ -242,7 +242,7 @@ export default function ProfilePage() {
                   <div className="relative pt-6">
                     {/* Current position marker */}
                     <div
-                      className="absolute top-0 transform -translate-x-1/2 flex flex-col items-center"
+                      className="absolute top-0 transform -translate-x-1/2 flex flex-col items-center z-10"
                       style={{ left: `${levelInfo.progress}%` }}
                     >
                       <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-1">
@@ -251,7 +251,13 @@ export default function ProfilePage() {
                       <div className="w-0.5 h-4 bg-orange-600 dark:bg-orange-400"></div>
                     </div>
 
-                    <Progress value={levelInfo.progress} className="h-3" />
+                    {/* Pokemon-style XP bar */}
+                    <div className="relative h-6 w-full overflow-hidden rounded-full bg-slate-700 dark:bg-slate-800 shadow-inner border-2 border-slate-600 dark:border-slate-700">
+                      <div
+                        className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 transition-all duration-500 ease-out shadow-lg"
+                        style={{ width: `${levelInfo.progress}%` }}
+                      />
+                    </div>
 
                     {/* Range labels */}
                     <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
