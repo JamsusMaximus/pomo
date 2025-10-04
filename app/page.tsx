@@ -198,12 +198,12 @@ export default function Home() {
   const { mm, ss } = formatTime(remaining);
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-12 sm:px-8 lg:px-12">
-      {/* Top Right Controls */}
-      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
+      {/* Top Controls - Positioned to avoid overlap */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3">
         <SignedOut>
           <SignUpButton mode="modal">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
               Signup / Signin
             </Button>
           </SignUpButton>
@@ -214,98 +214,98 @@ export default function Home() {
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+        {/* Circular Timer Container with Progress Ring Border */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="bg-card rounded-2xl shadow-lg border border-border p-8 sm:p-12"
+          className="relative"
         >
-          <div className="flex flex-col items-center space-y-16">
+          {/* Progress Ring SVG (as border) */}
+          <svg
+            className="absolute inset-0 w-full h-full -rotate-90"
+            viewBox="0 0 200 200"
+            style={{ width: "min(90vw, 420px)", height: "min(90vw, 420px)" }}
+          >
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
+                <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
+              </linearGradient>
+            </defs>
+
+            {/* Background circle */}
+            <circle
+              cx="100"
+              cy="100"
+              r="95"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              className="text-border"
+            />
+
+            {/* Animated progress circle */}
+            <motion.circle
+              cx="100"
+              cy="100"
+              r="95"
+              fill="none"
+              stroke="url(#progressGradient)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              initial={{ strokeDasharray: "596.9", strokeDashoffset: "0" }}
+              animate={{
+                strokeDashoffset: `${596.9 * (1 - percent / 100)}`,
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            />
+          </svg>
+
+          {/* Circular Content Container */}
+          <div
+            className="relative bg-card rounded-full shadow-2xl flex flex-col items-center justify-center p-8"
+            style={{ width: "min(90vw, 420px)", height: "min(90vw, 420px)" }}
+          >
             {/* Header */}
-            <div className="text-center space-y-3">
-              <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">Pomodoro</h1>
-              <p className="text-base text-muted-foreground">
-                Cycles completed:{" "}
-                <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+            <div className="text-center space-y-2 mb-4">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Pomodoro</h1>
+              <p className="text-sm text-muted-foreground">
+                Cycles: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
               </p>
             </div>
 
-            {/* Circular Progress Timer */}
-            <div className="relative flex items-center justify-center w-full">
-              <svg
-                className="w-[380px] h-[380px] sm:w-[460px] sm:h-[460px] -rotate-90"
-                viewBox="0 0 200 200"
-              >
-                <defs>
-                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
-                    <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
-                  </linearGradient>
-                </defs>
-
-                {/* Background circle */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="85"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="6"
-                  className="text-muted opacity-25"
-                />
-
-                {/* Animated progress circle */}
-                <motion.circle
-                  cx="100"
-                  cy="100"
-                  r="85"
-                  fill="none"
-                  stroke="url(#progressGradient)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
-                  animate={{
-                    strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
-                  }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                />
-              </svg>
-
-              {/* Timer content - positioned absolutely in center */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="text-7xl sm:text-8xl md:text-9xl font-semibold tabular-nums tracking-tighter"
-                  style={{
-                    fontFamily:
-                      'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {mm}:{ss}
-                </div>
-              </div>
+            {/* Timer */}
+            <div
+              className="text-6xl sm:text-7xl md:text-8xl font-semibold tabular-nums tracking-tighter mb-6"
+              style={{
+                fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {mm}:{ss}
             </div>
 
             {/* Tag Input */}
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-[280px] mb-6">
               <Input
                 type="text"
-                placeholder="Tag this pomodoro (e.g., coding, research)"
+                placeholder="Tag (e.g., coding)"
                 value={currentTag}
                 onChange={(e) => setCurrentTag(e.target.value)}
-                className="h-12 text-base rounded-2xl text-center"
+                className="h-10 text-sm rounded-full text-center"
                 disabled={isRunning}
               />
             </div>
 
             {/* Controls */}
-            <div className="flex flex-wrap gap-4 justify-center w-full">
+            <div className="flex gap-2 sm:gap-3">
               <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
                 <Button
                   onClick={start}
-                  size="lg"
-                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
+                  size="sm"
+                  className="rounded-full px-6"
                   disabled={isRunning}
                 >
                   Start
@@ -315,20 +315,15 @@ export default function Home() {
                 <Button
                   variant="secondary"
                   onClick={pause}
-                  size="lg"
-                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
+                  size="sm"
+                  className="rounded-full px-6"
                   disabled={!isRunning}
                 >
                   Pause
                 </Button>
               </motion.div>
               <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-                <Button
-                  variant="outline"
-                  onClick={reset}
-                  size="lg"
-                  className="min-w-[120px] h-12 text-base font-medium rounded-2xl"
-                >
+                <Button variant="outline" onClick={reset} size="sm" className="rounded-full px-6">
                   Reset
                 </Button>
               </motion.div>
@@ -342,7 +337,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-8 bg-card rounded-2xl shadow-lg border border-border p-6"
+            className="w-full bg-card rounded-2xl shadow-lg border border-border p-6"
           >
             <PomodoroFeed sessions={sessions} />
           </motion.div>
