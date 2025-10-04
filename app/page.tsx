@@ -12,8 +12,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
-import { saveCompletedSession } from "@/lib/storage/sessions";
-import type { Mode } from "@/types/pomodoro";
+import { saveCompletedSession, loadSessions, seedTestPomodoros } from "@/lib/storage/sessions";
+import { PomodoroFeed } from "@/components/PomodoroFeed";
+import type { Mode, PomodoroSession } from "@/types/pomodoro";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
@@ -22,6 +23,7 @@ export default function Home() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentTag, setCurrentTag] = useState("");
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
+  const [sessions, setSessions] = useState<PomodoroSession[]>([]);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -68,6 +70,8 @@ export default function Home() {
         }
       }
       setPreviousMode(newMode);
+      // Refresh sessions after saving
+      setSessions(loadSessions());
     },
     onCycleComplete: () => {
       setCyclesCompleted((prev) => prev + 1);
@@ -76,12 +80,20 @@ export default function Home() {
 
   // Hydrate from localStorage on mount
   useEffect(() => {
+    // Seed test pomodoros (only if no sessions exist)
+    seedTestPomodoros();
+
+    // Load preferences
     const prefs = loadPreferences();
     if (prefs) {
       setFocusDuration(prefs.focusDuration);
       setBreakDuration(prefs.breakDuration);
       setCyclesCompleted(prefs.cyclesCompleted);
     }
+
+    // Load sessions
+    setSessions(loadSessions());
+
     setIsHydrated(true);
   }, []);
 
@@ -262,6 +274,18 @@ export default function Home() {
             </div>
           </div>
         </motion.div>
+
+        {/* Pomodoro Feed */}
+        {isHydrated && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-8 bg-card rounded-2xl shadow-lg border border-border p-6"
+          >
+            <PomodoroFeed sessions={sessions} />
+          </motion.div>
+        )}
       </div>
     </main>
   );
