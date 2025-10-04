@@ -22,10 +22,11 @@ function formatDuration(seconds: number): string {
 }
 
 export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
-  // Sort sessions by completion time (most recent first)
-  const sortedSessions = [...sessions].sort((a, b) => b.completedAt - a.completedAt);
+  // Filter to only focus sessions and sort by completion time (most recent first)
+  const focusSessions = sessions.filter((s) => s.mode === "focus");
+  const sortedSessions = [...focusSessions].sort((a, b) => b.completedAt - a.completedAt);
 
-  if (sessions.length === 0) {
+  if (focusSessions.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <p className="text-sm">No pomodoros completed yet.</p>
@@ -50,17 +51,6 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
               className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-4 flex-1">
-                {/* Mode Badge */}
-                <div
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    session.mode === "focus"
-                      ? "bg-primary/10 text-primary"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {session.mode === "focus" ? "Focus" : "Break"}
-                </div>
-
                 {/* Time Range */}
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">{formatTime(startTime)}</span>
