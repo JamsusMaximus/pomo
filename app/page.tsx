@@ -214,125 +214,110 @@ export default function Home() {
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-2xl flex flex-col items-center gap-8">
-        {/* Circular Timer Container */}
+      <div className="w-full max-w-md flex flex-col items-center gap-8">
+        {/* Timer Card Container */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative"
+          className="w-full bg-card rounded-2xl shadow-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
         >
-          {/* Progress Ring SVG */}
-          <svg
-            className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
-            viewBox="0 0 200 200"
-            style={{ width: "min(85vw, 380px)", height: "min(85vw, 380px)" }}
-          >
-            <defs>
-              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
-                <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
-              </linearGradient>
-            </defs>
+          {/* Header */}
+          <div className="text-center space-y-2 mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Pomodoro</h1>
+            <p className="text-sm text-muted-foreground">
+              Cycles: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+            </p>
+          </div>
 
-            {/* Background circle */}
-            <circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="6"
-              className="text-border"
-            />
+          {/* Circular Progress Ring */}
+          <div className="relative mb-8">
+            <svg className="w-64 h-64 sm:w-80 sm:h-80 -rotate-90" viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
+                  <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
+                </linearGradient>
+              </defs>
 
-            {/* Animated progress circle */}
-            <motion.circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
-              stroke="url(#progressGradient)"
-              strokeWidth="6"
-              strokeLinecap="round"
-              initial={{ strokeDasharray: "565.49", strokeDashoffset: "0" }}
-              animate={{
-                strokeDashoffset: `${565.49 * (1 - percent / 100)}`,
-              }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-            />
-          </svg>
-
-          {/* Circular Content Container */}
-          <div
-            className="relative bg-card rounded-full shadow-2xl flex flex-col items-center justify-center p-8 sm:p-10"
-            style={{ width: "min(85vw, 380px)", height: "min(85vw, 380px)" }}
-          >
-            {/* Header */}
-            <div className="text-center space-y-1 mb-4">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Pomodoro</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Cycles: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
-              </p>
-            </div>
-
-            {/* Timer */}
-            <div
-              className="text-5xl sm:text-6xl md:text-7xl font-semibold tabular-nums tracking-tighter mb-4 sm:mb-6"
-              style={{
-                fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {mm}:{ss}
-            </div>
-
-            {/* Tag Input */}
-            <div className="w-full max-w-[240px] mb-4 sm:mb-6">
-              <Input
-                type="text"
-                placeholder="Tag (e.g., coding)"
-                value={currentTag}
-                onChange={(e) => setCurrentTag(e.target.value)}
-                className="h-9 sm:h-10 text-xs sm:text-sm rounded-full text-center"
-                disabled={isRunning}
+              {/* Background circle */}
+              <circle
+                cx="100"
+                cy="100"
+                r="85"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                className="text-border"
               />
-            </div>
 
-            {/* Controls */}
-            <div className="flex gap-2">
-              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-                <Button
-                  onClick={start}
-                  size="sm"
-                  className="rounded-full px-4 sm:px-6 text-xs sm:text-sm"
-                  disabled={isRunning}
-                >
-                  Start
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-                <Button
-                  variant="secondary"
-                  onClick={pause}
-                  size="sm"
-                  className="rounded-full px-4 sm:px-6 text-xs sm:text-sm"
-                  disabled={!isRunning}
-                >
-                  Pause
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-                <Button
-                  variant="outline"
-                  onClick={reset}
-                  size="sm"
-                  className="rounded-full px-4 sm:px-6 text-xs sm:text-sm"
-                >
-                  Reset
-                </Button>
-              </motion.div>
+              {/* Animated progress circle */}
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="85"
+                fill="none"
+                stroke="url(#progressGradient)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
+                animate={{
+                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
+            </svg>
+
+            {/* Timer in center of ring */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="text-6xl sm:text-7xl font-semibold tabular-nums tracking-tighter"
+                style={{
+                  fontFamily:
+                    'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {mm}:{ss}
+              </div>
             </div>
+          </div>
+
+          {/* Tag Input */}
+          <div className="w-full max-w-xs mb-6">
+            <Input
+              type="text"
+              placeholder="Tag (e.g., coding)"
+              value={currentTag}
+              onChange={(e) => setCurrentTag(e.target.value)}
+              className="h-11 text-sm text-center"
+              disabled={isRunning}
+            />
+          </div>
+
+          {/* Controls */}
+          <div className="flex gap-3">
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button onClick={start} size="default" className="px-8" disabled={isRunning}>
+                Start
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button
+                variant="secondary"
+                onClick={pause}
+                size="default"
+                className="px-8"
+                disabled={!isRunning}
+              >
+                Pause
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+              <Button variant="outline" onClick={reset} size="default" className="px-8">
+                Reset
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
 
