@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, RefreshCw, Trash2, Database, Award } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -75,8 +74,9 @@ export default function ProfilePage() {
     try {
       const result = await seedTestData();
       alert(`✅ Generated ${result.count} pomodoros over ${result.days} days!`);
-    } catch (error: any) {
-      alert(`❌ Failed: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`❌ Failed: ${message}`);
     } finally {
       setIsSeeding(false);
     }
@@ -95,8 +95,9 @@ export default function ProfilePage() {
     try {
       const result = await clearAllData();
       alert(`✅ Deleted ${result.deleted} pomodoros`);
-    } catch (error: any) {
-      alert(`❌ Failed: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`❌ Failed: ${message}`);
     } finally {
       setIsClearing(false);
     }

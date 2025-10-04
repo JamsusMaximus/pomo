@@ -27,10 +27,8 @@ export const getStats = query({
       .filter((q) => q.eq(q.field("mode"), "focus"))
       .collect();
 
-    const now = Date.now();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
 
     // Calculate start of week (Monday)
     const startOfWeek = new Date(today);
