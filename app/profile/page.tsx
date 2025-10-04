@@ -1,19 +1,66 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
 
 export default function ProfilePage() {
   const { user } = useUser();
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
+  const saveSession = useMutation(api.pomodoros.saveSession);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
+
+  // Check localStorage stats
+  useEffect(() => {
+    const allSessions = loadSessions();
+    const unsyncedSessions = getUnsyncedSessions();
+    const focusSessions = allSessions.filter((s) => s.mode === "focus");
+    const unsyncedFocus = unsyncedSessions.filter((s) => s.mode === "focus");
+    setLocalStats({ total: focusSessions.length, unsynced: unsyncedFocus.length });
+  }, [isSyncing]);
+
+  const handleManualSync = async () => {
+    const unsyncedSessions = getUnsyncedSessions();
+    if (unsyncedSessions.length === 0) {
+      alert("No unsynced sessions to sync!");
+      return;
+    }
+
+    setIsSyncing(true);
+    console.log(`Manually syncing ${unsyncedSessions.length} sessions...`);
+
+    try {
+      await Promise.all(
+        unsyncedSessions.map((session) =>
+          saveSession({
+            mode: session.mode,
+            duration: session.duration,
+            tag: session.tag,
+            completedAt: session.completedAt,
+          })
+        )
+      );
+
+      markSessionsSynced(unsyncedSessions.map((s) => s.id));
+      console.log("✅ Manual sync successful!");
+      alert(`Successfully synced ${unsyncedSessions.length} sessions!`);
+    } catch (error) {
+      console.error("Failed to sync:", error);
+      alert(`Sync failed: ${error}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -36,13 +83,35 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:py-12">
       <div className="max-w-4xl mx-auto">
-        {/* Back button */}
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Timer
-          </Button>
-        </Link>
+        {/* Back button and Debug info */}
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Timer
+            </Button>
+          </Link>
+
+          {/* Debug: Local storage info */}
+          {localStats.unsynced > 0 && (
+            <Button variant="outline" size="sm" onClick={handleManualSync} disabled={isSyncing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+              Sync {localStats.unsynced} Local Sessions
+            </Button>
+          )}
+        </div>
+
+        {/* Debug info card */}
+        {localStats.total > 0 && (
+          <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6 text-sm">
+            <p className="font-medium mb-1">Debug Info:</p>
+            <p className="text-muted-foreground">
+              • Local storage: {localStats.total} focus sessions
+            </p>
+            <p className="text-muted-foreground">• Unsynced: {localStats.unsynced}</p>
+            <p className="text-muted-foreground">• Convex: {stats?.total.count || 0}</p>
+          </div>
+        )}
 
         {/* Profile Header */}
         <motion.div
