@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
@@ -17,7 +17,11 @@ export default function ProfilePage() {
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
   const saveSession = useMutation(api.pomodoros.saveSession);
+  const seedTestData = useMutation(api.seed.seedTestData);
+  const clearAllData = useMutation(api.seed.clearAllData);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
 
   // Check localStorage stats
@@ -62,6 +66,40 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSeedData = async () => {
+    if (!confirm("Generate test pomodoros for the past 40 days?")) return;
+
+    setIsSeeding(true);
+    try {
+      const result = await seedTestData();
+      alert(`✅ Generated ${result.count} pomodoros over ${result.days} days!`);
+    } catch (error: any) {
+      alert(`❌ Failed: ${error.message}`);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (
+      !confirm(
+        "⚠️ This will delete ALL your pomodoro data from Convex. This cannot be undone. Are you sure?"
+      )
+    ) {
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      const result = await clearAllData();
+      alert(`✅ Deleted ${result.deleted} pomodoros`);
+    } catch (error: any) {
+      alert(`❌ Failed: ${error.message}`);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   if (!user) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4">
@@ -102,16 +140,35 @@ export default function ProfilePage() {
         </div>
 
         {/* Debug info card */}
-        {localStats.total > 0 && (
-          <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6 text-sm">
-            <p className="font-medium mb-1">Debug Info:</p>
+        <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-medium text-sm">Debug & Test Data</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
+                <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
+                {isSeeding ? "Seeding..." : "Seed 40 Days"}
+              </Button>
+              {stats && stats.total.count > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleClearData}
+                  disabled={isClearing}
+                >
+                  <Trash2 className={`w-4 h-4 mr-2 ${isClearing ? "animate-pulse" : ""}`} />
+                  Clear All
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="text-sm space-y-1">
             <p className="text-muted-foreground">
               • Local storage: {localStats.total} focus sessions
             </p>
             <p className="text-muted-foreground">• Unsynced: {localStats.unsynced}</p>
             <p className="text-muted-foreground">• Convex: {stats?.total.count || 0}</p>
           </div>
-        )}
+        </div>
 
         {/* Profile Header */}
         <motion.div
