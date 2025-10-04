@@ -334,17 +334,26 @@ export default function Home() {
               <Button
                 onClick={start}
                 size="lg"
-                className="w-full py-6 text-lg font-semibold flex flex-col items-center justify-center gap-1.5"
+                className="w-full py-6 text-lg font-semibold"
                 disabled={isRunning}
               >
-                <span>Start</span>
-                {showSpaceHint && !isRunning && (
-                  <kbd className="text-[9px] px-1.5 py-0.5 border border-current rounded opacity-50 font-mono font-normal">
-                    SPACE
-                  </kbd>
-                )}
+                Start
               </Button>
             </motion.div>
+
+            {/* Space bar hint */}
+            {showSpaceHint && !isRunning && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-muted-foreground flex items-center gap-1.5"
+              >
+                <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
+                  Space
+                </kbd>
+                <span>to start</span>
+              </motion.div>
+            )}
 
             {/* Pause and Reset buttons - fade in when timer is running */}
             {isRunning && (
