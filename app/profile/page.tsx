@@ -172,70 +172,57 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-card rounded-2xl shadow-lg border border-border p-8 mb-8"
-        >
-          <div className="flex items-center gap-6">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
-              <AvatarFallback className="text-2xl">
-                {user.username?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold mb-1">{user.username || "User"}</h1>
-              <p className="text-muted-foreground">{user.primaryEmailAddress?.emailAddress}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Level Card */}
+        {/* Combined Profile & Level Card */}
         {stats &&
           (() => {
             const levelInfo = getLevelInfo(stats.total.count);
             const currentPomos = stats.total.count;
             const rangeStart = levelInfo.pomosForCurrentLevel;
             const rangeEnd = levelInfo.pomosForNextLevel;
-            const positionInRange = currentPomos - rangeStart;
-            const totalRange = rangeEnd - rangeStart;
 
             return (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.05 }}
-                className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg border border-orange-500/20 p-6 mb-8"
+                transition={{ duration: 0.4 }}
+                className="bg-card rounded-2xl shadow-lg border border-border p-8 mb-8"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-orange-500 rounded-xl">
-                      <Award className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">Level {levelInfo.currentLevel}</h2>
-                      <p className="text-sm text-muted-foreground">
-                        {getLevelTitle(levelInfo.currentLevel)}
-                      </p>
-                    </div>
+                {/* Profile Section */}
+                <div className="flex items-center gap-6 pb-6 mb-6 border-b border-border">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
+                    <AvatarFallback className="text-xl">
+                      {user.username?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-bold mb-1">{user.username || "User"}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {user.primaryEmailAddress?.emailAddress}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                       {currentPomos}
                     </p>
                     <p className="text-xs text-muted-foreground">Total Pomodoros</p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Progress to Level {levelInfo.currentLevel + 1}
-                    </span>
-                    <span className="font-medium">{levelInfo.pomosRemaining} remaining</span>
+                {/* Level Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-orange-500 rounded-xl">
+                      <Award className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">
+                        Level {levelInfo.currentLevel} · {getLevelTitle(levelInfo.currentLevel)}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {levelInfo.pomosRemaining} pomodoros to Level {levelInfo.currentLevel + 1}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Linear range progress bar with position marker */}
