@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "Pomodoro Timer",
@@ -16,7 +17,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider defaultTheme="light" storageKey="pomo-theme">
-          {children}
+          <Providers>{children}</Providers>
         </ThemeProvider>
       </body>
     </html>
