@@ -223,6 +223,9 @@ export default function Home() {
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
 
+  // Determine if timer is paused (has time remaining but not running)
+  const isPaused = !isRunning && remaining < duration;
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
       {/* Top Controls - Positioned to avoid overlap */}
@@ -329,19 +332,19 @@ export default function Home() {
 
           {/* Controls */}
           <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-            {/* Start/Pause button - transforms based on state */}
+            {/* Start/Pause/Resume button - transforms based on state */}
             <motion.div className="w-full" whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
               <Button
                 onClick={isRunning ? pause : start}
                 size="lg"
                 className="w-full py-6 text-lg font-semibold"
               >
-                {isRunning ? "Pause" : "Start"}
+                {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
               </Button>
             </motion.div>
 
             {/* Space bar hint */}
-            {showSpaceHint && !isRunning && (
+            {showSpaceHint && !isRunning && !isPaused && (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -354,8 +357,8 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* Reset button - fade in when timer is running */}
-            {isRunning && (
+            {/* Reset button - fade in when timer is running or paused */}
+            {(isRunning || isPaused) && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
