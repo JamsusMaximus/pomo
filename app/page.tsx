@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { SignUpButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -141,11 +141,11 @@ export default function Home() {
       {/* Top Right Controls */}
       <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
         <SignedOut>
-          <SignInButton mode="modal">
+          <SignUpButton mode="modal">
             <Button variant="ghost" size="sm">
-              Sign In
+              Signup / Signin
             </Button>
-          </SignInButton>
+          </SignUpButton>
         </SignedOut>
         <SignedIn>
           <UserButton />
