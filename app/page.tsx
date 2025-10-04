@@ -32,6 +32,7 @@ export default function Home() {
   const [currentTag, setCurrentTag] = useState("");
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
+  const [showSpaceHint, setShowSpaceHint] = useState(true);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -196,6 +197,29 @@ export default function Home() {
     prevIsSignedIn.current = isSignedIn;
   }, [isSignedIn, isHydrated, saveSession]);
 
+  // Keyboard shortcut: Space bar to start/pause
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault(); // Prevent page scroll
+        if (!isRunning) {
+          start();
+          setShowSpaceHint(false); // Hide hint after first use
+        } else {
+          pause();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [isRunning, start, pause]);
+
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
 
@@ -304,28 +328,49 @@ export default function Home() {
           </div>
 
           {/* Controls */}
-          <div className="flex gap-3">
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button onClick={start} size="default" className="px-8" disabled={isRunning}>
-                Start
-              </Button>
-            </motion.div>
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button
-                variant="secondary"
-                onClick={pause}
-                size="default"
-                className="px-8"
-                disabled={!isRunning}
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex gap-3">
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button
+                  onClick={start}
+                  size="lg"
+                  className="px-12 py-6 text-lg"
+                  disabled={isRunning}
+                >
+                  Start
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button
+                  variant="secondary"
+                  onClick={pause}
+                  size="default"
+                  className="px-8"
+                  disabled={!isRunning}
+                >
+                  Pause
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                <Button variant="outline" onClick={reset} size="default" className="px-8">
+                  Reset
+                </Button>
+              </motion.div>
+            </div>
+
+            {/* Space bar hint */}
+            {showSpaceHint && !isRunning && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-muted-foreground flex items-center gap-1.5"
               >
-                Pause
-              </Button>
-            </motion.div>
-            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
-              <Button variant="outline" onClick={reset} size="default" className="px-8">
-                Reset
-              </Button>
-            </motion.div>
+                <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
+                  Space
+                </kbd>
+                <span>to start</span>
+              </motion.div>
+            )}
           </div>
         </motion.div>
 
