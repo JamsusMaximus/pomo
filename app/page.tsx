@@ -21,6 +21,8 @@ import {
 } from "@/lib/storage/sessions";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
+import Link from "next/link";
+import { User } from "lucide-react";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
@@ -209,6 +211,12 @@ export default function Home() {
           </SignUpButton>
         </SignedOut>
         <SignedIn>
+          <Link href="/profile">
+            <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+              <User className="w-4 h-4 mr-1" />
+              Profile
+            </Button>
+          </Link>
           <UserButton />
         </SignedIn>
         <ThemeToggle />
