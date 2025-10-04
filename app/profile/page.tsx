@@ -238,16 +238,24 @@ export default function ProfilePage() {
                     <span className="font-medium">{levelInfo.pomosRemaining} remaining</span>
                   </div>
 
-                  {/* Linear range progress bar */}
-                  <div className="relative">
+                  {/* Linear range progress bar with position marker */}
+                  <div className="relative pt-6">
+                    {/* Current position marker */}
+                    <div
+                      className="absolute top-0 transform -translate-x-1/2 flex flex-col items-center"
+                      style={{ left: `${levelInfo.progress}%` }}
+                    >
+                      <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-1">
+                        {currentPomos}
+                      </div>
+                      <div className="w-0.5 h-4 bg-orange-600 dark:bg-orange-400"></div>
+                    </div>
+
                     <Progress value={levelInfo.progress} className="h-3" />
 
                     {/* Range labels */}
                     <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                       <span className="font-medium">{rangeStart}</span>
-                      <span className="font-bold text-orange-600 dark:text-orange-400">
-                        {currentPomos}
-                      </span>
                       <span className="font-medium">{rangeEnd}</span>
                     </div>
                   </div>
