@@ -341,17 +341,19 @@ export default function Home() {
               </Button>
             </motion.div>
 
-            {/* Space bar hint */}
+            {/* Spacebar hint */}
             {showSpaceHint && !isRunning && (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-muted-foreground flex items-center gap-1.5"
+                className="mt-1"
               >
-                <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
-                  Space
-                </kbd>
-                <span>to start</span>
+                <div className="relative px-8 py-2 bg-gradient-to-b from-muted to-muted/80 border-2 border-border/60 rounded-lg shadow-sm">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider">
+                    SPACE
+                  </span>
+                </div>
               </motion.div>
             )}
 
