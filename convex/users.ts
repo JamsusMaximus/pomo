@@ -1,13 +1,13 @@
-import { mutation, query, MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { DataModel } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 /**
  * Generates a unique username from a full name.
  * If the username exists, appends numbers (1, 2, 3...).
  */
 async function generateUniqueUsername(
-  ctx: MutationCtx<DataModel>,
+  ctx: MutationCtx,
   firstName: string | undefined,
   lastName: string | undefined
 ): Promise<string> {
@@ -29,7 +29,7 @@ async function generateUniqueUsername(
   // Check if base username is available
   const existingWithBase = await ctx.db
     .query("users")
-    .filter((q) => q.eq(q.field("username"), baseUsername))
+    .filter((q: any) => q.eq(q.field("username"), baseUsername))
     .first();
 
   if (!existingWithBase) {
@@ -43,7 +43,7 @@ async function generateUniqueUsername(
     const candidate = `${baseUsername}${counter}`;
     const existing = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("username"), candidate))
+      .filter((q: any) => q.eq(q.field("username"), candidate))
       .first();
 
     if (!existing) {
