@@ -37,6 +37,17 @@ export function saveCompletedSession(mode: Mode, duration: number, tag?: string)
   return session;
 }
 
+export function getUnsyncedSessions(): PomodoroSession[] {
+  const sessions = loadSessions();
+  return sessions.filter((s) => !s.synced);
+}
+
+export function markSessionsSynced(sessionIds: string[]): void {
+  const sessions = loadSessions();
+  const updated = sessions.map((s) => (sessionIds.includes(s.id) ? { ...s, synced: true } : s));
+  saveSessions(updated);
+}
+
 export function seedTestPomodoros(): void {
   if (typeof window === "undefined") return;
 

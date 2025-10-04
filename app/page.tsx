@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { SignUpButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
@@ -12,7 +12,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
-import { saveCompletedSession, loadSessions, seedTestPomodoros } from "@/lib/storage/sessions";
+import {
+  saveCompletedSession,
+  loadSessions,
+  seedTestPomodoros,
+  getUnsyncedSessions,
+  markSessionsSynced,
+} from "@/lib/storage/sessions";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 
@@ -30,6 +36,9 @@ export default function Home() {
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
   const saveSession = useMutation(api.pomodoros.saveSession);
+
+  // Track previous sign-in state to detect when user signs in
+  const prevIsSignedIn = useRef(isSignedIn);
 
   const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
@@ -132,6 +141,43 @@ export default function Home() {
       console.error("Failed to sync preferences to Convex:", err);
     });
   }, [isSignedIn, focusDuration, breakDuration, cyclesCompleted, isHydrated, savePrefs]);
+
+  // Sync local pomodoros to Convex when user signs in
+  useEffect(() => {
+    // Detect when user transitions from signed out to signed in
+    if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
+      const unsyncedSessions = getUnsyncedSessions();
+
+      if (unsyncedSessions.length > 0) {
+        console.log(`Syncing ${unsyncedSessions.length} local pomodoros to Convex...`);
+
+        // Upload each unsynced session to Convex
+        Promise.all(
+          unsyncedSessions.map((session) =>
+            saveSession({
+              mode: session.mode,
+              duration: session.duration,
+              tag: session.tag,
+              completedAt: session.completedAt,
+            })
+          )
+        )
+          .then(() => {
+            // Mark all as synced in localStorage
+            markSessionsSynced(unsyncedSessions.map((s) => s.id));
+            console.log("✅ Local pomodoros synced successfully!");
+            // Refresh the sessions display
+            setSessions(loadSessions());
+          })
+          .catch((err) => {
+            console.error("Failed to sync local sessions to Convex:", err);
+          });
+      }
+    }
+
+    // Update the ref for next render
+    prevIsSignedIn.current = isSignedIn;
+  }, [isSignedIn, isHydrated, saveSession]);
 
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
