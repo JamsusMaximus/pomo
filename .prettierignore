@@ -9,6 +9,9 @@ out/
 build/
 dist/
 
+# Convex generated files
+convex/_generated/
+
 # Misc
 .DS_Store
 *.pem
