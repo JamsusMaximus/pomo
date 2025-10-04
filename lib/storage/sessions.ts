@@ -20,11 +20,7 @@ export function saveSessions(sessions: PomodoroSession[]): void {
   }
 }
 
-export function saveCompletedSession(
-  mode: Mode,
-  duration: number,
-  tag?: string
-): PomodoroSession {
+export function saveCompletedSession(mode: Mode, duration: number, tag?: string): PomodoroSession {
   const session: PomodoroSession = {
     id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     mode,
