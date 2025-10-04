@@ -24,16 +24,35 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           formFieldRow__username: { display: "none !important" },
           formFieldLabel__username: { display: "none !important" },
           formField__username: { display: "none !important" },
-          // Style social buttons (Google) to be full width and prominent
+          // Custom layout for social buttons
           socialButtonsBlockButton: {
-            width: "100%",
             fontSize: "16px",
             padding: "14px",
             fontWeight: "500",
+            flex: "0 0 100%",
           },
           socialButtonsBlockButtonText: {
             fontSize: "16px",
             fontWeight: "500",
+          },
+          // Google button - full width
+          "socialButtonsBlockButton[data-provider='google']": {
+            width: "100%",
+            flex: "0 0 100%",
+          },
+          // Apple and Facebook - 50% width
+          "socialButtonsBlockButton[data-provider='apple']": {
+            width: "calc(50% - 4px)",
+            flex: "0 0 calc(50% - 4px)",
+          },
+          "socialButtonsBlockButton[data-provider='facebook']": {
+            width: "calc(50% - 4px)",
+            flex: "0 0 calc(50% - 4px)",
+          },
+          socialButtonsBlock: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "8px",
           },
         },
         layout: {
