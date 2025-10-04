@@ -13,13 +13,14 @@ interface ActivityHeatmapProps {
 }
 
 export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
-  // Generate all days for the past year
+  // Generate all days for the past ~50 days (enough to show the seeded data nicely)
   const today = new Date();
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(today.getFullYear() - 1);
+  const daysToShow = 56; // 8 weeks = nice grid
+  const startDateCalc = new Date(today);
+  startDateCalc.setDate(today.getDate() - daysToShow);
 
-  // Start from the first day of the week containing one year ago
-  const startDate = new Date(oneYearAgo);
+  // Start from the first Sunday before the start date
+  const startDate = new Date(startDateCalc);
   const dayOfWeek = startDate.getDay();
   const diff = dayOfWeek === 0 ? 0 : -dayOfWeek; // Start on Sunday
   startDate.setDate(startDate.getDate() + diff);
