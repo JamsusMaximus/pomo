@@ -60,6 +60,7 @@ async function generateUniqueUsername(
  * Ensures a user exists in the database.
  * Uses Clerk auth context - cannot be spoofed by clients.
  * Auto-generates username from firstName + lastName.
+ * Returns { userId, username, isNew } so frontend can sync to Clerk.
  * Idempotent: safe to call multiple times.
  */
 export const ensureUser = mutation({
@@ -84,7 +85,7 @@ export const ensureUser = mutation({
       .first();
 
     if (existing) {
-      return existing._id;
+      return { userId: existing._id, username: existing.username, isNew: false };
     }
 
     // Generate unique username
@@ -98,7 +99,7 @@ export const ensureUser = mutation({
       createdAt: Date.now(),
     });
 
-    return userId;
+    return { userId, username, isNew: true };
   },
 });
 
