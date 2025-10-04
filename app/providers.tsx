@@ -11,10 +11,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ClerkProvider
       appearance={{
         elements: {
-          formFieldInput__firstName: "hidden",
-          formFieldInput__lastName: "hidden",
-          formFieldRow__firstName: "hidden",
-          formFieldRow__lastName: "hidden",
+          formFieldInput__firstName: { display: "none" },
+          formFieldInput__lastName: { display: "none" },
+          formFieldRow__firstName: { display: "none" },
+          formFieldRow__lastName: { display: "none" },
+          formFieldLabel__firstName: { display: "none" },
+          formFieldLabel__lastName: { display: "none" },
         },
       }}
     >
