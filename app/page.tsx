@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTimer } from "@/hooks/useTimer";
@@ -21,6 +23,12 @@ export default function Home() {
   const [currentTag, setCurrentTag] = useState("");
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
 
+  // Convex integration (optional - only when signed in)
+  const { user, isSignedIn } = useUser();
+  const ensureUser = useMutation(api.users.ensureUser);
+  const savePrefs = useMutation(api.timers.savePreferences);
+  const saveSession = useMutation(api.pomodoros.saveSession);
+
   const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
     breakDuration,
@@ -28,10 +36,36 @@ export default function Home() {
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
+        // Save locally
         saveCompletedSession("focus", focusDuration, currentTag);
+
+        // Also save to Convex if signed in
+        if (isSignedIn) {
+          saveSession({
+            mode: "focus",
+            duration: focusDuration,
+            tag: currentTag || undefined,
+            completedAt: Date.now(),
+          }).catch((err) => {
+            console.error("Failed to save session to Convex:", err);
+          });
+        }
+
         setCurrentTag(""); // Clear tag for next session
       } else if (previousMode === "break") {
+        // Save locally
         saveCompletedSession("break", breakDuration);
+
+        // Also save to Convex if signed in
+        if (isSignedIn) {
+          saveSession({
+            mode: "break",
+            duration: breakDuration,
+            completedAt: Date.now(),
+          }).catch((err) => {
+            console.error("Failed to save session to Convex:", err);
+          });
+        }
       }
       setPreviousMode(newMode);
     },
@@ -61,6 +95,31 @@ export default function Home() {
       cyclesCompleted,
     });
   }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
+
+  // Ensure user exists in Convex when signed in
+  useEffect(() => {
+    if (isSignedIn && user) {
+      ensureUser({
+        username: user.username || user.firstName || "Anonymous",
+        avatarUrl: user.imageUrl,
+      }).catch((err) => {
+        console.error("Failed to ensure user:", err);
+      });
+    }
+  }, [isSignedIn, user, ensureUser]);
+
+  // Sync preferences to Convex when signed in and preferences change
+  useEffect(() => {
+    if (!isHydrated || !isSignedIn) return;
+
+    savePrefs({
+      focusDuration,
+      breakDuration,
+      cyclesCompleted,
+    }).catch((err) => {
+      console.error("Failed to sync preferences to Convex:", err);
+    });
+  }, [isSignedIn, focusDuration, breakDuration, cyclesCompleted, isHydrated, savePrefs]);
 
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
