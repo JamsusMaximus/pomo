@@ -34,3 +34,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Placeholder values for build-time only
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_placeholder
+          CLERK_SECRET_KEY: sk_test_placeholder
+          NEXT_PUBLIC_CONVEX_URL: https://placeholder.convex.cloud
