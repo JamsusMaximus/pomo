@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const FOCUS_DEFAULT = 25 * 60; // seconds
 const BREAK_DEFAULT = 5 * 60; // seconds
 const STORAGE_KEY = "pomo-preferences";
+const SESSIONS_STORAGE_KEY = "pomo-sessions";
 
 type Mode = "focus" | "break";
 
@@ -18,6 +20,15 @@ interface PersistedPreferences {
   breakDuration: number;
   lastMode: Mode;
   cyclesCompleted: number;
+}
+
+interface PomodoroSession {
+  id: string;
+  tag?: string;
+  duration: number; // seconds
+  mode: Mode;
+  completedAt: number; // timestamp
+  synced: boolean; // whether it's been synced to Convex
 }
 
 function formatTime(seconds: number): { mm: string; ss: string } {
@@ -47,19 +58,65 @@ function savePreferences(prefs: PersistedPreferences) {
   }
 }
 
+function loadSessions(): PomodoroSession[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSessions(sessions: PomodoroSession[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
+  } catch {
+    // Silently fail if localStorage is disabled
+  }
+}
+
+function saveCompletedSession(mode: Mode, duration: number, tag?: string): PomodoroSession {
+  const session: PomodoroSession = {
+    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    mode,
+    duration,
+    tag: tag || undefined,
+    completedAt: Date.now(),
+    synced: false,
+  };
+
+  const sessions = loadSessions();
+  sessions.push(session);
+  saveSessions(sessions);
+
+  return session;
+}
+
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentTag, setCurrentTag] = useState("");
+  const [previousMode, setPreviousMode] = useState<Mode>("focus");
 
   const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
     breakDuration,
     autoStartBreak: false,
-    onModeChange: () => {
-      // Mode changes are handled by the hook, we just need to sync to localStorage
+    onModeChange: (newMode) => {
+      // When mode changes, save the completed session for the previous mode
+      if (previousMode === "focus") {
+        // Save completed focus session
+        saveCompletedSession("focus", focusDuration, currentTag);
+        setCurrentTag(""); // Clear tag for next session
+      } else if (previousMode === "break") {
+        // Save completed break session
+        saveCompletedSession("break", breakDuration);
+      }
+      setPreviousMode(newMode);
     },
     onCycleComplete: () => {
       setCyclesCompleted((prev) => prev + 1);
@@ -93,8 +150,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-12 sm:px-8 lg:px-12">
-      {/* Theme Toggle - Fixed Position */}
-      <div className="fixed top-6 right-6 z-50">
+      {/* Top Right Controls */}
+      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <Button variant="ghost" size="sm">
+              Sign In
+            </Button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
         <ThemeToggle />
       </div>
 
