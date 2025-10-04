@@ -2,97 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-
-const FOCUS_DEFAULT = 25 * 60; // seconds
-const BREAK_DEFAULT = 5 * 60; // seconds
-const STORAGE_KEY = "pomo-preferences";
-const SESSIONS_STORAGE_KEY = "pomo-sessions";
-
-type Mode = "focus" | "break";
-
-interface PersistedPreferences {
-  focusDuration: number;
-  breakDuration: number;
-  lastMode: Mode;
-  cyclesCompleted: number;
-}
-
-interface PomodoroSession {
-  id: string;
-  tag?: string;
-  duration: number; // seconds
-  mode: Mode;
-  completedAt: number; // timestamp
-  synced: boolean; // whether it's been synced to Convex
-}
-
-function formatTime(seconds: number): { mm: string; ss: string } {
-  const mm = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const ss = (seconds % 60).toString().padStart(2, "0");
-  return { mm, ss };
-}
-
-function loadPreferences(): PersistedPreferences | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-}
-
-function savePreferences(prefs: PersistedPreferences) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    // Silently fail if localStorage is disabled
-  }
-}
-
-function loadSessions(): PomodoroSession[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSessions(sessions: PomodoroSession[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
-  } catch {
-    // Silently fail if localStorage is disabled
-  }
-}
-
-function saveCompletedSession(mode: Mode, duration: number, tag?: string): PomodoroSession {
-  const session: PomodoroSession = {
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    mode,
-    duration,
-    tag: tag || undefined,
-    completedAt: Date.now(),
-    synced: false,
-  };
-
-  const sessions = loadSessions();
-  sessions.push(session);
-  saveSessions(sessions);
-
-  return session;
-}
+import { formatTime } from "@/lib/format";
+import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
+import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
+import { saveCompletedSession } from "@/lib/storage/sessions";
+import type { Mode } from "@/types/pomodoro";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
@@ -109,11 +28,9 @@ export default function Home() {
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
-        // Save completed focus session
         saveCompletedSession("focus", focusDuration, currentTag);
         setCurrentTag(""); // Clear tag for next session
       } else if (previousMode === "break") {
-        // Save completed break session
         saveCompletedSession("break", breakDuration);
       }
       setPreviousMode(newMode);
@@ -136,7 +53,7 @@ export default function Home() {
 
   // Persist to localStorage when preferences change
   useEffect(() => {
-    if (!isHydrated) return; // Don't save initial values before hydration
+    if (!isHydrated) return;
     savePreferences({
       focusDuration,
       breakDuration,
