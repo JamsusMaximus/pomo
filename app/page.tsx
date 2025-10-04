@@ -334,7 +334,7 @@ export default function Home() {
               <Button
                 onClick={start}
                 size="lg"
-                className="w-full py-6 text-lg font-semibold flex flex-col gap-1.5"
+                className="w-full py-6 text-lg font-semibold flex flex-col items-center justify-center gap-1.5"
                 disabled={isRunning}
               >
                 <span>Start</span>
