@@ -2,62 +2,72 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const FOCUS_DEFAULT = 25 * 60; // seconds
-const BREAK_DEFAULT = 5 * 60; // seconds
-const STORAGE_KEY = "pomo-preferences";
-
-type Mode = "focus" | "break";
-
-interface PersistedPreferences {
-  focusDuration: number;
-  breakDuration: number;
-  lastMode: Mode;
-  cyclesCompleted: number;
-}
-
-function formatTime(seconds: number): { mm: string; ss: string } {
-  const mm = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const ss = (seconds % 60).toString().padStart(2, "0");
-  return { mm, ss };
-}
-
-function loadPreferences(): PersistedPreferences | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-}
-
-function savePreferences(prefs: PersistedPreferences) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    // Silently fail if localStorage is disabled
-  }
-}
+import { formatTime } from "@/lib/format";
+import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
+import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
+import { saveCompletedSession } from "@/lib/storage/sessions";
+import type { Mode } from "@/types/pomodoro";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [currentTag, setCurrentTag] = useState("");
+  const [previousMode, setPreviousMode] = useState<Mode>("focus");
+
+  // Convex integration (optional - only when signed in)
+  const { user, isSignedIn } = useUser();
+  const ensureUser = useMutation(api.users.ensureUser);
+  const savePrefs = useMutation(api.timers.savePreferences);
+  const saveSession = useMutation(api.pomodoros.saveSession);
 
   const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
     focusDuration,
     breakDuration,
     autoStartBreak: false,
-    onModeChange: () => {
-      // Mode changes are handled by the hook, we just need to sync to localStorage
+    onModeChange: (newMode) => {
+      // When mode changes, save the completed session for the previous mode
+      if (previousMode === "focus") {
+        // Save locally
+        saveCompletedSession("focus", focusDuration, currentTag);
+
+        // Also save to Convex if signed in
+        if (isSignedIn) {
+          saveSession({
+            mode: "focus",
+            duration: focusDuration,
+            tag: currentTag || undefined,
+            completedAt: Date.now(),
+          }).catch((err) => {
+            console.error("Failed to save session to Convex:", err);
+          });
+        }
+
+        setCurrentTag(""); // Clear tag for next session
+      } else if (previousMode === "break") {
+        // Save locally
+        saveCompletedSession("break", breakDuration);
+
+        // Also save to Convex if signed in
+        if (isSignedIn) {
+          saveSession({
+            mode: "break",
+            duration: breakDuration,
+            completedAt: Date.now(),
+          }).catch((err) => {
+            console.error("Failed to save session to Convex:", err);
+          });
+        }
+      }
+      setPreviousMode(newMode);
     },
     onCycleComplete: () => {
       setCyclesCompleted((prev) => prev + 1);
@@ -77,7 +87,7 @@ export default function Home() {
 
   // Persist to localStorage when preferences change
   useEffect(() => {
-    if (!isHydrated) return; // Don't save initial values before hydration
+    if (!isHydrated) return;
     savePreferences({
       focusDuration,
       breakDuration,
@@ -86,13 +96,48 @@ export default function Home() {
     });
   }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
 
+  // Ensure user exists in Convex when signed in
+  useEffect(() => {
+    if (isSignedIn && user) {
+      ensureUser({
+        username: user.username || user.firstName || "Anonymous",
+        avatarUrl: user.imageUrl,
+      }).catch((err) => {
+        console.error("Failed to ensure user:", err);
+      });
+    }
+  }, [isSignedIn, user, ensureUser]);
+
+  // Sync preferences to Convex when signed in and preferences change
+  useEffect(() => {
+    if (!isHydrated || !isSignedIn) return;
+
+    savePrefs({
+      focusDuration,
+      breakDuration,
+      cyclesCompleted,
+    }).catch((err) => {
+      console.error("Failed to sync preferences to Convex:", err);
+    });
+  }, [isSignedIn, focusDuration, breakDuration, cyclesCompleted, isHydrated, savePrefs]);
+
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-12 sm:px-8 lg:px-12">
-      {/* Theme Toggle - Fixed Position */}
-      <div className="fixed top-6 right-6 z-50">
+      {/* Top Right Controls */}
+      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <Button variant="ghost" size="sm">
+              Sign In
+            </Button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
         <ThemeToggle />
       </div>
 
@@ -167,6 +212,18 @@ export default function Home() {
                   {mm}:{ss}
                 </div>
               </div>
+            </div>
+
+            {/* Tag Input */}
+            <div className="w-full max-w-md">
+              <Input
+                type="text"
+                placeholder="Tag this pomodoro (e.g., coding, research)"
+                value={currentTag}
+                onChange={(e) => setCurrentTag(e.target.value)}
+                className="h-12 text-base rounded-2xl text-center"
+                disabled={isRunning}
+              />
             </div>
 
             {/* Controls */}

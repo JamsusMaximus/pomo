@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-
-type Mode = "focus" | "break";
+import type { Mode } from "@/types/pomodoro";
 
 interface UseTimerOptions {
   focusDuration: number;
