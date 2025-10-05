@@ -1,6 +1,13 @@
 import type { PomodoroSession, Mode } from "@/types/pomodoro";
 import { SESSIONS_STORAGE_KEY } from "@/lib/constants";
 
+/**
+ * Loads all pomodoro sessions from localStorage
+ *
+ * Safe for SSR: Returns empty array during server-side rendering
+ *
+ * @returns Array of session objects
+ */
 export function loadSessions(): PomodoroSession[] {
   if (typeof window === "undefined") return [];
   try {
@@ -11,6 +18,13 @@ export function loadSessions(): PomodoroSession[] {
   }
 }
 
+/**
+ * Saves sessions array to localStorage
+ *
+ * Safe for SSR: No-op during server-side rendering
+ *
+ * @param sessions - Array of sessions to persist
+ */
 export function saveSessions(sessions: PomodoroSession[]): void {
   if (typeof window === "undefined") return;
   try {
@@ -20,6 +34,19 @@ export function saveSessions(sessions: PomodoroSession[]): void {
   }
 }
 
+/**
+ * Creates and saves a new completed pomodoro session
+ *
+ * Features:
+ * - Generates unique ID using timestamp + random string
+ * - Marks as unsynced (for later Convex upload when user signs in)
+ * - Appends to existing sessions in localStorage
+ *
+ * @param mode - Session type (focus or break)
+ * @param duration - Duration in seconds
+ * @param tag - Optional tag/label for focus sessions
+ * @returns The created session object
+ */
 export function saveCompletedSession(mode: Mode, duration: number, tag?: string): PomodoroSession {
   const session: PomodoroSession = {
     id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -37,17 +64,39 @@ export function saveCompletedSession(mode: Mode, duration: number, tag?: string)
   return session;
 }
 
+/**
+ * Gets all sessions that haven't been synced to Convex yet
+ *
+ * Used when user signs in to upload local sessions to cloud
+ *
+ * @returns Array of unsynced sessions
+ */
 export function getUnsyncedSessions(): PomodoroSession[] {
   const sessions = loadSessions();
   return sessions.filter((s) => !s.synced);
 }
 
+/**
+ * Marks sessions as synced to Convex
+ *
+ * Updates the synced flag to prevent duplicate uploads
+ *
+ * @param sessionIds - Array of session IDs to mark as synced
+ */
 export function markSessionsSynced(sessionIds: string[]): void {
   const sessions = loadSessions();
   const updated = sessions.map((s) => (sessionIds.includes(s.id) ? { ...s, synced: true } : s));
   saveSessions(updated);
 }
 
+/**
+ * Seeds localStorage with test pomodoro data (DEV only)
+ *
+ * Only runs if no existing sessions found.
+ * Creates 3 sample focus sessions for UI testing.
+ *
+ * Safe for SSR: No-op during server-side rendering
+ */
 export function seedTestPomodoros(): void {
   if (typeof window === "undefined") return;
 

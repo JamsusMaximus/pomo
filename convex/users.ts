@@ -4,7 +4,19 @@ import type { MutationCtx } from "./_generated/server";
 
 /**
  * Generates a unique username from a full name.
- * If the username exists, appends numbers (1, 2, 3...).
+ * Uses a random suffix to avoid N+1 database queries.
+ *
+ * Algorithm:
+ * 1. Sanitize name to create base username
+ * 2. Add 4-digit random suffix
+ * 3. If collision (rare), fallback to timestamp
+ *
+ * Performance: O(1) instead of O(N) - single DB query instead of loop
+ *
+ * @param ctx - Mutation context with database access
+ * @param firstName - User's first name (optional)
+ * @param lastName - User's last name (optional)
+ * @returns Unique username string
  */
 async function generateUniqueUsername(
   ctx: MutationCtx,
@@ -26,42 +38,41 @@ async function generateUniqueUsername(
     baseUsername = "user";
   }
 
-  // Check if base username is available
-  const existingWithBase = await ctx.db
+  // Generate random 4-digit suffix (1000-9999)
+  // This gives 9000 possible combinations, making collisions rare
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const candidate = `${baseUsername}${randomSuffix}`;
+
+  // Check if this username is available (single query)
+  const existing = await ctx.db
     .query("users")
-    .filter((q) => q.eq(q.field("username"), baseUsername))
+    .filter((q) => q.eq(q.field("username"), candidate))
     .first();
 
-  if (!existingWithBase) {
-    return baseUsername;
+  if (!existing) {
+    return candidate;
   }
 
-  // Try appending numbers until we find an available username
-  let counter = 1;
-  while (counter < 1000) {
-    // Sanity limit
-    const candidate = `${baseUsername}${counter}`;
-    const existing = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("username"), candidate))
-      .first();
-
-    if (!existing) {
-      return candidate;
-    }
-    counter++;
-  }
-
-  // Fallback: use timestamp
+  // Collision (extremely rare) - fallback to timestamp for guaranteed uniqueness
   return `${baseUsername}${Date.now()}`;
 }
 
 /**
  * Ensures a user exists in the database.
- * Uses Clerk auth context - cannot be spoofed by clients.
- * Auto-generates username from firstName + lastName.
- * Returns { userId, username, isNew } so frontend can sync to Clerk.
- * Idempotent: safe to call multiple times.
+ *
+ * Security: Uses Clerk auth context - cannot be spoofed by clients.
+ * The clerkId comes from verified JWT, not user input.
+ *
+ * Features:
+ * - Auto-generates unique username from firstName + lastName
+ * - Idempotent: safe to call multiple times
+ * - Returns user info for frontend sync
+ *
+ * @param args.firstName - User's first name from Clerk (optional)
+ * @param args.lastName - User's last name from Clerk (optional)
+ * @param args.avatarUrl - User's avatar URL from Clerk (optional)
+ * @returns Object with userId, username, and isNew flag
+ * @throws Error if not authenticated
  */
 export const ensureUser = mutation({
   args: {
@@ -105,7 +116,8 @@ export const ensureUser = mutation({
 
 /**
  * Gets the current authenticated user.
- * Returns null if not authenticated.
+ *
+ * @returns User object if authenticated, null otherwise
  */
 export const me = query({
   args: {},
@@ -126,7 +138,12 @@ export const me = query({
 
 /**
  * Gets a user by their ID.
- * Only returns user if requester is authenticated.
+ *
+ * Security: Requires authentication to access user data.
+ *
+ * @param args.userId - The ID of the user to fetch
+ * @returns User object or null if not found
+ * @throws Error if not authenticated
  */
 export const getUser = query({
   args: { userId: v.id("users") },
