@@ -42,6 +42,33 @@ if (!gitLog.trim()) {
   process.exit(0);
 }
 
+// Check if we've already processed yesterday's commits
+const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
+if (fs.existsSync(outputPath)) {
+  try {
+    const existingContent = fs.readFileSync(outputPath, "utf-8");
+    const match = existingContent.match(/export const changelog: ChangelogEntry\[\] = ([\s\S]*);/);
+    if (match) {
+      const existingChangelog = JSON.parse(match[1]);
+      const yesterdayFormatted = new Date(yesterdayStr).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const alreadyProcessed = existingChangelog.some((entry) => entry.date === yesterdayFormatted);
+      if (alreadyProcessed) {
+        console.log(`✅ Changelog already contains entries for ${yesterdayFormatted}`);
+        console.log(`   Skipping generation (already run today)`);
+        process.exit(0);
+      }
+    }
+  } catch (e) {
+    // If we can't parse, continue with generation
+    console.log("⚠️  Could not check existing changelog, proceeding with generation");
+  }
+}
+
 // Parse commits
 const commits = gitLog
   .trim()
@@ -142,8 +169,7 @@ async function generateChangelog() {
     const jsonText = jsonMatch[1] || jsonMatch[0];
     const newEntries = JSON.parse(jsonText);
 
-    // Load existing changelog
-    const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
+    // Load existing changelog (outputPath already defined earlier)
     let existingChangelog = [];
 
     if (fs.existsSync(outputPath)) {

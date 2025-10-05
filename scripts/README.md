@@ -28,13 +28,16 @@ npm run generate:changelog
 
 This will:
 
-1. Read git commits from **yesterday only** (to minimize costs)
-2. Send them to Claude Haiku (cheapest model)
-3. Claude intelligently extracts user-facing features
-4. Groups similar changes together
-5. Generates comprehensive but concise descriptions
-6. **Merges** with existing changelog (doesn't overwrite)
-7. Outputs to `lib/changelog-data.ts`
+1. Read git commits from **yesterday** (previous day)
+2. **Check if already processed** - if yes, skip (runs once per day)
+3. Send them to Claude Haiku (cheapest model)
+4. Claude intelligently extracts user-facing features
+5. Groups similar changes together
+6. Generates comprehensive but concise descriptions
+7. **Prepends** to existing changelog (builds full history)
+8. Outputs to `lib/changelog-data.ts`
+
+**Result:** Full changelog history, generated incrementally once per day.
 
 ### What Claude Does
 
@@ -59,16 +62,29 @@ This will:
 - Keeps descriptions concise (max 20 words)
 - Limits to 5 changes per day
 
-### When to Run
+### How It Works
 
-The script runs automatically once per day in CI when code is pushed to `main`.
+**Automatic (CI):**
 
-You can also run it manually:
+- Runs on every push to `main`
+- Checks if yesterday's commits are already in changelog
+- If already processed → skips (no API call, no cost)
+- If not processed → generates summary and adds to changelog
+- **Result:** Runs once per day on the first commit
 
-- After a day of development to see the changelog
-- To test the generator locally
+**Manual:**
+You can run it locally anytime:
 
-The generated file is committed to git so the changelog is available at build time.
+```bash
+npm run generate:changelog
+```
+
+**Full History:**
+
+- Changelog contains ALL days since the script was set up
+- Each day's entry is added incrementally
+- Never overwrites or loses history
+- Committed to git for deployment
 
 ### Cost Optimization
 
