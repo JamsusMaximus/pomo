@@ -325,19 +325,20 @@ export default function ProfilePage() {
                         <motion.div
                           className="relative"
                           animate={{
-                            y: [0, -3, 0, -2, 0],
-                            scale: [1, 1.02, 0.98, 1.01, 1],
-                            rotate: [0, 1, -1, 0.5, 0],
+                            scaleX: [1, 1.05, 0.95, 1.03, 0.98, 1.02, 1],
+                            scaleY: [1, 0.95, 1.08, 0.97, 1.05, 0.96, 1],
+                            rotate: [0, -2, 1, -1.5, 2, -0.5, 0],
+                            y: [0, -2, -1, -3, -1, -2, 0],
                           }}
                           transition={{
-                            duration: 3,
+                            duration: 4,
                             repeat: Infinity,
-                            ease: "easeInOut",
+                            ease: [0.45, 0.05, 0.55, 0.95],
                           }}
                         >
-                          <Flame className="w-32 h-32 sm:w-36 sm:h-36 text-orange-500 fill-orange-500 drop-shadow-lg" />
+                          <Flame className="w-24 h-24 sm:w-28 sm:h-28 text-orange-500 fill-orange-500 drop-shadow-lg" />
                         </motion.div>
-                        <div className="flex flex-col items-center -mt-2">
+                        <div className="flex flex-col items-center -mt-1">
                           <span className={`font-black text-orange-600 dark:text-orange-400 ${
                             (stats.dailyStreak ?? 0) >= 100 ? "text-3xl sm:text-4xl" : 
                             (stats.dailyStreak ?? 0) >= 10 ? "text-4xl sm:text-5xl" : 
