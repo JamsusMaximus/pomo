@@ -194,8 +194,10 @@ export default function Home() {
 
   // Hydrate from localStorage on mount
   useEffect(() => {
-    // Seed test pomodoros (only if no sessions exist)
-    seedTestPomodoros();
+    // Seed test pomodoros in development only (only if no sessions exist)
+    if (process.env.NODE_ENV === "development") {
+      seedTestPomodoros();
+    }
 
     // Load preferences
     const prefs = loadPreferences();
