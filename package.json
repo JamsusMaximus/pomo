@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "generate:changelog": "node scripts/generate-changelog.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
