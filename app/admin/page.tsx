@@ -9,11 +9,10 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Power, PowerOff, Award, type LucideIcon } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Link from "next/link";
-import { Id } from "@/convex/_generated/dataModel";
 
 // Helper to render Lucide icon from string name
 const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
-  const Icon = (LucideIcons as any)[iconName] as LucideIcon;
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
   if (!Icon) {
     return <Award className={className} />; // Fallback icon
   }
@@ -31,17 +30,26 @@ export default function AdminPage() {
   const seedLevels = useMutation(api.levels.seedLevelConfig);
   const updateLevel = useMutation(api.levels.updateLevel);
 
+  type ChallengeType = "total" | "streak" | "daily" | "weekly" | "monthly" | "recurring_monthly";
+
   const [showForm, setShowForm] = useState(false);
-  const [showLevelEdit, setShowLevelEdit] = useState(false);
   const [editingLevel, setEditingLevel] = useState<{ level: number; title: string; threshold: number } | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    type: ChallengeType;
+    target: number;
+    badge: string;
+    recurring: boolean;
+    recurringMonth?: number;
+  }>({
     name: "",
     description: "",
-    type: "total" as const,
+    type: "total",
     target: 0,
     badge: "Trophy",
     recurring: false,
-    recurringMonth: undefined as number | undefined,
+    recurringMonth: undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +83,7 @@ export default function AdminPage() {
         <Card className="p-8 max-w-md">
           <h1 className="text-2xl font-bold mb-4">Unauthorized</h1>
           <p className="text-muted-foreground mb-4">
-            You don't have permission to access this page.
+            You don&apos;t have permission to access this page.
           </p>
           <Link href="/">
             <Button>Go Home</Button>
@@ -153,7 +161,12 @@ export default function AdminPage() {
                   <select
                     className="w-full p-2 rounded-md border bg-background"
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        type: e.target.value as ChallengeType,
+                      })
+                    }
                   >
                     <option value="total">Total</option>
                     <option value="streak">Streak</option>

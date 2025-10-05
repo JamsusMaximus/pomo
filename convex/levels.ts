@@ -1,7 +1,18 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-const ADMIN_EMAILS = ["jddmcaulay@gmail.com"];
+/**
+ * Get admin emails from environment variable
+ * Fallback to empty array if not configured
+ */
+function getAdminEmails(): string[] {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS;
+  if (!adminEmailsEnv) {
+    console.warn("ADMIN_EMAILS environment variable not set. No admins configured.");
+    return [];
+  }
+  return adminEmailsEnv.split(",").map((email) => email.trim());
+}
 
 /**
  * Check if the current user is an admin
@@ -11,9 +22,10 @@ export const isAdmin = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return false;
-    
+
     const email = identity.email;
-    return ADMIN_EMAILS.includes(email || "");
+    const adminEmails = getAdminEmails();
+    return adminEmails.includes(email || "");
   },
 });
 
@@ -48,7 +60,8 @@ export const updateLevel = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !ADMIN_EMAILS.includes(identity.email || "")) {
+    const adminEmails = getAdminEmails();
+    if (!identity || !adminEmails.includes(identity.email || "")) {
       throw new Error("Unauthorized: Admin access only");
     }
 
@@ -81,7 +94,8 @@ export const seedLevelConfig = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !ADMIN_EMAILS.includes(identity.email || "")) {
+    const adminEmails = getAdminEmails();
+    if (!identity || !adminEmails.includes(identity.email || "")) {
       throw new Error("Unauthorized: Admin access only");
     }
 
