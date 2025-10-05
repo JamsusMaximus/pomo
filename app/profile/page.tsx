@@ -325,13 +325,12 @@ export default function ProfilePage() {
                         <motion.div
                           className="relative"
                           animate={{
-                            scaleX: [1, 1.05, 0.95, 1.03, 0.98, 1.02, 1],
-                            scaleY: [1, 0.95, 1.08, 0.97, 1.05, 0.96, 1],
-                            rotate: [0, -2, 1, -1.5, 2, -0.5, 0],
-                            y: [0, -2, -1, -3, -1, -2, 0],
+                            scaleX: [1, 1.08, 0.92, 1.05, 0.95, 1.03, 1],
+                            rotate: [0, -2.5, 1.5, -2, 2, -1, 0],
+                            opacity: [1, 0.92, 0.96, 0.9, 0.95, 0.93, 1],
                           }}
                           transition={{
-                            duration: 4,
+                            duration: 3.5,
                             repeat: Infinity,
                             ease: [0.45, 0.05, 0.55, 0.95],
                           }}
