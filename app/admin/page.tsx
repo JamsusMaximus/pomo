@@ -9,6 +9,7 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Power, PowerOff, Award, type LucideIcon } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Link from "next/link";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Helper to render Lucide icon from string name
 const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
@@ -19,7 +20,7 @@ const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: 
   return <Icon className={className} />;
 };
 
-export default function AdminPage() {
+function AdminPageContent() {
   const isAdmin = useQuery(api.levels.isAdmin);
   const challenges = useQuery(api.challenges.getAllChallenges);
   const levelConfig = useQuery(api.levels.getLevelConfig);
@@ -365,5 +366,13 @@ export default function AdminPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <ErrorBoundary fallbackTitle="Admin Panel Error" fallbackMessage="An error occurred in the admin panel. Please try again.">
+      <AdminPageContent />
+    </ErrorBoundary>
   );
 }
