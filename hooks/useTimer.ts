@@ -1,25 +1,67 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Mode } from "@/types/pomodoro";
 
+/**
+ * Options for configuring the Pomodoro timer
+ */
 interface UseTimerOptions {
+  /** Duration of focus sessions in seconds */
   focusDuration: number;
+  /** Duration of break sessions in seconds */
   breakDuration: number;
+  /** Whether to automatically start break after focus session completes */
   autoStartBreak?: boolean;
+  /** Callback fired when timer mode changes (focus ↔ break) */
   onModeChange?: (mode: Mode) => void;
+  /** Callback fired when a full cycle (focus + break) completes */
   onCycleComplete?: () => void;
 }
 
+/**
+ * Return value from useTimer hook
+ */
 interface UseTimerReturn {
+  /** Seconds remaining in current session */
   remaining: number;
+  /** Total duration of current session in seconds */
   duration: number;
+  /** Current timer mode (focus or break) */
   mode: Mode;
+  /** Whether timer is actively running */
   isRunning: boolean;
+  /** Start or resume the timer */
   start: () => void;
+  /** Pause the timer (can be resumed) */
   pause: () => void;
+  /** Reset timer to initial state (focus mode, full duration) */
   reset: () => void;
+  /** Debug helper: Set timer to specific seconds (DEV only) */
   setDebugTime: (seconds: number) => void;
 }
 
+/**
+ * Drift-resistant Pomodoro timer hook
+ *
+ * Features:
+ * - Uses Date.now() for elapsed time calculation (prevents drift)
+ * - Visibility change reconciliation (handles tab switching)
+ * - Auto-mode switching (focus → break → focus)
+ * - Pause/resume support
+ *
+ * Performance: O(1) updates every second, no expensive calculations
+ *
+ * @param options - Timer configuration options
+ * @returns Timer state and control functions
+ *
+ * @example
+ * ```tsx
+ * const { remaining, isRunning, start, pause } = useTimer({
+ *   focusDuration: 25 * 60,
+ *   breakDuration: 5 * 60,
+ *   onModeChange: (mode) => console.log('Mode:', mode),
+ * });
+ * ```
+ */
 export function useTimer({
   focusDuration,
   breakDuration,
