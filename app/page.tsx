@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
+import { getLevelInfo } from "@/lib/levels";
 import {
   saveCompletedSession,
   loadSessions,
@@ -39,6 +40,7 @@ export default function Home() {
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
+  const stats = useQuery(api.stats.getStats);
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
   const saveSession = useMutation(api.pomodoros.saveSession);
@@ -334,8 +336,14 @@ export default function Home() {
           </SignUpButton>
         </SignedOut>
         <SignedIn>
-          <Link href="/profile">
-            <Avatar className="w-8 h-8 cursor-pointer hover:opacity-80 transition-opacity">
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+              Lv {stats ? getLevelInfo(stats.total.count).currentLevel : "..."}
+            </span>
+            <Avatar className="w-8 h-8 cursor-pointer">
               <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
               <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
