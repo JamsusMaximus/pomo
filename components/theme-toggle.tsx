@@ -27,8 +27,8 @@ export function ThemeToggle() {
   // Show placeholder during SSR
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="rounded-full" aria-label="Toggle theme">
-        <Sun className="h-5 w-5" />
+      <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" aria-label="Toggle theme">
+        <Sun className="h-6 w-6" />
       </Button>
     );
   }
@@ -39,7 +39,7 @@ export function ThemeToggle() {
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        className="rounded-full"
+        className="rounded-full h-10 w-10"
         aria-label="Toggle theme"
       >
         <motion.div
@@ -51,7 +51,7 @@ export function ThemeToggle() {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           className="absolute"
         >
-          <Sun className="h-5 w-5" />
+          <Sun className="h-6 w-6" />
         </motion.div>
         <motion.div
           initial={false}
@@ -62,7 +62,7 @@ export function ThemeToggle() {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           className="absolute"
         >
-          <Moon className="h-5 w-5" />
+          <Moon className="h-6 w-6" />
         </motion.div>
       </Button>
     </motion.div>
