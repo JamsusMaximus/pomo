@@ -8,12 +8,44 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import { useRouter } from "next/navigation";
+
+// Helper to get week view data for Duolingo-style display
+function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
+  if (!activity) return [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const weekView = [];
+  
+  // Generate 8 days: last 6 days + today + next day
+  for (let i = -6; i <= 1; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    
+    const dayData = activity.find((a) => a.date === dateKey);
+    const isToday = i === 0;
+    const isFuture = i > 0;
+    const hasPomodoro = dayData && dayData.count > 0;
+    
+    weekView.push({
+      dayOfWeek: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][date.getDay()],
+      date: dateKey,
+      isToday,
+      isFuture,
+      completed: hasPomodoro && !isFuture,
+    });
+  }
+  
+  return weekView;
+}
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -276,57 +308,88 @@ export default function ProfilePage() {
                   </div>
                 </motion.div>
 
-                {/* Exciting Streaks */}
+                {/* Duolingo-Style Daily Streak */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.05 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
+                  className="mb-6"
                 >
-                  {/* Daily Streak */}
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
-                    <div className="absolute -top-6 -right-6 opacity-5">
-                      <Flame className="w-40 h-40" />
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-8 sm:p-10 relative overflow-hidden">
+                    <div className="absolute -top-8 -right-8 opacity-5">
+                      <Flame className="w-64 h-64" />
                     </div>
                     <div className="relative z-10">
-                      <h3 className="text-sm font-medium text-muted-foreground mb-4">Daily Streak</h3>
-                      <div className="flex items-center gap-4">
-                        <div className="p-4 bg-orange-500 rounded-2xl shadow-lg">
-                          <Flame className="w-10 h-10 text-white" />
+                      {/* Flame icon and number */}
+                      <div className="flex flex-col items-center mb-6">
+                        <div className="relative mb-4">
+                          <Flame className="w-32 h-32 text-orange-500 drop-shadow-lg" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-5xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                              {stats.dailyStreak ?? 0}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-5xl sm:text-6xl font-bold text-orange-600 dark:text-orange-400">
-                            {stats.dailyStreak ?? 0}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"} in a row
-                          </p>
+                        <h2 className="text-3xl font-bold text-orange-500">day streak!</h2>
+                      </div>
+
+                      {/* Week view */}
+                      <div className="bg-background/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm">
+                        <div className="flex justify-around items-start gap-2 sm:gap-4">
+                          {getWeekViewData(activity).map((day) => (
+                            <div key={day.date} className="flex flex-col items-center gap-2">
+                              <span className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}>
+                                {day.dayOfWeek}
+                              </span>
+                              {day.isToday ? (
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+                                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+                                </div>
+                              ) : day.completed ? (
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+                                  <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-[3]" />
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted/50 border-2 border-border" />
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
+
+                      {/* Encouragement text */}
+                      <p className="text-center mt-6 text-sm text-muted-foreground">
+                        {stats.dailyStreak && stats.dailyStreak > 0 ? (
+                          <>
+                            Great start! Keep your{" "}
+                            <span className="text-orange-500 font-semibold">perfect streak</span> going tomorrow.
+                          </>
+                        ) : (
+                          <>
+                            Start your streak today! Complete a pomodoro to{" "}
+                            <span className="text-orange-500 font-semibold">begin your journey</span>.
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Weekly Streak */}
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
-                    <div className="absolute -top-6 -right-6 opacity-5">
-                      <Flame className="w-40 h-40" />
-                    </div>
-                    <div className="relative z-10">
-                      <h3 className="text-sm font-medium text-muted-foreground mb-4">Weekly Streak</h3>
-                      <div className="flex items-center gap-4">
-                        <div className="p-4 bg-orange-500 rounded-2xl shadow-lg">
-                          <Flame className="w-10 h-10 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-5xl sm:text-6xl font-bold text-orange-600 dark:text-orange-400">
-                            {stats.weeklyStreak ?? 0}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"} with 5+ pomos
-                          </p>
-                        </div>
+                  {/* Weekly Streak - Smaller */}
+                  <div className="mt-4 bg-card rounded-xl shadow-md border border-border p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-500/10 rounded-lg">
+                        <Flame className="w-5 h-5 text-orange-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Weekly Streak</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(stats.weeklyStreak ?? 0) === 1 ? "1 week" : `${stats.weeklyStreak ?? 0} weeks`} with 5+ pomos
+                        </p>
                       </div>
                     </div>
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                      {stats.weeklyStreak ?? 0}
+                    </p>
                   </div>
                 </motion.div>
 
