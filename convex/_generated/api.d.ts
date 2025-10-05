@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as challenges from "../challenges.js";
+import type * as levels from "../levels.js";
 import type * as migrateChallenges from "../migrateChallenges.js";
 import type * as pomodoros from "../pomodoros.js";
 import type * as seed from "../seed.js";
@@ -32,6 +33,7 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   challenges: typeof challenges;
+  levels: typeof levels;
   migrateChallenges: typeof migrateChallenges;
   pomodoros: typeof pomodoros;
   seed: typeof seed;

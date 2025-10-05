@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
-import { getLevelInfo } from "@/lib/levels";
+import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import {
   saveCompletedSession,
   loadSessions,
@@ -41,6 +41,7 @@ export default function Home() {
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
   const stats = useQuery(api.stats.getStats);
+  const levelConfig = useQuery(api.levels.getLevelConfig);
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
   const saveSession = useMutation(api.pomodoros.saveSession);
@@ -346,9 +347,78 @@ export default function Home() {
               <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
               <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium">
-              Level {stats ? getLevelInfo(stats.total.count).currentLevel : 1}
-            </span>
+            {(() => {
+              if (!stats) {
+                return (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">Level 1</span>
+                    <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-orange-500 to-orange-600 w-0" />
+                    </div>
+                  </div>
+                );
+              }
+
+              // Get level info from database config or fallback to lib
+              const getLevelInfoFromDb = (pomos: number) => {
+                if (!levelConfig || levelConfig.length === 0) {
+                  const info = getLevelInfo(pomos);
+                  return { ...info, title: getLevelTitle(info.currentLevel) };
+                }
+
+                let currentLevel = levelConfig[0];
+                for (const level of levelConfig) {
+                  if (level.threshold <= pomos) {
+                    currentLevel = level;
+                  } else {
+                    break;
+                  }
+                }
+
+                const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
+                const nextLevel = levelConfig[currentIndex + 1];
+                
+                if (!nextLevel) {
+                  return {
+                    currentLevel: currentLevel.level,
+                    pomosForCurrentLevel: currentLevel.threshold,
+                    pomosForNextLevel: currentLevel.threshold,
+                    pomosRemaining: 0,
+                    progress: 100,
+                    title: currentLevel.title,
+                  };
+                }
+
+                const pomosInCurrentLevel = pomos - currentLevel.threshold;
+                const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
+                const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+                return {
+                  currentLevel: currentLevel.level,
+                  pomosForCurrentLevel: currentLevel.threshold,
+                  pomosForNextLevel: nextLevel.threshold,
+                  pomosRemaining: nextLevel.threshold - pomos,
+                  progress: Math.min(100, Math.max(0, progress)),
+                  title: currentLevel.title,
+                };
+              };
+
+              const levelInfo = getLevelInfoFromDb(stats.total.count);
+
+              return (
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">
+                    Level {levelInfo.currentLevel}
+                  </span>
+                  <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300"
+                      style={{ width: `${levelInfo.progress}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
           </Link>
         </SignedIn>
         <ThemeToggle />
