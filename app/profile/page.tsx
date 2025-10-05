@@ -273,11 +273,47 @@ export default function ProfilePage() {
             );
           })()}
 
+        {/* Streaks */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="grid grid-cols-2 gap-4 mb-8"
+          >
+            {/* Daily Streak */}
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
+              <div className="absolute top-4 right-4 text-6xl opacity-10">🔥</div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Daily Streak</h3>
+              <div className="flex items-baseline gap-2">
+                <p className="text-4xl font-bold">{stats.dailyStreak}</p>
+                <span className="text-2xl">🔥</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {stats.dailyStreak === 1 ? "day" : "days"} in a row
+              </p>
+            </div>
+
+            {/* Weekly Streak */}
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
+              <div className="absolute top-4 right-4 text-6xl opacity-10">🔥</div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Weekly Streak</h3>
+              <div className="flex items-baseline gap-2">
+                <p className="text-4xl font-bold">{stats.weeklyStreak}</p>
+                <span className="text-2xl">🔥</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {stats.weeklyStreak === 1 ? "week" : "weeks"} with 5+ pomos
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Stats Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
           {/* All Time */}
@@ -310,21 +346,17 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Activity Heatmap */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-card rounded-2xl shadow-lg border border-border p-8"
-        >
-          <h2 className="text-xl font-bold mb-6">Activity</h2>
-          {activity ? (
+        {activity && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="bg-card rounded-2xl shadow-lg border border-border p-6"
+          >
+            <h2 className="text-xl font-bold mb-4">Activity Heatmap</h2>
             <ActivityHeatmap data={activity} />
-          ) : (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-pulse text-muted-foreground">Loading activity...</div>
-            </div>
-          )}
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     </main>
   );

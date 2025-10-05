@@ -63,11 +63,16 @@ export const getStats = query({
     const yearCount = yearSessions.length;
     const yearMinutes = yearSessions.reduce((sum, s) => sum + s.duration / 60, 0);
 
+    // Calculate streaks
+    const streaks = calculateStreaks(sessions);
+
     return {
       total: { count: totalCount, minutes: Math.round(totalMinutes) },
       week: { count: weekCount, minutes: Math.round(weekMinutes) },
       month: { count: monthCount, minutes: Math.round(monthMinutes) },
       year: { count: yearCount, minutes: Math.round(yearMinutes) },
+      dailyStreak: streaks.daily,
+      weeklyStreak: streaks.weekly,
     };
   },
 });
@@ -123,3 +128,88 @@ export const getActivity = query({
     }));
   },
 });
+
+/**
+ * Calculate daily and weekly streaks
+ * Daily streak: consecutive days with at least 1 completed pomodoro
+ * Weekly streak: consecutive weeks with at least 5 completed pomodoros
+ */
+function calculateStreaks(sessions: Array<{ completedAt: number }>): {
+  daily: number;
+  weekly: number;
+} {
+  if (sessions.length === 0) {
+    return { daily: 0, weekly: 0 };
+  }
+
+  // Group sessions by date
+  const sessionsByDate: Record<string, number> = {};
+  sessions.forEach((session) => {
+    const date = new Date(session.completedAt);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
+  });
+
+  // Get sorted dates (most recent first)
+  const sortedDates = Object.keys(sessionsByDate).sort().reverse();
+
+  // Calculate daily streak
+  let dailyStreak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  // Start from today or yesterday (allow for timezone differences)
+  let checkDate = new Date(today);
+  if (!sessionsByDate[todayKey]) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  // Count consecutive days with sessions
+  while (true) {
+    const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
+    if (sessionsByDate[checkKey]) {
+      dailyStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  // Calculate weekly streak (weeks with at least 5 pomodoros)
+  const sessionsByWeek: Record<string, number> = {};
+  sessions.forEach((session) => {
+    const date = new Date(session.completedAt);
+    const startOfWeek = new Date(date);
+    const dayOfWeek = date.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startOfWeek.setDate(date.getDate() + diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const weekKey = startOfWeek.toISOString().split("T")[0];
+    sessionsByWeek[weekKey] = (sessionsByWeek[weekKey] || 0) + 1;
+  });
+
+  const sortedWeeks = Object.keys(sessionsByWeek).sort().reverse();
+  let weeklyStreak = 0;
+
+  const currentWeekStart = new Date();
+  const dayOfWeek = currentWeekStart.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  currentWeekStart.setDate(currentWeekStart.getDate() + diff);
+  currentWeekStart.setHours(0, 0, 0, 0);
+
+  let checkWeek = new Date(currentWeekStart);
+
+  // Count consecutive weeks with at least 5 pomodoros
+  while (true) {
+    const weekKey = checkWeek.toISOString().split("T")[0];
+    if (sessionsByWeek[weekKey] && sessionsByWeek[weekKey] >= 5) {
+      weeklyStreak++;
+      checkWeek.setDate(checkWeek.getDate() - 7);
+    } else {
+      break;
+    }
+  }
+
+  return { daily: dailyStreak, weekly: weeklyStreak };
+}
