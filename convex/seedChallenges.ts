@@ -137,9 +137,7 @@ export const seedDefaultChallenges = mutation({
     ];
 
     // Insert all challenges
-    const promises = defaultChallenges.map((challenge) =>
-      ctx.db.insert("challenges", challenge)
-    );
+    const promises = defaultChallenges.map((challenge) => ctx.db.insert("challenges", challenge));
 
     await Promise.all(promises);
 

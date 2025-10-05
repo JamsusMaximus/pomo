@@ -48,9 +48,7 @@ export const getUserChallenges = query({
       .collect();
 
     // Create a map for quick lookup
-    const userChallengeMap = new Map(
-      userChallenges.map((uc) => [uc.challengeId, uc])
-    );
+    const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
 
     const activeChallengesData = [];
     const completedChallengesData = [];
@@ -126,9 +124,7 @@ export const syncMyProgress = mutation({
           break;
 
         case "daily": {
-          const todayPomos = pomodoros.filter(
-            (p) => p.completedAt >= todayTimestamp
-          );
+          const todayPomos = pomodoros.filter((p) => p.completedAt >= todayTimestamp);
           progress = todayPomos.length;
           break;
         }
@@ -142,9 +138,7 @@ export const syncMyProgress = mutation({
 
         case "monthly": {
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          const monthPomos = pomodoros.filter(
-            (p) => p.completedAt >= monthStart
-          );
+          const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
           progress = monthPomos.length;
           break;
         }
@@ -152,9 +146,7 @@ export const syncMyProgress = mutation({
         case "recurring_monthly": {
           if (challenge.recurringMonth === now.getMonth() + 1) {
             const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const monthPomos = pomodoros.filter(
-              (p) => p.completedAt >= monthStart
-            );
+            const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
             progress = monthPomos.length;
           }
           break;
@@ -163,14 +155,14 @@ export const syncMyProgress = mutation({
         case "streak": {
           let streak = 0;
           let checkDate = new Date(today);
-          
+
           while (true) {
             const dayStart = checkDate.getTime();
             const dayEnd = dayStart + 24 * 60 * 60 * 1000;
             const dayPomos = pomodoros.filter(
               (p) => p.completedAt >= dayStart && p.completedAt < dayEnd
             );
-            
+
             if (dayPomos.length > 0) {
               streak++;
               checkDate.setDate(checkDate.getDate() - 1);
@@ -252,9 +244,7 @@ export const updateChallengeProgress = internalMutation({
           break;
 
         case "daily": {
-          const todayPomos = pomodoros.filter(
-            (p) => p.completedAt >= todayTimestamp
-          );
+          const todayPomos = pomodoros.filter((p) => p.completedAt >= todayTimestamp);
           progress = todayPomos.length;
           break;
         }
@@ -268,9 +258,7 @@ export const updateChallengeProgress = internalMutation({
 
         case "monthly": {
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          const monthPomos = pomodoros.filter(
-            (p) => p.completedAt >= monthStart
-          );
+          const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
           progress = monthPomos.length;
           break;
         }
@@ -279,9 +267,7 @@ export const updateChallengeProgress = internalMutation({
           // Only count if it's the correct month
           if (challenge.recurringMonth === now.getMonth() + 1) {
             const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const monthPomos = pomodoros.filter(
-              (p) => p.completedAt >= monthStart
-            );
+            const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
             progress = monthPomos.length;
           }
           break;
@@ -291,14 +277,14 @@ export const updateChallengeProgress = internalMutation({
           // Calculate current streak
           let streak = 0;
           let checkDate = new Date(today);
-          
+
           while (true) {
             const dayStart = checkDate.getTime();
             const dayEnd = dayStart + 24 * 60 * 60 * 1000;
             const dayPomos = pomodoros.filter(
               (p) => p.completedAt >= dayStart && p.completedAt < dayEnd
             );
-            
+
             if (dayPomos.length > 0) {
               streak++;
               checkDate.setDate(checkDate.getDate() - 1);

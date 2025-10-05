@@ -5,24 +5,28 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ## ✨ Features
 
 ### Core Functionality
+
 - **Pomodoro Timer** - Classic 25-minute focus sessions with customizable work/break intervals
 - **Session Management** - Track all your completed pomodoro sessions with detailed history
 - **Offline Support** - Works offline with automatic sync when connection is restored
 - **Sound Notifications** - Audio alerts when sessions complete (customizable)
 
 ### Gamification & Progress
+
 - **Leveling System** - Earn XP and level up as you complete pomodoros
 - **Challenges & Badges** - Unlock achievements for streaks, totals, and milestones
 - **Visual Focus Graph** - Weekly heatmap showing your productivity patterns
 - **Statistics Dashboard** - Track weekly, monthly, yearly, and all-time stats
 
 ### User Experience
+
 - **User Authentication** - Secure auth via Clerk with profile management
 - **Dark Mode** - Beautiful dark theme optimized for focus
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Real-time Sync** - All data synced across devices via Convex
 
 ### Admin Features
+
 - **Challenge Management** - Create and manage custom challenges
 - **Level Configuration** - Configure level thresholds and titles
 - **Badge System** - Icon-based badges using Lucide icons
@@ -41,6 +45,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ## 📦 Installation
 
 ### Prerequisites
+
 - Node.js 20+ and npm
 - Convex account ([dashboard.convex.dev](https://dashboard.convex.dev))
 - Clerk account ([clerk.com](https://clerk.com))
@@ -49,12 +54,14 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/pomo.git
    cd pomo
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -62,11 +69,13 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 3. **Configure environment variables**
 
    Copy `.env.example` to `.env.local`:
+
    ```bash
    cp .env.example .env.local
    ```
 
    Add your credentials:
+
    ```env
    # Convex
    CONVEX_DEPLOYMENT=your-convex-deployment
@@ -81,16 +90,19 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
    ```
 
 4. **Set up Convex**
+
    ```bash
    npx convex dev
    ```
 
    In the Convex dashboard, set the `ADMIN_EMAILS` environment variable:
+
    ```
    ADMIN_EMAILS=admin@example.com,admin2@example.com
    ```
 
 5. **Run the development server**
+
    ```bash
    npm run dev
    ```
@@ -100,6 +112,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ## 🎯 How It Works
 
 ### Session Flow
+
 1. User starts a pomodoro timer (25 minutes by default)
 2. Session runs locally in browser with countdown
 3. User can pause, resume, or skip the session
@@ -110,6 +123,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ### Data Architecture
 
 **Convex Collections:**
+
 - `users` - User profiles with level, XP, and streak data
 - `sessions` - All completed pomodoro sessions
 - `challenges` - Challenge definitions (admin-managed)
@@ -119,17 +133,20 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ### Gamification System
 
 **Leveling:**
+
 - Each pomodoro = 100 XP
 - Levels have configurable thresholds (default: 1, 5, 10, 25, 50, 100, 250 pomodoros)
 - Visual progress bar shows next level
 
 **Challenges:**
+
 - **Total** - Complete X pomodoros all-time
 - **Streak** - Maintain X days in a row
 - **Daily/Weekly/Monthly** - Complete X in time period
 - **Recurring Monthly** - Complete X in specific month
 
 **Badges:**
+
 - Unlocked via challenges
 - Visual icons using Lucide library
 - Displayed on profile page
@@ -137,6 +154,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 ### Offline-First Design
 
 Sessions are stored in `localStorage` and synced on:
+
 - Page load (if user is authenticated)
 - Manual retry button
 - Automatic retry with exponential backoff (2s, 4s, 8s)
@@ -148,12 +166,14 @@ Error boundaries catch sync failures and show user-friendly messages.
 The project includes an automated changelog system using Claude Haiku:
 
 ### How It Works
+
 1. Git pre-commit hook triggers on every commit
 2. Script analyzes all commits since last changelog entry
 3. Claude Haiku extracts user-facing changes
 4. Changelog is generated and auto-added to commit
 
 ### Setup
+
 ```bash
 # Install git hooks
 bash scripts/install-hooks.sh
@@ -163,6 +183,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ### Features
+
 - Handles multi-day gaps (e.g., commits → 2 days no activity → next commit still summarizes)
 - Categorizes changes as "New", "Improved", or "Fixed"
 - Filters out backend/infrastructure changes
@@ -170,6 +191,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 - Max 5 changes per day for clarity
 
 ### Manual Generation
+
 ```bash
 npm run generate:changelog
 ```
@@ -206,6 +228,7 @@ pomo/
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 ```bash
 # Connect to Vercel
 vercel
@@ -216,13 +239,16 @@ vercel --prod
 ```
 
 ### Environment Variables
+
 Set these in your hosting provider:
+
 - `NEXT_PUBLIC_CONVEX_URL`
 - `CONVEX_DEPLOYMENT`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 
 Set this in Convex dashboard:
+
 - `ADMIN_EMAILS`
 
 ## 🧪 Development
@@ -245,6 +271,7 @@ npm run generate:changelog  # Generate changelog manually
 ### Code Quality
 
 The project enforces:
+
 - TypeScript strict mode
 - ESLint with Next.js config
 - Prettier formatting
@@ -262,14 +289,18 @@ npm run test:watch   # Watch mode
 ## 🎨 Customization
 
 ### Timer Settings
+
 Edit `app/page.tsx`:
+
 ```typescript
-const WORK_TIME = 25 * 60;    // 25 minutes
-const BREAK_TIME = 5 * 60;    // 5 minutes
+const WORK_TIME = 25 * 60; // 25 minutes
+const BREAK_TIME = 5 * 60; // 5 minutes
 ```
 
 ### Level Thresholds
+
 Use admin panel at `/admin` or edit `convex/levels.ts`:
+
 ```typescript
 { level: 1, title: "Beginner", threshold: 1 },
 { level: 2, title: "Focused", threshold: 5 },
@@ -277,7 +308,9 @@ Use admin panel at `/admin` or edit `convex/levels.ts`:
 ```
 
 ### Challenges
+
 Create via admin panel at `/admin` or seed defaults:
+
 ```bash
 # In Convex dashboard function runner
 mutation: seedDefaultChallenges

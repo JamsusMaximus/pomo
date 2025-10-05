@@ -8,7 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  RefreshCw,
+  Trash2,
+  Database,
+  Award,
+  LogOut,
+  Settings,
+  Flame,
+  Check,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -25,18 +37,18 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
   today.setHours(0, 0, 0, 0);
 
   const weekView = [];
-  
+
   // Generate 7 days: last 5 days + today + next day
   for (let i = -5; i <= 1; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    
+
     const dayData = activity.find((a) => a.date === dateKey);
     const isToday = i === 0;
     const isFuture = i > 0;
     const hasPomodoro = dayData && dayData.count > 0;
-    
+
     weekView.push({
       dayOfWeek: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][date.getDay()],
       date: dateKey,
@@ -45,7 +57,7 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
       completed: hasPomodoro && !isFuture,
     });
   }
-  
+
   return weekView;
 }
 
@@ -290,9 +302,9 @@ function ProfilePageContent() {
                 }
               }
 
-              const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
+              const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
               const nextLevel = levelConfig[currentIndex + 1];
-              
+
               if (!nextLevel) {
                 // Max level reached
                 return {
@@ -342,7 +354,9 @@ function ProfilePageContent() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <h1 className="text-2xl sm:text-3xl font-bold mb-1">{user.username || "User"}</h1>
+                      <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                        {user.username || "User"}
+                      </h1>
                       <p className="text-sm text-muted-foreground mb-2">
                         {user.primaryEmailAddress?.emailAddress}
                       </p>
@@ -359,7 +373,9 @@ function ProfilePageContent() {
                         {currentPomos}
                       </p>
                       <p className="text-sm text-muted-foreground">Total Pomodoros</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatTime(stats.total.minutes)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatTime(stats.total.minutes)}
+                      </p>
                     </div>
                   </div>
 
@@ -382,8 +398,9 @@ function ProfilePageContent() {
                       <div className="h-3 w-full overflow-hidden rounded-full bg-muted/30">
                         <motion.div
                           className="h-full"
-                          style={{ 
-                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)"
+                          style={{
+                            background:
+                              "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
                           }}
                           initial={{ width: 0 }}
                           whileInView={{ width: `${levelInfo.progress}%` }}
@@ -428,7 +445,9 @@ function ProfilePageContent() {
                                 ease: "easeOut",
                               }}
                             >
-                              <span className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}>
+                              <span
+                                className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}
+                              >
                                 {day.dayOfWeek}
                               </span>
                               {day.isToday && day.completed ? (
@@ -505,11 +524,16 @@ function ProfilePageContent() {
                         <p className="text-center mt-4 text-xs sm:text-sm text-muted-foreground">
                           {stats.dailyStreak && stats.dailyStreak > 0 ? (
                             <>
-                              Keep your <span className="text-orange-500 font-semibold">perfect streak</span> going!
+                              Keep your{" "}
+                              <span className="text-orange-500 font-semibold">perfect streak</span>{" "}
+                              going!
                             </>
                           ) : (
                             <>
-                              Complete a pomodoro to <span className="text-orange-500 font-semibold">start your streak</span>
+                              Complete a pomodoro to{" "}
+                              <span className="text-orange-500 font-semibold">
+                                start your streak
+                              </span>
                             </>
                           )}
                         </p>
@@ -531,14 +555,20 @@ function ProfilePageContent() {
                         >
                           <Flame className="w-16 h-16 sm:w-20 sm:h-20 text-orange-500 fill-orange-500 mb-2" />
                         </motion.div>
-                        <span className={`font-black text-orange-600 dark:text-orange-400 ${
-                          (stats.dailyStreak ?? 0) >= 100 ? "text-4xl sm:text-5xl" : 
-                          (stats.dailyStreak ?? 0) >= 10 ? "text-5xl sm:text-6xl" : 
-                          "text-6xl sm:text-7xl"
-                        }`}>
+                        <span
+                          className={`font-black text-orange-600 dark:text-orange-400 ${
+                            (stats.dailyStreak ?? 0) >= 100
+                              ? "text-4xl sm:text-5xl"
+                              : (stats.dailyStreak ?? 0) >= 10
+                                ? "text-5xl sm:text-6xl"
+                                : "text-6xl sm:text-7xl"
+                          }`}
+                        >
                           {stats.dailyStreak ?? 0}
                         </span>
-                        <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">day streak!</h2>
+                        <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">
+                          day streak!
+                        </h2>
                       </div>
                     </div>
                   </div>
@@ -555,21 +585,23 @@ function ProfilePageContent() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex gap-1">
-                          {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map((_, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              transition={{
-                                delay: 0.1 + i * 0.1,
-                                duration: 0.5,
-                                type: "spring",
-                                stiffness: 200,
-                              }}
-                            >
-                              <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
-                            </motion.div>
-                          ))}
+                          {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map(
+                            (_, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{
+                                  delay: 0.1 + i * 0.1,
+                                  duration: 0.5,
+                                  type: "spring",
+                                  stiffness: 200,
+                                }}
+                              >
+                                <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
+                              </motion.div>
+                            )
+                          )}
                           {(stats.weeklyStreak ?? 0) > 8 && (
                             <span className="text-xl font-bold text-orange-500 ml-1">
                               +{(stats.weeklyStreak ?? 0) - 8}
@@ -602,7 +634,8 @@ function ProfilePageContent() {
                       <div className="flex-1">
                         <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
                         <p className="text-sm text-muted-foreground">
-                          90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
+                          90-day trend. Focused days increase your Focus Fitness. Days off, or
+                          unfocused days, cause it to drop.
                         </p>
                       </div>
                       <div className="text-right ml-4">
@@ -624,21 +657,23 @@ function ProfilePageContent() {
                         <p className="text-xs text-muted-foreground mt-1">Current</p>
                       </div>
                     </div>
-                    <FocusGraph data={(() => {
-                      // Find the last data point with meaningful score (> 5)
-                      // This prevents showing the natural decay to near-zero at the end
-                      let lastMeaningfulIndex = focusGraph.length - 1;
-                      for (let i = focusGraph.length - 1; i >= 0; i--) {
-                        if (focusGraph[i].score >= 5) {
-                          lastMeaningfulIndex = i;
-                          break;
+                    <FocusGraph
+                      data={(() => {
+                        // Find the last data point with meaningful score (> 5)
+                        // This prevents showing the natural decay to near-zero at the end
+                        let lastMeaningfulIndex = focusGraph.length - 1;
+                        for (let i = focusGraph.length - 1; i >= 0; i--) {
+                          if (focusGraph[i].score >= 5) {
+                            lastMeaningfulIndex = i;
+                            break;
+                          }
                         }
-                      }
-                      // Always show at least 30 days of data
-                      const minDataPoints = Math.min(30, focusGraph.length);
-                      const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
-                      return focusGraph.slice(0, cutoffIndex);
-                    })()} />
+                        // Always show at least 30 days of data
+                        const minDataPoints = Math.min(30, focusGraph.length);
+                        const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
+                        return focusGraph.slice(0, cutoffIndex);
+                      })()}
+                    />
                   </motion.div>
                 )}
 
@@ -654,7 +689,9 @@ function ProfilePageContent() {
                       {/* Left side - Heatmap */}
                       <div className="flex-1">
                         <h2 className="text-lg font-bold mb-2">Activity Heatmap</h2>
-                        <p className="text-sm text-muted-foreground mb-4">Your productivity patterns at a glance</p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Your productivity patterns at a glance
+                        </p>
                         <ActivityHeatmap data={activity} />
                       </div>
 
@@ -663,8 +700,12 @@ function ProfilePageContent() {
                         {/* This Week */}
                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
                           <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Week</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.week.minutes)}</p>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              This Week
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatTime(stats.week.minutes)}
+                            </p>
                           </div>
                           <p className="text-3xl font-bold">{stats.week.count}</p>
                         </div>
@@ -672,8 +713,12 @@ function ProfilePageContent() {
                         {/* This Month */}
                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
                           <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Month</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.month.minutes)}</p>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              This Month
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatTime(stats.month.minutes)}
+                            </p>
                           </div>
                           <p className="text-3xl font-bold">{stats.month.count}</p>
                         </div>
@@ -681,8 +726,12 @@ function ProfilePageContent() {
                         {/* This Year */}
                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
                           <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Year</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.year.minutes)}</p>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              This Year
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatTime(stats.year.minutes)}
+                            </p>
                           </div>
                           <p className="text-3xl font-bold">{stats.year.count}</p>
                         </div>
@@ -706,7 +755,8 @@ function ProfilePageContent() {
                           <div>
                             <h2 className="text-lg font-bold">Active Challenges</h2>
                             <p className="text-sm text-muted-foreground">
-                              {userChallenges.active.length} challenge{userChallenges.active.length !== 1 ? "s" : ""} in progress
+                              {userChallenges.active.length} challenge
+                              {userChallenges.active.length !== 1 ? "s" : ""} in progress
                             </p>
                           </div>
                           <Button
@@ -719,7 +769,9 @@ function ProfilePageContent() {
                             }}
                             disabled={isSyncingChallenges}
                           >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`} />
+                            <RefreshCw
+                              className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`}
+                            />
                             Sync Progress
                           </Button>
                         </div>
@@ -732,7 +784,9 @@ function ProfilePageContent() {
                               return bPercent - aPercent;
                             })
                             .map((challenge: UserChallenge, index: number) => {
-                              const percentage = Math.round((challenge.progress / challenge.target) * 100);
+                              const percentage = Math.round(
+                                (challenge.progress / challenge.target) * 100
+                              );
                               return (
                                 <motion.div
                                   key={challenge._id}
@@ -743,31 +797,46 @@ function ProfilePageContent() {
                                   className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
                                 >
                                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
-                                    <ChallengeIcon iconName={challenge.badge} className="w-6 h-6 text-orange-500" />
+                                    <ChallengeIcon
+                                      iconName={challenge.badge}
+                                      className="w-6 h-6 text-orange-500"
+                                    />
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                       <h3 className="font-bold">{challenge.name}</h3>
-                                      <span className="text-sm font-bold text-orange-500">{percentage}%</span>
+                                      <span className="text-sm font-bold text-orange-500">
+                                        {percentage}%
+                                      </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {challenge.description}
+                                    </p>
                                     <div className="mt-2">
                                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                         <span>
-                                          {challenge.progress} / {challenge.target} {challenge.type === "streak" ? "days" : "pomodoros"}
+                                          {challenge.progress} / {challenge.target}{" "}
+                                          {challenge.type === "streak" ? "days" : "pomodoros"}
                                         </span>
-                                        <span>{challenge.target - challenge.progress} remaining</span>
+                                        <span>
+                                          {challenge.target - challenge.progress} remaining
+                                        </span>
                                       </div>
                                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                                         <motion.div
                                           className="h-full"
                                           style={{
-                                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
+                                            background:
+                                              "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
                                           }}
                                           initial={{ width: 0 }}
                                           whileInView={{ width: `${Math.min(percentage, 100)}%` }}
                                           viewport={{ once: true, margin: "-50px" }}
-                                          transition={{ duration: 1, delay: index * 0.05 + 0.2, ease: "easeOut" }}
+                                          transition={{
+                                            duration: 1,
+                                            delay: index * 0.05 + 0.2,
+                                            ease: "easeOut",
+                                          }}
                                         />
                                       </div>
                                     </div>
@@ -785,49 +854,58 @@ function ProfilePageContent() {
                         <div className="mb-4">
                           <h2 className="text-lg font-bold">Completed Challenges</h2>
                           <p className="text-sm text-muted-foreground">
-                            {userChallenges.completed.length} badge{userChallenges.completed.length !== 1 ? "s" : ""} earned
+                            {userChallenges.completed.length} badge
+                            {userChallenges.completed.length !== 1 ? "s" : ""} earned
                           </p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {userChallenges.completed.map((challenge: UserChallenge, index: number) => (
-                            <motion.div
-                              key={challenge._id}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              whileInView={{ opacity: 1, scale: 1 }}
-                              viewport={{ once: true, margin: "-50px" }}
-                              transition={{ 
-                                duration: 0.4, 
-                                delay: index * 0.03,
-                                ease: "easeOut"
-                              }}
-                              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
-                            >
-                              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
-                                <ChallengeIcon iconName={challenge.badge} className="w-8 h-8 text-orange-500" />
-                              </div>
-                              <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
-                              <p className="text-xs text-muted-foreground text-center">{challenge.description}</p>
-                              {challenge.completedAt && (
-                                <p className="text-xs text-orange-500">
-                                  {new Date(challenge.completedAt).toLocaleDateString()}
+                          {userChallenges.completed.map(
+                            (challenge: UserChallenge, index: number) => (
+                              <motion.div
+                                key={challenge._id}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{
+                                  duration: 0.4,
+                                  delay: index * 0.03,
+                                  ease: "easeOut",
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
+                              >
+                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
+                                  <ChallengeIcon
+                                    iconName={challenge.badge}
+                                    className="w-8 h-8 text-orange-500"
+                                  />
+                                </div>
+                                <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
+                                <p className="text-xs text-muted-foreground text-center">
+                                  {challenge.description}
                                 </p>
-                              )}
-                            </motion.div>
-                          ))}
+                                {challenge.completedAt && (
+                                  <p className="text-xs text-orange-500">
+                                    {new Date(challenge.completedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </motion.div>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
 
                     {/* Empty State */}
-                    {userChallenges.active.length === 0 && userChallenges.completed.length === 0 && (
-                      <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
-                        <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Complete your first pomodoro to start earning badges!
-                        </p>
-                      </div>
-                    )}
+                    {userChallenges.active.length === 0 &&
+                      userChallenges.completed.length === 0 && (
+                        <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
+                          <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Complete your first pomodoro to start earning badges!
+                          </p>
+                        </div>
+                      )}
                   </motion.div>
                 )}
               </>
@@ -840,7 +918,10 @@ function ProfilePageContent() {
 
 export default function ProfilePage() {
   return (
-    <ErrorBoundary fallbackTitle="Profile Error" fallbackMessage="An error occurred while loading your profile. Please refresh the page.">
+    <ErrorBoundary
+      fallbackTitle="Profile Error"
+      fallbackMessage="An error occurred while loading your profile. Please refresh the page."
+    >
       <ProfilePageContent />
     </ErrorBoundary>
   );

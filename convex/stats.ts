@@ -258,7 +258,9 @@ export const getFocusGraph = query({
     const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
     const sessions = await ctx.db
       .query("pomodoros")
-      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id).gte("completedAt", ninetyDaysAgo))
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", user._id).gte("completedAt", ninetyDaysAgo)
+      )
       .filter((q) => q.eq(q.field("mode"), "focus"))
       .collect();
 
@@ -274,7 +276,7 @@ export const getFocusGraph = query({
     // Uses Strava's CTL (Chronic Training Load) algorithm: 42-day EWMA
     const DECAY_FACTOR = 0.976; // ~2.4% daily decay (matches Strava's 42-day time constant)
     const POMO_WEIGHT = 1; // Each pomo adds 1 point (more reasonable scale)
-    
+
     const focusData: Array<{ date: string; score: number }> = [];
     let currentScore = 0;
 
@@ -286,10 +288,10 @@ export const getFocusGraph = query({
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      
+
       // Apply decay from previous day
       currentScore = currentScore * DECAY_FACTOR;
-      
+
       // Add today's pomos
       const todayPomos = pomosByDate[dateKey] || 0;
       currentScore += todayPomos * POMO_WEIGHT;

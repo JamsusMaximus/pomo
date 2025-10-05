@@ -35,16 +35,13 @@ export const isAdmin = query({
 export const getLevelConfig = query({
   args: {},
   handler: async (ctx) => {
-    const configs = await ctx.db
-      .query("levelConfig")
-      .withIndex("by_level")
-      .collect();
-    
+    const configs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
+
     // If no configs exist, return defaults
     if (configs.length === 0) {
       return getDefaultLevelConfig();
     }
-    
+
     return configs.sort((a, b) => a.level - b.level);
   },
 });
@@ -105,9 +102,7 @@ export const seedLevelConfig = mutation({
     }
 
     const defaults = getDefaultLevelConfig();
-    const promises = defaults.map((config) =>
-      ctx.db.insert("levelConfig", config)
-    );
+    const promises = defaults.map((config) => ctx.db.insert("levelConfig", config));
 
     await Promise.all(promises);
 
@@ -137,4 +132,3 @@ function getDefaultLevelConfig() {
     { level: 15, title: "Ultimate", threshold: 391 },
   ];
 }
-

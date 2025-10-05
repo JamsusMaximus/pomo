@@ -7,7 +7,12 @@ interface FocusGraphProps {
 }
 
 export function FocusGraph({ data }: FocusGraphProps) {
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; score: number; date: string } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    x: number;
+    y: number;
+    score: number;
+    date: string;
+  } | null>(null);
 
   const { pathD, dataPoints } = useMemo(() => {
     if (!data || data.length === 0) {
@@ -54,11 +59,7 @@ export function FocusGraph({ data }: FocusGraphProps) {
 
   return (
     <div className="w-full relative">
-      <svg
-        viewBox="0 0 800 200"
-        className="w-full h-auto"
-        preserveAspectRatio="xMidYMid meet"
-      >
+      <svg viewBox="0 0 800 200" className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((percent) => (
           <line
@@ -74,11 +75,7 @@ export function FocusGraph({ data }: FocusGraphProps) {
         ))}
 
         {/* Area fill */}
-        <path
-          d={pathD}
-          fill="url(#focusGradient)"
-          opacity="0.2"
-        />
+        <path d={pathD} fill="url(#focusGradient)" opacity="0.2" />
 
         {/* Line */}
         <path
@@ -148,7 +145,9 @@ export function FocusGraph({ data }: FocusGraphProps) {
             transform: "translate(-50%, -120%)",
           }}
         >
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{hoveredPoint.score}</p>
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            {hoveredPoint.score}
+          </p>
           <p className="text-xs text-muted-foreground whitespace-nowrap">{hoveredPoint.date}</p>
         </div>
       )}

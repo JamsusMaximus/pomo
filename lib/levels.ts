@@ -3,7 +3,7 @@
  * Hybrid progression:
  * Levels 1-5: Exponential (0, 2, 4, 8, 16)
  * Levels 6+: Pokemon-style growth (gaps increase gradually)
- * 
+ *
  * Level 1: 0, Level 2: 2, Level 3: 4, Level 4: 8, Level 5: 16
  * Level 6: 31 (+15), Level 7: 51 (+20), Level 8: 76 (+25), Level 9: 106 (+30)
  * Gap increases by 5 each level after level 5
@@ -28,7 +28,7 @@ export function getTotalPomosForLevel(level: number): number {
     // Exponential for levels 2-5: 2, 4, 8, 16
     return Math.pow(2, level - 1);
   }
-  
+
   // For level 6+, start at 16 and add increasing gaps
   // Gap formula: 10 + 5*(level - 5)
   // Level 6: 16 + 15 = 31
