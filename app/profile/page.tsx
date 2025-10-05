@@ -1,20 +1,23 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const { signOut, openUserProfile } = useClerk();
+  const router = useRouter();
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
   const saveSession = useMutation(api.pomodoros.saveSession);
@@ -124,7 +127,7 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:py-12">
       <div className="max-w-4xl mx-auto">
-        {/* Back button and Debug info */}
+        {/* Top navigation */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
             <Button variant="ghost" size="sm">
@@ -133,13 +136,23 @@ export default function ProfilePage() {
             </Button>
           </Link>
 
-          {/* Debug: Local storage info */}
-          {localStats.unsynced > 0 && (
-            <Button variant="outline" size="sm" onClick={handleManualSync} disabled={isSyncing}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
-              Sync {localStats.unsynced} Local Sessions
+          <div className="flex items-center gap-2">
+            {/* Debug: Local storage info */}
+            {localStats.unsynced > 0 && (
+              <Button variant="outline" size="sm" onClick={handleManualSync} disabled={isSyncing}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+                Sync {localStats.unsynced} Local Sessions
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => openUserProfile()}>
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Account
             </Button>
-          )}
+            <Button variant="outline" size="sm" onClick={() => signOut(() => router.push("/"))}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Debug info card */}

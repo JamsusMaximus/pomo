@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { SignUpButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
@@ -334,12 +335,11 @@ export default function Home() {
         </SignedOut>
         <SignedIn>
           <Link href="/profile">
-            <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
-              <User className="w-4 h-4 mr-1" />
-              Profile
-            </Button>
+            <Avatar className="w-8 h-8 cursor-pointer hover:opacity-80 transition-opacity">
+              <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
+              <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+            </Avatar>
           </Link>
-          <UserButton />
         </SignedIn>
         <ThemeToggle />
       </div>
