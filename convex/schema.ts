@@ -61,4 +61,10 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_challenge", ["userId", "challengeId"])
     .index("by_user_completed", ["userId", "completed"]),
+
+  levelConfig: defineTable({
+    level: v.number(),
+    title: v.string(),
+    threshold: v.number(), // total pomos needed to reach this level
+  }).index("by_level", ["level"]),
 });

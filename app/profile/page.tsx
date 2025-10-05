@@ -65,6 +65,7 @@ export default function ProfilePage() {
   const activity = useQuery(api.stats.getActivity);
   const focusGraph = useQuery(api.stats.getFocusGraph);
   const userChallenges = useQuery(api.challenges.getUserChallenges);
+  const levelConfig = useQuery(api.levels.getLevelConfig);
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
@@ -256,7 +257,55 @@ export default function ProfilePage() {
         {/* Main Content - Two Column Layout */}
         {stats &&
           (() => {
-            const levelInfo = getLevelInfo(stats.total.count);
+            // Use database level config if available, otherwise fallback to lib
+            const getLevelInfoFromDb = (pomos: number) => {
+              if (!levelConfig || levelConfig.length === 0) {
+                const info = getLevelInfo(pomos);
+                return {
+                  ...info,
+                  title: getLevelTitle(info.currentLevel),
+                };
+              }
+
+              let currentLevel = levelConfig[0];
+              for (const level of levelConfig) {
+                if (level.threshold <= pomos) {
+                  currentLevel = level;
+                } else {
+                  break;
+                }
+              }
+
+              const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
+              const nextLevel = levelConfig[currentIndex + 1];
+              
+              if (!nextLevel) {
+                // Max level reached
+                return {
+                  currentLevel: currentLevel.level,
+                  pomosForCurrentLevel: currentLevel.threshold,
+                  pomosForNextLevel: currentLevel.threshold,
+                  pomosRemaining: 0,
+                  progress: 100,
+                  title: currentLevel.title,
+                };
+              }
+
+              const pomosInCurrentLevel = pomos - currentLevel.threshold;
+              const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
+              const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+              return {
+                currentLevel: currentLevel.level,
+                pomosForCurrentLevel: currentLevel.threshold,
+                pomosForNextLevel: nextLevel.threshold,
+                pomosRemaining: nextLevel.threshold - pomos,
+                progress: Math.min(100, Math.max(0, progress)),
+                title: currentLevel.title,
+              };
+            };
+
+            const levelInfo = getLevelInfoFromDb(stats.total.count);
             const currentPomos = stats.total.count;
             const rangeStart = levelInfo.pomosForCurrentLevel;
             const rangeEnd = levelInfo.pomosForNextLevel;
@@ -286,7 +335,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-2">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <p className="text-sm font-medium">
-                            Level {levelInfo.currentLevel} · {getLevelTitle(levelInfo.currentLevel)}
+                            Level {levelInfo.currentLevel} · {levelInfo.title}
                           </p>
                         </div>
                       </div>

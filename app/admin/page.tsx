@@ -21,13 +21,19 @@ const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: 
 };
 
 export default function AdminPage() {
+  const isAdmin = useQuery(api.levels.isAdmin);
   const challenges = useQuery(api.challenges.getAllChallenges);
+  const levelConfig = useQuery(api.levels.getLevelConfig);
   const createChallenge = useMutation(api.challenges.createChallenge);
   const toggleActive = useMutation(api.challenges.toggleChallengeActive);
   const seedChallenges = useMutation(api.seedChallenges.seedDefaultChallenges);
   const migrateBadges = useMutation(api.migrateChallenges.migrateChallengeBadges);
+  const seedLevels = useMutation(api.levels.seedLevelConfig);
+  const updateLevel = useMutation(api.levels.updateLevel);
 
   const [showForm, setShowForm] = useState(false);
+  const [showLevelEdit, setShowLevelEdit] = useState(false);
+  const [editingLevel, setEditingLevel] = useState<{ level: number; title: string; threshold: number } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -52,6 +58,32 @@ export default function AdminPage() {
     });
     setShowForm(false);
   };
+
+  // Show loading state
+  if (isAdmin === undefined) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
+  // Show unauthorized message if not admin
+  if (!isAdmin) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8 max-w-md">
+          <h1 className="text-2xl font-bold mb-4">Unauthorized</h1>
+          <p className="text-muted-foreground mb-4">
+            You don't have permission to access this page.
+          </p>
+          <Link href="/">
+            <Button>Go Home</Button>
+          </Link>
+        </Card>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -219,6 +251,104 @@ export default function AdminPage() {
               </div>
             </Card>
           ))}
+        </div>
+
+        {/* Level Management Section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">Level Configuration</h2>
+              <p className="text-muted-foreground">Manage level titles and thresholds</p>
+            </div>
+            <div className="flex gap-2">
+              {(!levelConfig || levelConfig.length === 0) && (
+                <Button variant="outline" onClick={() => seedLevels()}>
+                  Seed Defaults
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Levels List */}
+          <div className="space-y-4">
+            {levelConfig?.map((level) => (
+              <Card key={level.level} className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10 font-bold text-orange-500">
+                    {level.level}
+                  </div>
+                  {editingLevel && editingLevel.level === level.level ? (
+                    <>
+                      <div className="flex-1 flex gap-4">
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Title"
+                            value={editingLevel.title}
+                            onChange={(e) =>
+                              setEditingLevel({ ...editingLevel, title: e.target.value })
+                            }
+                          />
+                        </div>
+                        <div className="w-32">
+                          <Input
+                            type="number"
+                            placeholder="Threshold"
+                            value={editingLevel.threshold}
+                            onChange={(e) =>
+                              setEditingLevel({
+                                ...editingLevel,
+                                threshold: parseInt(e.target.value) || 0,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await updateLevel({
+                              level: editingLevel.level,
+                              title: editingLevel.title,
+                              threshold: editingLevel.threshold,
+                            });
+                            setEditingLevel(null);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingLevel(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg">{level.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Threshold: {level.threshold} pomodoros
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setEditingLevel({
+                            level: level.level,
+                            title: level.title,
+                            threshold: level.threshold,
+                          })
+                        }
+                      >
+                        Edit
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </main>
