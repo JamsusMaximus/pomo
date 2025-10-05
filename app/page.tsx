@@ -347,7 +347,7 @@ export default function Home() {
               <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
             <span className="text-sm font-medium">
-              Level {stats ? getLevelInfo(stats.total.count).currentLevel : "..."}
+              Level {stats ? getLevelInfo(stats.total.count).currentLevel : 1}
             </span>
           </Link>
         </SignedIn>
