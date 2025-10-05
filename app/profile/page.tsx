@@ -24,8 +24,8 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
 
   const weekView = [];
   
-  // Generate 8 days: last 6 days + today + next day
-  for (let i = -6; i <= 1; i++) {
+  // Generate 7 days: last 5 days + today + next day
+  for (let i = -5; i <= 1; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -315,33 +315,51 @@ export default function ProfilePage() {
                   transition={{ duration: 0.4, delay: 0.05 }}
                   className="mb-6"
                 >
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-8 sm:p-10 relative overflow-hidden">
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
                     <div className="absolute -top-8 -right-8 opacity-5">
                       <Flame className="w-64 h-64" />
                     </div>
                     <div className="relative z-10">
-                      {/* Flame icon and number */}
-                      <div className="flex flex-col items-center mb-6">
-                        <div className="relative mb-4">
-                          <Flame className="w-32 h-32 text-orange-500 drop-shadow-lg" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-5xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                      {/* Flame icon with number inside */}
+                      <div className="flex flex-col items-center mb-5">
+                        <div className="relative mb-3">
+                          <Flame className="w-24 h-24 sm:w-28 sm:h-28 text-orange-500 fill-orange-500" />
+                          <div className="absolute inset-0 flex items-center justify-center pb-1">
+                            <span className="text-4xl sm:text-5xl font-black text-white">
                               {stats.dailyStreak ?? 0}
                             </span>
                           </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-orange-500">day streak!</h2>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-orange-500">day streak!</h2>
                       </div>
 
                       {/* Week view */}
-                      <div className="bg-background/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm">
-                        <div className="flex justify-around items-start gap-2 sm:gap-4">
+                      <div className="bg-background/50 rounded-xl p-4 backdrop-blur-sm">
+                        <div className="flex justify-around items-start gap-2 sm:gap-3">
                           {getWeekViewData(activity).map((day) => (
                             <div key={day.date} className="flex flex-col items-center gap-2">
                               <span className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}>
                                 {day.dayOfWeek}
                               </span>
-                              {day.isToday ? (
+                              {day.isToday && day.completed ? (
+                                <motion.div
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
+                                  animate={{
+                                    boxShadow: [
+                                      "0 0 0 0 rgba(249, 115, 22, 0.4)",
+                                      "0 0 0 8px rgba(249, 115, 22, 0)",
+                                      "0 0 0 0 rgba(249, 115, 22, 0)",
+                                    ],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    ease: "easeOut",
+                                  }}
+                                >
+                                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+                                </motion.div>
+                              ) : day.isToday ? (
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
                                   <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
                                 </div>
@@ -358,7 +376,7 @@ export default function ProfilePage() {
                       </div>
 
                       {/* Encouragement text */}
-                      <p className="text-center mt-6 text-sm text-muted-foreground">
+                      <p className="text-center mt-5 text-sm text-muted-foreground">
                         {stats.dailyStreak && stats.dailyStreak > 0 ? (
                           <>
                             Great start! Keep your{" "}
