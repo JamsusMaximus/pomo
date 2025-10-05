@@ -379,7 +379,8 @@ export default function Home() {
 
               // Get level info from database config or fallback to lib
               const getLevelInfoFromDb = (pomos: number) => {
-                if (!levelConfig || levelConfig.length === 0) {
+                // Use lib fallback if levelConfig is still loading or empty
+                if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
                   const info = getLevelInfo(pomos);
                   return { ...info, title: getLevelTitle(info.currentLevel) };
                 }
@@ -395,7 +396,7 @@ export default function Home() {
 
                 const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
                 const nextLevel = levelConfig[currentIndex + 1];
-                
+
                 if (!nextLevel) {
                   return {
                     currentLevel: currentLevel.level,
