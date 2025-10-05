@@ -85,7 +85,19 @@ export default function Home() {
   // Show browser notification
   const showNotification = useCallback(
     (title: string, body: string) => {
-      if ("Notification" in window && notificationPermission === "granted") {
+      console.log("Attempting notification. Permission:", notificationPermission);
+
+      if (!("Notification" in window)) {
+        console.error("This browser does not support notifications");
+        return;
+      }
+
+      if (notificationPermission !== "granted") {
+        console.warn("Notification permission not granted:", notificationPermission);
+        return;
+      }
+
+      try {
         const notification = new Notification(title, {
           body,
           icon: "/favicon.ico",
@@ -93,6 +105,8 @@ export default function Home() {
           tag: "pomodoro-complete",
           requireInteraction: true,
         });
+
+        console.log("Notification created successfully");
 
         // Close notification after 10 seconds
         setTimeout(() => notification.close(), 10000);
@@ -102,6 +116,8 @@ export default function Home() {
           window.focus();
           notification.close();
         };
+      } catch (error) {
+        console.error("Failed to show notification:", error);
       }
     },
     [notificationPermission]
@@ -348,7 +364,7 @@ export default function Home() {
 
           {/* Debug Button - DEV ONLY */}
           {process.env.NODE_ENV === "development" && (
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-2 left-2 flex flex-col gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -359,6 +375,22 @@ export default function Home() {
               >
                 Debug: 2s
               </Button>
+              {notificationPermission !== "granted" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if ("Notification" in window) {
+                      const permission = await Notification.requestPermission();
+                      setNotificationPermission(permission);
+                      alert(`Notification permission: ${permission}`);
+                    }
+                  }}
+                  className="text-xs opacity-50 hover:opacity-100"
+                >
+                  🔔 Enable
+                </Button>
+              )}
             </div>
           )}
 
