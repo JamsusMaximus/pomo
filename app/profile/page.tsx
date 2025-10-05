@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
+import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
+  const focusGraph = useQuery(api.stats.getFocusGraph);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
   // Debug: Log stats to see what we're getting
@@ -333,6 +335,22 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Focus Graph */}
+        {focusGraph && focusGraph.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.12 }}
+            className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8"
+          >
+            <h2 className="text-xl font-bold mb-4">Focus Fitness</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Your productivity trend over the past 90 days. The score increases with daily pomodoros and naturally decays over time.
+            </p>
+            <FocusGraph data={focusGraph} />
           </motion.div>
         )}
 

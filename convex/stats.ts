@@ -213,3 +213,73 @@ function calculateStreaks(sessions: Array<{ completedAt: number }>): {
 
   return { daily: dailyStreak, weekly: weeklyStreak };
 }
+
+/**
+ * Get Focus Graph data - similar to Strava's fitness graph
+ * Uses exponential weighted moving average to show productivity trends
+ */
+export const getFocusGraph = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    // Get sessions from past 90 days
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const sessions = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id).gte("completedAt", ninetyDaysAgo))
+      .filter((q) => q.eq(q.field("mode"), "focus"))
+      .collect();
+
+    // Group by date
+    const pomosByDate: Record<string, number> = {};
+    sessions.forEach((session) => {
+      const date = new Date(session.completedAt);
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      pomosByDate[dateKey] = (pomosByDate[dateKey] || 0) + 1;
+    });
+
+    // Calculate focus score for each day using exponential weighted moving average
+    const DECAY_FACTOR = 0.97; // 3% daily decay
+    const POMO_WEIGHT = 10; // Each pomo adds 10 points
+    
+    const focusData: Array<{ date: string; score: number }> = [];
+    let currentScore = 0;
+
+    // Generate data for past 90 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 89; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      
+      // Apply decay from previous day
+      currentScore = currentScore * DECAY_FACTOR;
+      
+      // Add today's pomos
+      const todayPomos = pomosByDate[dateKey] || 0;
+      currentScore += todayPomos * POMO_WEIGHT;
+
+      focusData.push({
+        date: dateKey,
+        score: Math.round(currentScore),
+      });
+    }
+
+    return focusData;
+  },
+});
