@@ -4,14 +4,12 @@ import type { MutationCtx } from "./_generated/server";
 
 /**
  * Generates a unique username from a full name.
- * Uses a random suffix to avoid N+1 database queries.
+ * Only adds numeric suffix if there's a collision.
  *
  * Algorithm:
  * 1. Sanitize name to create base username
- * 2. Add 4-digit random suffix
- * 3. If collision (rare), fallback to timestamp
- *
- * Performance: O(1) instead of O(N) - single DB query instead of loop
+ * 2. Check if base username is available
+ * 3. If taken, try incrementing numbers (1, 2, 3...) until unique
  *
  * @param ctx - Mutation context with database access
  * @param firstName - User's first name (optional)
@@ -38,13 +36,9 @@ async function generateUniqueUsername(
     baseUsername = "user";
   }
 
-  // Generate random 4-digit suffix (1000-9999)
-  // This gives 9000 possible combinations, making collisions rare
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const candidate = `${baseUsername}${randomSuffix}`;
-
-  // Check if this username is available (single query)
-  const existing = await ctx.db
+  // Try base username first (no suffix)
+  let candidate = baseUsername;
+  let existing = await ctx.db
     .query("users")
     .filter((q) => q.eq(q.field("username"), candidate))
     .first();
@@ -53,8 +47,28 @@ async function generateUniqueUsername(
     return candidate;
   }
 
-  // Collision (extremely rare) - fallback to timestamp for guaranteed uniqueness
-  return `${baseUsername}${Date.now()}`;
+  // Base username is taken, try adding numbers
+  let suffix = 1;
+  while (existing) {
+    candidate = `${baseUsername}${suffix}`;
+    existing = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("username"), candidate))
+      .first();
+
+    if (!existing) {
+      return candidate;
+    }
+
+    suffix++;
+
+    // Safety limit to prevent infinite loop
+    if (suffix > 10000) {
+      return `${baseUsername}${Date.now()}`;
+    }
+  }
+
+  return candidate;
 }
 
 /**
