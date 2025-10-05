@@ -14,6 +14,8 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as pomodoros from "../pomodoros.js";
+import type * as seed from "../seed.js";
+import type * as stats from "../stats.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
 
@@ -27,6 +29,8 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   pomodoros: typeof pomodoros;
+  seed: typeof seed;
+  stats: typeof stats;
   timers: typeof timers;
   users: typeof users;
 }>;

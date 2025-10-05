@@ -8,7 +8,59 @@ const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        elements: {
+          // Hide first name, last name, and username fields
+          formFieldInput__firstName: { display: "none !important" },
+          formFieldInput__lastName: { display: "none !important" },
+          formFieldRow__firstName: { display: "none !important" },
+          formFieldRow__lastName: { display: "none !important" },
+          formFieldLabel__firstName: { display: "none !important" },
+          formFieldLabel__lastName: { display: "none !important" },
+          formField__firstName: { display: "none !important" },
+          formField__lastName: { display: "none !important" },
+          formFieldInput__username: { display: "none !important" },
+          formFieldRow__username: { display: "none !important" },
+          formFieldLabel__username: { display: "none !important" },
+          formField__username: { display: "none !important" },
+          // Custom layout for social buttons
+          socialButtonsBlockButton: {
+            fontSize: "16px",
+            padding: "14px",
+            fontWeight: "500",
+            flex: "0 0 100%",
+          },
+          socialButtonsBlockButtonText: {
+            fontSize: "16px",
+            fontWeight: "500",
+          },
+          // Google button - full width
+          "socialButtonsBlockButton[data-provider='google']": {
+            width: "100%",
+            flex: "0 0 100%",
+          },
+          // Apple and Facebook - 50% width
+          "socialButtonsBlockButton[data-provider='apple']": {
+            width: "calc(50% - 4px)",
+            flex: "0 0 calc(50% - 4px)",
+          },
+          "socialButtonsBlockButton[data-provider='facebook']": {
+            width: "calc(50% - 4px)",
+            flex: "0 0 calc(50% - 4px)",
+          },
+          socialButtonsBlock: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "8px",
+          },
+        },
+        layout: {
+          socialButtonsPlacement: "top",
+          showOptionalFields: false,
+        },
+      }}
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         {children}
       </ConvexProviderWithClerk>

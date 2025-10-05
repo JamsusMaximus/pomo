@@ -1,14 +1,72 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import type { MutationCtx } from "./_generated/server";
+
+/**
+ * Generates a unique username from a full name.
+ * If the username exists, appends numbers (1, 2, 3...).
+ */
+async function generateUniqueUsername(
+  ctx: MutationCtx,
+  firstName: string | undefined,
+  lastName: string | undefined
+): Promise<string> {
+  // Generate base username from name
+  let baseUsername = "";
+  if (firstName && lastName) {
+    baseUsername = `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+  } else if (firstName) {
+    baseUsername = firstName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  } else {
+    baseUsername = "user";
+  }
+
+  // If empty after sanitization, use default
+  if (baseUsername.length === 0) {
+    baseUsername = "user";
+  }
+
+  // Check if base username is available
+  const existingWithBase = await ctx.db
+    .query("users")
+    .filter((q) => q.eq(q.field("username"), baseUsername))
+    .first();
+
+  if (!existingWithBase) {
+    return baseUsername;
+  }
+
+  // Try appending numbers until we find an available username
+  let counter = 1;
+  while (counter < 1000) {
+    // Sanity limit
+    const candidate = `${baseUsername}${counter}`;
+    const existing = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("username"), candidate))
+      .first();
+
+    if (!existing) {
+      return candidate;
+    }
+    counter++;
+  }
+
+  // Fallback: use timestamp
+  return `${baseUsername}${Date.now()}`;
+}
 
 /**
  * Ensures a user exists in the database.
  * Uses Clerk auth context - cannot be spoofed by clients.
+ * Auto-generates username from firstName + lastName.
+ * Returns { userId, username, isNew } so frontend can sync to Clerk.
  * Idempotent: safe to call multiple times.
  */
 export const ensureUser = mutation({
   args: {
-    username: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -20,11 +78,6 @@ export const ensureUser = mutation({
 
     const clerkId = identity.subject;
 
-    // Validate username
-    if (!args.username || args.username.trim().length === 0) {
-      throw new Error("Username cannot be empty");
-    }
-
     // Check if user already exists
     const existing = await ctx.db
       .query("users")
@@ -32,18 +85,21 @@ export const ensureUser = mutation({
       .first();
 
     if (existing) {
-      return existing._id;
+      return { userId: existing._id, username: existing.username, isNew: false };
     }
+
+    // Generate unique username
+    const username = await generateUniqueUsername(ctx, args.firstName, args.lastName);
 
     // Create new user
     const userId = await ctx.db.insert("users", {
       clerkId,
-      username: args.username.trim(),
+      username,
       avatarUrl: args.avatarUrl,
       createdAt: Date.now(),
     });
 
-    return userId;
+    return { userId, username, isNew: true };
   },
 });
 

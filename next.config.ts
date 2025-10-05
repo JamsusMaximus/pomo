@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Only use static export for Tauri builds
+  output: process.env.TAURI_BUILD === "true" ? "export" : undefined,
+  images: {
+    unoptimized: process.env.TAURI_BUILD === "true",
+  },
 };
 
 export default nextConfig;
