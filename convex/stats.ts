@@ -169,8 +169,8 @@ function calculateStreaks(sessions: Array<{ completedAt: number }>): {
     sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
   });
 
-  // Get sorted dates (most recent first)
-  const sortedDates = Object.keys(sessionsByDate).sort().reverse();
+  // Get sorted dates (most recent first) - kept for potential future use
+  // const sortedDates = Object.keys(sessionsByDate).sort().reverse();
 
   // Calculate daily streak
   let dailyStreak = 0;
@@ -179,7 +179,7 @@ function calculateStreaks(sessions: Array<{ completedAt: number }>): {
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   // Start from today or yesterday (allow for timezone differences)
-  let checkDate = new Date(today);
+  const checkDate = new Date(today);
   if (!sessionsByDate[todayKey]) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
@@ -208,7 +208,7 @@ function calculateStreaks(sessions: Array<{ completedAt: number }>): {
     sessionsByWeek[weekKey] = (sessionsByWeek[weekKey] || 0) + 1;
   });
 
-  const sortedWeeks = Object.keys(sessionsByWeek).sort().reverse();
+  // const sortedWeeks = Object.keys(sessionsByWeek).sort().reverse();
   let weeklyStreak = 0;
 
   const currentWeekStart = new Date();
@@ -217,7 +217,7 @@ function calculateStreaks(sessions: Array<{ completedAt: number }>): {
   currentWeekStart.setDate(currentWeekStart.getDate() + diff);
   currentWeekStart.setHours(0, 0, 0, 0);
 
-  let checkWeek = new Date(currentWeekStart);
+  const checkWeek = new Date(currentWeekStart);
 
   // Count consecutive weeks with at least 5 pomodoros
   while (true) {

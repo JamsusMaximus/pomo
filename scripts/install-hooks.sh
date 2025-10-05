@@ -20,10 +20,19 @@ echo "🔍 Running pre-commit checks..."
 
 # 1. Auto-format staged files with Prettier
 echo "✨ Formatting code with Prettier..."
-npx prettier --write $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|json|css|md|mjs)$')
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|json|css|md|mjs)$')
+if [ -n "$STAGED_FILES" ]; then
+  npx prettier --write $STAGED_FILES
+  git add $STAGED_FILES
+fi
 
-# Re-stage files that were formatted
-git diff --name-only | grep -E '\.(js|jsx|ts|tsx|json|css|md|mjs)$' | xargs git add 2>/dev/null || true
+# 2. Auto-fix ESLint errors
+echo "🔧 Fixing ESLint errors..."
+STAGED_CODE=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|mjs)$')
+if [ -n "$STAGED_CODE" ]; then
+  npx eslint --fix $STAGED_CODE || true
+  git add $STAGED_CODE
+fi
 
 # 2. Auto-generate changelog (optional - requires API key)
 if [ -n "$ANTHROPIC_API_KEY" ]; then
@@ -51,8 +60,9 @@ chmod +x "$HOOKS_DIR/pre-commit"
 echo "✅ Git hooks installed successfully!"
 echo ""
 echo "The pre-commit hook will:"
-echo "  1. Auto-format code with Prettier (prevents CI failures)"
-echo "  2. Generate changelog using Claude Haiku (if ANTHROPIC_API_KEY is set)"
-echo "  3. Auto-add formatted files and changelog to your commit"
+echo "  1. Auto-format code with Prettier"
+echo "  2. Auto-fix ESLint errors"
+echo "  3. Generate changelog using Claude Haiku (if ANTHROPIC_API_KEY is set)"
+echo "  4. Auto-add all fixed files to your commit"
 echo ""
-echo "Your commits will now always pass Prettier checks! 🎉"
+echo "Your commits will now always pass CI checks! 🎉"
