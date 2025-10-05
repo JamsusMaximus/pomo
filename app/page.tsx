@@ -33,6 +33,8 @@ export default function Home() {
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [showSpaceHint, setShowSpaceHint] = useState(true);
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermission>("default");
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -43,6 +45,68 @@ export default function Home() {
   // Track previous sign-in state to detect when user signs in
   const prevIsSignedIn = useRef(isSignedIn);
 
+  // Play completion sound using Web Audio API
+  const playCompletionSound = useCallback(() => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Pleasant chime sound
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 1);
+
+      // Second tone for harmony
+      setTimeout(() => {
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+        gain2.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+        osc2.start(audioContext.currentTime);
+        osc2.stop(audioContext.currentTime + 1);
+      }, 150);
+    } catch (error) {
+      console.error("Failed to play sound:", error);
+    }
+  }, []);
+
+  // Show browser notification
+  const showNotification = useCallback(
+    (title: string, body: string) => {
+      if ("Notification" in window && notificationPermission === "granted") {
+        const notification = new Notification(title, {
+          body,
+          icon: "/favicon.ico",
+          badge: "/favicon.ico",
+          tag: "pomodoro-complete",
+          requireInteraction: true,
+        });
+
+        // Close notification after 10 seconds
+        setTimeout(() => notification.close(), 10000);
+
+        // Focus window when notification is clicked
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      }
+    },
+    [notificationPermission]
+  );
+
   const { remaining, duration, mode, isRunning, start, pause, reset, setDebugTime } = useTimer({
     focusDuration,
     breakDuration,
@@ -50,6 +114,10 @@ export default function Home() {
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
+        // Play completion sound and show notification
+        playCompletionSound();
+        showNotification("Pomodoro Complete! 🎉", "Great work! Time for a break.");
+
         // Increment pomos count
         setCyclesCompleted((prev) => prev + 1);
 
@@ -90,6 +158,18 @@ export default function Home() {
       setPreviousMode(newMode);
     },
   });
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotificationPermission(Notification.permission);
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((permission) => {
+          setNotificationPermission(permission);
+        });
+      }
+    }
+  }, []);
 
   // Hydrate from localStorage on mount
   useEffect(() => {
