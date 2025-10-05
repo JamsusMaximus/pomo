@@ -315,30 +315,30 @@ export default function ProfilePage() {
                   transition={{ duration: 0.4, delay: 0.05 }}
                   className="mb-6"
                 >
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-6 relative overflow-hidden">
                     <div className="absolute -top-8 -right-8 opacity-5">
                       <Flame className="w-64 h-64" />
                     </div>
-                    <div className="relative z-10">
-                      {/* Flame icon with number inside */}
-                      <div className="flex flex-col items-center mb-5">
-                        <div className="relative mb-3">
-                          <Flame className="w-32 h-32 sm:w-36 sm:h-36 text-orange-500 fill-orange-500" />
+                    <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+                      {/* Flame icon with number inside - LEFT SIDE */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <div className="relative">
+                          <Flame className="w-28 h-28 sm:w-32 sm:h-32 text-orange-500 fill-orange-500" />
                           <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: "0.15em" }}>
                             <span className={`font-black text-white ${
-                              (stats.dailyStreak ?? 0) >= 100 ? "text-3xl sm:text-4xl" : 
-                              (stats.dailyStreak ?? 0) >= 10 ? "text-4xl sm:text-5xl" : 
-                              "text-5xl sm:text-6xl"
+                              (stats.dailyStreak ?? 0) >= 100 ? "text-2xl sm:text-3xl" : 
+                              (stats.dailyStreak ?? 0) >= 10 ? "text-3xl sm:text-4xl" : 
+                              "text-4xl sm:text-5xl"
                             }`}>
                               {stats.dailyStreak ?? 0}
                             </span>
                           </div>
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-orange-500">day streak!</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-orange-500 mt-2">day streak!</h2>
                       </div>
 
-                      {/* Week view */}
-                      <div className="bg-background/50 rounded-xl p-4 backdrop-blur-sm">
+                      {/* Week view - RIGHT SIDE */}
+                      <div className="flex-1 w-full bg-background/50 rounded-xl p-4 backdrop-blur-sm">
                         <div className="flex justify-around items-start gap-2 sm:gap-3">
                           {getWeekViewData(activity).map((day, index) => (
                             <motion.div
@@ -362,10 +362,8 @@ export default function ProfilePage() {
                                   animate={{
                                     scale: [0, 1.2, 1],
                                     boxShadow: [
-                                      "0 0 0 0 rgba(249, 115, 22, 0.6)",
-                                      "0 0 0 12px rgba(249, 115, 22, 0)",
                                       "0 0 0 0 rgba(249, 115, 22, 0.4)",
-                                      "0 0 0 8px rgba(249, 115, 22, 0)",
+                                      "0 0 0 10px rgba(249, 115, 22, 0)",
                                       "0 0 0 0 rgba(249, 115, 22, 0)",
                                     ],
                                   }}
@@ -376,11 +374,11 @@ export default function ProfilePage() {
                                       ease: "easeOut",
                                     },
                                     boxShadow: {
-                                      delay: 0.05 + index * 0.2,
-                                      duration: 0.6,
+                                      delay: 0.05 + index * 0.2 + 0.3,
+                                      duration: 2,
                                       ease: "easeOut",
                                       repeat: Infinity,
-                                      repeatDelay: 1.4,
+                                      repeatDelay: 2,
                                     },
                                   }}
                                 >
@@ -427,22 +425,19 @@ export default function ProfilePage() {
                             </motion.div>
                           ))}
                         </div>
+                        {/* Encouragement text - inside week view */}
+                        <p className="text-center mt-4 text-xs sm:text-sm text-muted-foreground">
+                          {stats.dailyStreak && stats.dailyStreak > 0 ? (
+                            <>
+                              Keep your <span className="text-orange-500 font-semibold">perfect streak</span> going!
+                            </>
+                          ) : (
+                            <>
+                              Complete a pomodoro to <span className="text-orange-500 font-semibold">start your streak</span>
+                            </>
+                          )}
+                        </p>
                       </div>
-
-                      {/* Encouragement text */}
-                      <p className="text-center mt-5 text-sm text-muted-foreground">
-                        {stats.dailyStreak && stats.dailyStreak > 0 ? (
-                          <>
-                            Great start! Keep your{" "}
-                            <span className="text-orange-500 font-semibold">perfect streak</span> going tomorrow.
-                          </>
-                        ) : (
-                          <>
-                            Start your streak today! Complete a pomodoro to{" "}
-                            <span className="text-orange-500 font-semibold">begin your journey</span>.
-                          </>
-                        )}
-                      </p>
                     </div>
                   </div>
 
