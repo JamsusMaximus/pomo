@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import { useRouter } from "next/navigation";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -70,7 +71,7 @@ interface UserChallenge {
   recurringMonth?: number;
 }
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
@@ -834,5 +835,13 @@ export default function ProfilePage() {
           })()}
       </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ErrorBoundary fallbackTitle="Profile Error" fallbackMessage="An error occurred while loading your profile. Please refresh the page.">
+      <ProfilePageContent />
+    </ErrorBoundary>
   );
 }

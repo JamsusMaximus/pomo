@@ -25,8 +25,9 @@ import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
 import { Download } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-export default function Home() {
+function HomeContent() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
@@ -38,6 +39,8 @@ export default function Home() {
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
   const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "error" | "success">("idle");
+  const [syncRetryCount, setSyncRetryCount] = useState(0);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -263,42 +266,69 @@ export default function Home() {
     });
   }, [isSignedIn, focusDuration, breakDuration, cyclesCompleted, isHydrated, savePrefs]);
 
+  // Sync local pomodoros to Convex with retry mechanism
+  const syncLocalSessions = useCallback(async () => {
+    const unsyncedSessions = getUnsyncedSessions();
+
+    if (unsyncedSessions.length === 0) {
+      setSyncStatus("idle");
+      return;
+    }
+
+    setSyncStatus("syncing");
+    console.log(`Syncing ${unsyncedSessions.length} local pomodoros to Convex...`);
+
+    try {
+      // Upload each unsynced session to Convex
+      await Promise.all(
+        unsyncedSessions.map((session) =>
+          saveSession({
+            mode: session.mode,
+            duration: session.duration,
+            tag: session.tag,
+            completedAt: session.completedAt,
+          })
+        )
+      );
+
+      // Mark all as synced in localStorage
+      markSessionsSynced(unsyncedSessions.map((s) => s.id));
+      console.log("✅ Local pomodoros synced successfully!");
+      setSyncStatus("success");
+      setSyncRetryCount(0);
+
+      // Refresh the sessions display
+      setSessions(loadSessions());
+
+      // Reset success status after 3 seconds
+      setTimeout(() => setSyncStatus("idle"), 3000);
+    } catch (err) {
+      console.error("Failed to sync local sessions to Convex:", err);
+      setSyncStatus("error");
+
+      // Auto-retry up to 3 times with exponential backoff
+      if (syncRetryCount < 3) {
+        const retryDelay = Math.pow(2, syncRetryCount) * 2000; // 2s, 4s, 8s
+        console.log(`Retrying sync in ${retryDelay / 1000}s... (attempt ${syncRetryCount + 1}/3)`);
+
+        setTimeout(() => {
+          setSyncRetryCount((prev) => prev + 1);
+          syncLocalSessions();
+        }, retryDelay);
+      }
+    }
+  }, [saveSession, syncRetryCount]);
+
   // Sync local pomodoros to Convex when user signs in
   useEffect(() => {
     // Detect when user transitions from signed out to signed in
     if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
-      const unsyncedSessions = getUnsyncedSessions();
-
-      if (unsyncedSessions.length > 0) {
-        console.log(`Syncing ${unsyncedSessions.length} local pomodoros to Convex...`);
-
-        // Upload each unsynced session to Convex
-        Promise.all(
-          unsyncedSessions.map((session) =>
-            saveSession({
-              mode: session.mode,
-              duration: session.duration,
-              tag: session.tag,
-              completedAt: session.completedAt,
-            })
-          )
-        )
-          .then(() => {
-            // Mark all as synced in localStorage
-            markSessionsSynced(unsyncedSessions.map((s) => s.id));
-            console.log("✅ Local pomodoros synced successfully!");
-            // Refresh the sessions display
-            setSessions(loadSessions());
-          })
-          .catch((err) => {
-            console.error("Failed to sync local sessions to Convex:", err);
-          });
-      }
+      syncLocalSessions();
     }
 
     // Update the ref for next render
     prevIsSignedIn.current = isSignedIn;
-  }, [isSignedIn, isHydrated, saveSession]);
+  }, [isSignedIn, isHydrated, syncLocalSessions]);
 
   // Keyboard shortcut: Space bar to start/pause
   useEffect(() => {
@@ -331,6 +361,60 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
+      {/* Sync Status Toast */}
+      {syncStatus !== "idle" && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-20 right-4 z-50 bg-card border border-border rounded-lg shadow-lg p-3 max-w-xs"
+        >
+          {syncStatus === "syncing" && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <span>Syncing sessions...</span>
+            </div>
+          )}
+          {syncStatus === "success" && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>Sessions synced!</span>
+            </div>
+          )}
+          {syncStatus === "error" && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Sync failed</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSyncRetryCount(0);
+                  syncLocalSessions();
+                }}
+                className="text-xs"
+              >
+                Retry Now
+              </Button>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Top Controls - Positioned to avoid overlap */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 h-10">
         <Link href="/download">
@@ -669,5 +753,13 @@ export default function Home() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <ErrorBoundary fallbackTitle="Timer Error" fallbackMessage="The pomodoro timer encountered an error. Your progress has been saved.">
+      <HomeContent />
+    </ErrorBoundary>
   );
 }
