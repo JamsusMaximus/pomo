@@ -325,14 +325,14 @@ export default function ProfilePage() {
                         <motion.div
                           className="relative"
                           animate={{
-                            scaleX: [1, 1.08, 0.92, 1.05, 0.95, 1.03, 1],
-                            rotate: [0, -2.5, 1.5, -2, 2, -1, 0],
-                            opacity: [1, 0.92, 0.96, 0.9, 0.95, 0.93, 1],
+                            scaleX: [1, 1.03, 0.97, 1.02, 0.98, 1.01, 1],
+                            rotate: [0, -1, 0.5, -0.8, 1, -0.5, 0],
+                            opacity: [1, 0.95, 0.97, 0.94, 0.96, 0.95, 1],
                           }}
                           transition={{
-                            duration: 3.5,
+                            duration: 6,
                             repeat: Infinity,
-                            ease: [0.45, 0.05, 0.55, 0.95],
+                            ease: "easeInOut",
                           }}
                         >
                           <Flame className="w-24 h-24 sm:w-28 sm:h-28 text-orange-500 fill-orange-500 drop-shadow-lg" />
