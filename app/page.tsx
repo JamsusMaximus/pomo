@@ -216,7 +216,7 @@ export default function Home() {
     });
   }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
 
-  // Ensure user exists in Convex when signed in and sync username to Clerk
+  // Ensure user exists in Convex when signed in
   useEffect(() => {
     if (isSignedIn && user) {
       ensureUser({
@@ -225,17 +225,7 @@ export default function Home() {
         avatarUrl: user.imageUrl,
       })
         .then((result) => {
-          // Sync username to Clerk if user is new and doesn't have a username set
-          if (result.isNew || !user.username) {
-            user
-              .update({ username: result.username })
-              .then(() => {
-                console.log(`✅ Username synced to Clerk: ${result.username}`);
-              })
-              .catch((err) => {
-                console.error("Failed to sync username to Clerk:", err);
-              });
-          }
+          console.log(`✅ User ensured in Convex: ${result.username}`);
         })
         .catch((err) => {
           console.error("Failed to ensure user:", err);
