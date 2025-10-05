@@ -58,12 +58,23 @@ export default function ProfilePage() {
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
-  // Debug: Log stats to see what we're getting
+  // Debug: Log stats and challenges to see what we're getting
   useEffect(() => {
     if (stats) {
       console.log("Stats data:", stats);
     }
   }, [stats]);
+
+  useEffect(() => {
+    if (userChallenges) {
+      console.log("Challenges data:", {
+        active: userChallenges.active,
+        completed: userChallenges.completed,
+        activeCount: userChallenges.active.length,
+        completedCount: userChallenges.completed.length,
+      });
+    }
+  }, [userChallenges]);
   const seedTestData = useMutation(api.seed.seedTestData);
   const clearAllData = useMutation(api.seed.clearAllData);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -610,7 +621,12 @@ export default function ProfilePage() {
                     {userChallenges.active.length > 0 && (
                       <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
                         <div className="flex items-center justify-between mb-4">
-                          <h2 className="text-lg font-bold">Active Challenges</h2>
+                          <div>
+                            <h2 className="text-lg font-bold">Active Challenges</h2>
+                            <p className="text-sm text-muted-foreground">
+                              {userChallenges.active.length} challenge{userChallenges.active.length !== 1 ? "s" : ""} in progress
+                            </p>
+                          </div>
                           <Button
                             variant="outline"
                             size="sm"
@@ -626,34 +642,47 @@ export default function ProfilePage() {
                           </Button>
                         </div>
                         <div className="space-y-3">
-                          {userChallenges.active.map((challenge: any) => (
-                            <div
-                              key={challenge._id}
-                              className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border"
-                            >
-                              <span className="text-4xl">{challenge.badge}</span>
-                              <div className="flex-1">
-                                <h3 className="font-bold">{challenge.name}</h3>
-                                <p className="text-sm text-muted-foreground">{challenge.description}</p>
-                                <div className="mt-2">
-                                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                                    <span>
-                                      {challenge.progress} / {challenge.target}
-                                    </span>
-                                    <span>{Math.round((challenge.progress / challenge.target) * 100)}%</span>
-                                  </div>
-                                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-orange-500 transition-all duration-500"
-                                      style={{
-                                        width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%`,
-                                      }}
-                                    />
+                          {userChallenges.active
+                            .sort((a: any, b: any) => {
+                              // Sort by progress percentage (highest first)
+                              const aPercent = (a.progress / a.target) * 100;
+                              const bPercent = (b.progress / b.target) * 100;
+                              return bPercent - aPercent;
+                            })
+                            .map((challenge: any) => {
+                              const percentage = Math.round((challenge.progress / challenge.target) * 100);
+                              return (
+                                <div
+                                  key={challenge._id}
+                                  className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
+                                >
+                                  <span className="text-4xl">{challenge.badge}</span>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <h3 className="font-bold">{challenge.name}</h3>
+                                      <span className="text-sm font-bold text-orange-500">{percentage}%</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                                    <div className="mt-2">
+                                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                                        <span>
+                                          {challenge.progress} / {challenge.target} {challenge.type === "streak" ? "days" : "pomodoros"}
+                                        </span>
+                                        <span>{challenge.target - challenge.progress} remaining</span>
+                                      </div>
+                                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                                          style={{
+                                            width: `${Math.min(percentage, 100)}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                          ))}
+                              );
+                            })}
                         </div>
                       </div>
                     )}
@@ -661,7 +690,12 @@ export default function ProfilePage() {
                     {/* Completed Challenges */}
                     {userChallenges.completed.length > 0 && (
                       <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-                        <h2 className="text-lg font-bold mb-4">Completed Challenges</h2>
+                        <div className="mb-4">
+                          <h2 className="text-lg font-bold">Completed Challenges</h2>
+                          <p className="text-sm text-muted-foreground">
+                            {userChallenges.completed.length} badge{userChallenges.completed.length !== 1 ? "s" : ""} earned
+                          </p>
+                        </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                           {userChallenges.completed.map((challenge: any) => (
                             <div
