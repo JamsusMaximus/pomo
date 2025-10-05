@@ -197,7 +197,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Combined Profile & Level Card */}
+        {/* Main Content - Two Column Layout */}
         {stats &&
           (() => {
             const levelInfo = getLevelInfo(stats.total.count);
@@ -206,202 +206,171 @@ export default function ProfilePage() {
             const rangeEnd = levelInfo.pomosForNextLevel;
 
             return (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="bg-card rounded-2xl shadow-lg border border-border p-8 mb-8"
-              >
-                {/* Profile Section */}
-                <div className="flex items-center gap-6 pb-6 mb-6 border-b border-border">
-                  <Avatar className="w-20 h-20">
-                    <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
-                    <AvatarFallback className="text-xl">
-                      {user.username?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold mb-1">{user.username || "User"}</h1>
-                    <p className="text-sm text-muted-foreground">
-                      {user.primaryEmailAddress?.emailAddress}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                      {currentPomos}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Total Pomodoros</p>
-                  </div>
-                </div>
-
-                {/* Level Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-orange-500 rounded-xl">
-                      <Award className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">
-                        Level {levelInfo.currentLevel} · {getLevelTitle(levelInfo.currentLevel)}
-                      </h2>
+              <>
+                {/* Hero Section - Profile & Overview */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8 mb-6"
+                >
+                  {/* Profile Header */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
+                    <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
+                      <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
+                      <AvatarFallback className="text-xl">
+                        {user.username?.[0]?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h1 className="text-2xl sm:text-3xl font-bold mb-1">{user.username || "User"}</h1>
                       <p className="text-sm text-muted-foreground">
-                        {levelInfo.pomosRemaining} pomodoros to Level {levelInfo.currentLevel + 1}
+                        {user.primaryEmailAddress?.emailAddress}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                          <p className="text-sm font-medium">
+                            Level {levelInfo.currentLevel} · {getLevelTitle(levelInfo.currentLevel)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-xl p-4 border border-orange-500/10">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Total</p>
+                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{currentPomos}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.total.minutes)}</p>
+                    </div>
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">This Week</p>
+                      <p className="text-2xl font-bold">{stats.week.count}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.week.minutes)}</p>
+                    </div>
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Daily Streak</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold">{stats.dailyStreak ?? 0}</p>
+                        <Flame className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"}
+                      </p>
+                    </div>
+                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Weekly Streak</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold">{stats.weeklyStreak ?? 0}</p>
+                        <Flame className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"}
                       </p>
                     </div>
                   </div>
 
-                  {/* Linear range progress bar with position marker */}
-                  <div className="relative pt-6">
-                    {/* Current position marker */}
-                    <div
-                      className="absolute top-0 transform -translate-x-1/2 flex flex-col items-center z-10"
-                      style={{ left: `${levelInfo.progress}%` }}
-                    >
-                      <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-1">
-                        {currentPomos}
+                  {/* Level Progress */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-orange-500 rounded-lg">
+                          <Award className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-sm font-medium">
+                          {levelInfo.pomosRemaining} pomos to Level {levelInfo.currentLevel + 1}
+                        </p>
                       </div>
-                      <div className="w-0.5 h-4 bg-orange-600 dark:bg-orange-400"></div>
+                      <p className="text-xs text-muted-foreground">
+                        {rangeStart} → {rangeEnd}
+                      </p>
                     </div>
-
-                    {/* XP progress bar */}
-                    <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted/30 border border-border">
+                    <div className="relative">
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted/30">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                          style={{ width: `${levelInfo.progress}%` }}
+                        />
+                      </div>
                       <div
-                        className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500 ease-out"
-                        style={{ width: `${levelInfo.progress}%` }}
-                      />
-                    </div>
-
-                    {/* Range labels */}
-                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                      <span className="font-medium">{rangeStart}</span>
-                      <span className="font-medium">{rangeEnd}</span>
+                        className="absolute -top-1 transform -translate-x-1/2"
+                        style={{ left: `${levelInfo.progress}%` }}
+                      >
+                        <div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-background shadow-lg" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+
+                {/* Focus Fitness */}
+                {focusGraph && focusGraph.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.05 }}
+                    className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
+                  >
+                    <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      90-day productivity trend using Strava's fitness algorithm
+                    </p>
+                    <FocusGraph data={focusGraph} />
+                  </motion.div>
+                )}
+
+                {/* Stats Grid */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6"
+                >
+                  {/* This Month */}
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">This Month</p>
+                    <p className="text-2xl font-bold">{stats.month.count}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.month.minutes)}</p>
+                  </div>
+
+                  {/* This Year */}
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">This Year</p>
+                    <p className="text-2xl font-bold">{stats.year.count}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.year.minutes)}</p>
+                  </div>
+
+                  {/* All Time (repeated for grid) */}
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">All Time</p>
+                    <p className="text-2xl font-bold">{stats.total.count}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.total.minutes)}</p>
+                  </div>
+
+                  {/* Last 7 Days */}
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Last 7 Days</p>
+                    <p className="text-2xl font-bold">{stats.week.count}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.week.minutes)}</p>
+                  </div>
+                </motion.div>
+
+                {/* Activity Heatmap */}
+                {activity && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.15 }}
+                    className="bg-card rounded-2xl shadow-lg border border-border p-6"
+                  >
+                    <h2 className="text-lg font-bold mb-2">Activity Heatmap</h2>
+                    <p className="text-sm text-muted-foreground mb-4">Your productivity patterns at a glance</p>
+                    <ActivityHeatmap data={activity} />
+                  </motion.div>
+                )}
+              </>
             );
           })()}
-
-        {/* Streaks */}
-        {stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="grid grid-cols-2 gap-4 mb-8"
-          >
-            {/* Daily Streak */}
-            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
-              <div className="absolute -top-4 -right-4 opacity-5">
-                <Flame className="w-32 h-32" />
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Daily Streak</h3>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-orange-500 rounded-xl">
-                    <Flame className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-4xl font-bold text-orange-600 dark:text-orange-400">
-                      {stats.dailyStreak ?? 0}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"} in a row
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Weekly Streak */}
-            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
-              <div className="absolute -top-4 -right-4 opacity-5">
-                <Flame className="w-32 h-32" />
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Weekly Streak</h3>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-orange-500 rounded-xl">
-                    <Flame className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-4xl font-bold text-orange-600 dark:text-orange-400">
-                      {stats.weeklyStreak ?? 0}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"} with 5+ pomos
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Focus Graph */}
-        {focusGraph && focusGraph.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.12 }}
-            className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8"
-          >
-            <h2 className="text-xl font-bold mb-4">Focus Fitness</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Your productivity trend over the past 90 days. The score increases with daily pomodoros and naturally decays over time.
-            </p>
-            <FocusGraph data={focusGraph} />
-          </motion.div>
-        )}
-
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-        >
-          {/* All Time */}
-          <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">All Time</h3>
-            <p className="text-3xl font-bold mb-1">{stats?.total.count || 0}</p>
-            <p className="text-sm text-muted-foreground">{formatTime(stats?.total.minutes || 0)}</p>
-          </div>
-
-          {/* This Week */}
-          <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">This Week</h3>
-            <p className="text-3xl font-bold mb-1">{stats?.week.count || 0}</p>
-            <p className="text-sm text-muted-foreground">{formatTime(stats?.week.minutes || 0)}</p>
-          </div>
-
-          {/* This Month */}
-          <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">This Month</h3>
-            <p className="text-3xl font-bold mb-1">{stats?.month.count || 0}</p>
-            <p className="text-sm text-muted-foreground">{formatTime(stats?.month.minutes || 0)}</p>
-          </div>
-
-          {/* This Year */}
-          <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">This Year</h3>
-            <p className="text-3xl font-bold mb-1">{stats?.year.count || 0}</p>
-            <p className="text-sm text-muted-foreground">{formatTime(stats?.year.minutes || 0)}</p>
-          </div>
-        </motion.div>
-
-        {/* Activity Heatmap */}
-        {activity && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-card rounded-2xl shadow-lg border border-border p-6"
-          >
-            <h2 className="text-xl font-bold mb-4">Activity Heatmap</h2>
-            <ActivityHeatmap data={activity} />
-          </motion.div>
-        )}
       </div>
     </main>
   );
