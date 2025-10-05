@@ -21,6 +21,13 @@ export default function ProfilePage() {
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
   const saveSession = useMutation(api.pomodoros.saveSession);
+
+  // Debug: Log stats to see what we're getting
+  useEffect(() => {
+    if (stats) {
+      console.log("Stats data:", stats);
+    }
+  }, [stats]);
   const seedTestData = useMutation(api.seed.seedTestData);
   const clearAllData = useMutation(api.seed.clearAllData);
   const [isSyncing, setIsSyncing] = useState(false);
