@@ -43,3 +43,6 @@ next-env.d.ts
 # tauri
 /src-tauri/target
 /src-tauri/WixTools
+
+# changelog rate limit
+.changelog-last-run
