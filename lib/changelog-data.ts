@@ -1,4 +1,4 @@
-// Auto-generated from git commits by scripts/generate-changelog.js
+// Auto-generated from git commits by Claude AI (scripts/generate-changelog.mjs)
 // Do not edit manually - run 'npm run generate:changelog' to update
 
 export interface ChangelogChange {
@@ -19,44 +19,27 @@ export const changelog: ChangelogEntry[] = [
     date: "October 5, 2025",
     changes: [
       {
-        hash: "b433536",
-        date: "2025-10-05",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Auto-generate changelog from git commits",
-        description: "auto-generate changelog from git commits",
+        title: "Pomodoro session feed",
+        description: "You can now view a feed of your completed Pomodoro sessions.",
       },
       {
-        hash: "7ebb133",
-        date: "2025-10-05",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Add changelog page at /changelog",
-        description: "add changelog page at /changelog",
+        title: "Hybrid Convex sync",
+        description:
+          "Your Pomodoro sessions are now automatically synced to the cloud when you're signed in.",
       },
       {
-        hash: "8dcfa34",
-        date: "2025-10-05",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Show user level beside avatar in navigation",
-        description: "show user level beside avatar in navigation",
-      },
-      {
-        hash: "1da11ad",
-        date: "2025-10-05",
-        type: "feature",
-        label: "New",
-        title: "Add Tauri for Mac app packaging",
-        description: "add Tauri for Mac app packaging",
-      },
-      {
-        hash: "280c4db",
-        date: "2025-10-05",
-        type: "feature",
-        label: "New",
-        title: "Add completion sound and browser notifications",
-        description: "add completion sound and browser notifications",
+        title: "Optional authentication",
+        description:
+          "You can now use the app without signing in, with your sessions stored locally.",
       },
     ],
   },
@@ -64,33 +47,28 @@ export const changelog: ChangelogEntry[] = [
     date: "October 4, 2025",
     changes: [
       {
-        hash: "5e913a7",
-        date: "2025-10-04",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Add pomodoro session feed",
-        description: "add pomodoro session feed",
+        title: "Streamlined signup",
+        description:
+          "The signup form now only requires an email, with Google sign-in as the prominent option.",
       },
       {
-        hash: "9b3aab2",
-        date: "2025-10-04",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Make auth optional, add local session storage",
-        description: "make auth optional, add local session storage",
+        title: "Completion notifications with sound",
+        description:
+          "You'll get notifications when a Pomodoro session completes, with an optional sound.",
       },
-    ],
-  },
-  {
-    date: "October 3, 2025",
-    changes: [
       {
-        hash: "9871df9",
-        date: "2025-10-03",
+        hash: "",
         type: "feature",
         label: "New",
-        title: "Cohesive minimal dark theme with slate palette",
-        description: "cohesive minimal dark theme with slate palette",
+        title: "24-hour time format",
+        description:
+          "The session feed now displays time in a 24-hour format for better readability.",
       },
     ],
   },

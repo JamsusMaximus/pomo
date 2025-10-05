@@ -206,17 +206,18 @@ async function generateChangelog() {
 
     // Add type and label to each change
     const formattedChangelog = uniqueChangelog.map((entry) => ({
-      ...entry,
+      date: entry.date,
       changes: entry.changes.map((change) => ({
-        ...change,
+        hash: change.hash || "",
         type: change.type || "feature",
         label: change.label || "New",
-        hash: change.hash || "",
+        title: change.title,
+        description: change.description,
       })),
     }));
 
     // Generate TypeScript file
-    const tsContent = `// Auto-generated from git commits by Claude AI (scripts/generate-changelog.js)
+    const tsContent = `// Auto-generated from git commits by Claude AI (scripts/generate-changelog.mjs)
 // Do not edit manually - run 'npm run generate:changelog' to update
 
 export interface ChangelogChange {
