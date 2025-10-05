@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 /**
  * Get all active challenges
@@ -154,7 +153,7 @@ export const syncMyProgress = mutation({
 
         case "streak": {
           let streak = 0;
-          let checkDate = new Date(today);
+          const checkDate = new Date(today);
 
           while (true) {
             const dayStart = checkDate.getTime();
@@ -276,7 +275,7 @@ export const updateChallengeProgress = internalMutation({
         case "streak": {
           // Calculate current streak
           let streak = 0;
-          let checkDate = new Date(today);
+          const checkDate = new Date(today);
 
           while (true) {
             const dayStart = checkDate.getTime();
