@@ -482,9 +482,19 @@ export default function ProfilePage() {
                   >
                     <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
                     <p className="text-sm text-muted-foreground mb-4">
-                      90-day productivity trend using Strava's fitness algorithm
+                      90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
                     </p>
-                    <FocusGraph data={focusGraph} />
+                    <FocusGraph data={(() => {
+                      // Remove trailing zeros to prevent steep drop at the end
+                      let lastNonZeroIndex = focusGraph.length - 1;
+                      for (let i = focusGraph.length - 1; i >= 0; i--) {
+                        if (focusGraph[i].score > 0) {
+                          lastNonZeroIndex = i;
+                          break;
+                        }
+                      }
+                      return focusGraph.slice(0, lastNonZeroIndex + 1);
+                    })()} />
                   </motion.div>
                 )}
 
