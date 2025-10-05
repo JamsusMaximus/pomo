@@ -324,7 +324,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
       {/* Top Controls - Positioned to avoid overlap */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 h-10">
         <Link href="/download">
           <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
             <Download className="w-4 h-4 mr-1" />
@@ -350,12 +350,22 @@ export default function Home() {
             {(() => {
               if (!stats) {
                 return (
-                  <div className="flex flex-col gap-1">
+                  <motion.div 
+                    className="flex flex-col gap-1"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
                     <span className="text-sm font-medium">Level 1</span>
-                    <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-orange-500 to-orange-600 w-0" />
+                    <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
+                        initial={{ width: 0 }}
+                        animate={{ width: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                      />
                     </div>
-                  </div>
+                  </motion.div>
                 );
               }
 
@@ -406,17 +416,24 @@ export default function Home() {
               const levelInfo = getLevelInfoFromDb(stats.total.count);
 
               return (
-                <div className="flex flex-col gap-1">
+                <motion.div 
+                  className="flex flex-col gap-1"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
                   <span className="text-sm font-medium">
                     Level {levelInfo.currentLevel}
                   </span>
-                  <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300"
-                      style={{ width: `${levelInfo.progress}%` }}
+                  <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${levelInfo.progress}%` }}
+                      transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
                     />
                   </div>
-                </div>
+                </motion.div>
               );
             })()}
           </Link>
@@ -611,12 +628,12 @@ export default function Home() {
               >
                 <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
                   <Button variant="outline" onClick={reset} size="default" className="w-full">
-                    Reset
-                  </Button>
+            Reset
+          </Button>
                 </motion.div>
               </motion.div>
             )}
-          </div>
+        </div>
         </motion.div>
 
         {/* Pomodoro Feed */}
