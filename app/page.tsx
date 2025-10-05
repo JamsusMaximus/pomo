@@ -560,16 +560,23 @@ export default function Home() {
 
             {/* Timer in center of ring */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div
+              <motion.div
                 className="text-6xl sm:text-7xl font-semibold tabular-nums tracking-tighter"
                 style={{
                   fontFamily:
                     'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
                   fontVariantNumeric: "tabular-nums",
                 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={
+                  hasAnimatedProgress
+                    ? { duration: 0 }
+                    : { duration: 1.4, delay: 0.4, ease: "easeOut" }
+                }
               >
                 {mm}:{ss}
-              </div>
+              </motion.div>
             </div>
           </div>
 
