@@ -315,42 +315,10 @@ export default function ProfilePage() {
                   transition={{ duration: 0.4, delay: 0.05 }}
                   className="mb-6"
                 >
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-xl border border-orange-500/20 p-6 relative overflow-hidden">
-                    <div className="absolute -top-8 -right-8 opacity-5">
-                      <Flame className="w-64 h-64" />
-                    </div>
-                    <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-                      {/* Flame icon with animated burning effect - LEFT SIDE */}
-                      <div className="flex flex-col items-center shrink-0">
-                        <motion.div
-                          className="relative"
-                          animate={{
-                            scaleX: [1, 1.03, 0.97, 1.02, 0.98, 1.01, 1],
-                            rotate: [0, -1, 0.5, -0.8, 1, -0.5, 0],
-                            opacity: [1, 0.95, 0.97, 0.94, 0.96, 0.95, 1],
-                          }}
-                          transition={{
-                            duration: 6,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          <Flame className="w-24 h-24 sm:w-28 sm:h-28 text-orange-500 fill-orange-500 drop-shadow-lg" />
-                        </motion.div>
-                        <div className="flex flex-col items-center -mt-1">
-                          <span className={`font-black text-orange-600 dark:text-orange-400 ${
-                            (stats.dailyStreak ?? 0) >= 100 ? "text-3xl sm:text-4xl" : 
-                            (stats.dailyStreak ?? 0) >= 10 ? "text-4xl sm:text-5xl" : 
-                            "text-5xl sm:text-6xl"
-                          }`}>
-                            {stats.dailyStreak ?? 0}
-                          </span>
-                          <h2 className="text-lg sm:text-xl font-bold text-orange-500">day streak!</h2>
-                        </div>
-                      </div>
-
-                      {/* Week view - RIGHT SIDE */}
-                      <div className="flex-1 w-full bg-background/50 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                      {/* Week view - LEFT SIDE */}
+                      <div className="flex-1 w-full">
                         <div className="flex justify-around items-start gap-2 sm:gap-3">
                           {getWeekViewData(activity).map((day, index) => (
                             <motion.div
@@ -437,7 +405,7 @@ export default function ProfilePage() {
                             </motion.div>
                           ))}
                         </div>
-                        {/* Encouragement text - inside week view */}
+                        {/* Encouragement text */}
                         <p className="text-center mt-4 text-xs sm:text-sm text-muted-foreground">
                           {stats.dailyStreak && stats.dailyStreak > 0 ? (
                             <>
@@ -450,25 +418,79 @@ export default function ProfilePage() {
                           )}
                         </p>
                       </div>
+
+                      {/* Streak number and label - RIGHT SIDE */}
+                      <div className="flex flex-col items-center sm:items-end shrink-0">
+                        <motion.div
+                          animate={{
+                            scaleX: [1, 1.03, 0.97, 1.02, 0.98, 1.01, 1],
+                            rotate: [0, -1, 0.5, -0.8, 1, -0.5, 0],
+                            opacity: [1, 0.95, 0.97, 0.94, 0.96, 0.95, 1],
+                          }}
+                          transition={{
+                            duration: 6,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          <Flame className="w-16 h-16 sm:w-20 sm:h-20 text-orange-500 fill-orange-500 mb-2" />
+                        </motion.div>
+                        <span className={`font-black text-orange-600 dark:text-orange-400 ${
+                          (stats.dailyStreak ?? 0) >= 100 ? "text-4xl sm:text-5xl" : 
+                          (stats.dailyStreak ?? 0) >= 10 ? "text-5xl sm:text-6xl" : 
+                          "text-6xl sm:text-7xl"
+                        }`}>
+                          {stats.dailyStreak ?? 0}
+                        </span>
+                        <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">day streak!</h2>
+                      </div>
                     </div>
                   </div>
+                </motion.div>
 
-                  {/* Weekly Streak - Smaller */}
-                  <div className="mt-4 bg-card rounded-xl shadow-md border border-border p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-500/10 rounded-lg">
-                        <Flame className="w-5 h-5 text-orange-500" />
+                {/* Weekly Streak - More Exciting */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.08 }}
+                  className="mb-6"
+                >
+                  <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-5 relative overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map((_, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{
+                                delay: 0.1 + i * 0.1,
+                                duration: 0.5,
+                                type: "spring",
+                                stiffness: 200,
+                              }}
+                            >
+                              <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
+                            </motion.div>
+                          ))}
+                          {(stats.weeklyStreak ?? 0) > 8 && (
+                            <span className="text-xl font-bold text-orange-500 ml-1">
+                              +{(stats.weeklyStreak ?? 0) - 8}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Weekly Streak</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(stats.weeklyStreak ?? 0) === 1 ? "1 week" : `${stats.weeklyStreak ?? 0} weeks`} with 5+ pomos
+                      <div className="text-right">
+                        <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
+                          {stats.weeklyStreak ?? 0}
                         </p>
+                        <p className="text-sm font-medium text-muted-foreground mt-1">
+                          {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">5+ pomos</p>
                       </div>
                     </div>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                      {stats.weeklyStreak ?? 0}
-                    </p>
                   </div>
                 </motion.div>
 
@@ -485,15 +507,19 @@ export default function ProfilePage() {
                       90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
                     </p>
                     <FocusGraph data={(() => {
-                      // Remove trailing zeros to prevent steep drop at the end
-                      let lastNonZeroIndex = focusGraph.length - 1;
+                      // Find the last data point with meaningful score (> 5)
+                      // This prevents showing the natural decay to near-zero at the end
+                      let lastMeaningfulIndex = focusGraph.length - 1;
                       for (let i = focusGraph.length - 1; i >= 0; i--) {
-                        if (focusGraph[i].score > 0) {
-                          lastNonZeroIndex = i;
+                        if (focusGraph[i].score >= 5) {
+                          lastMeaningfulIndex = i;
                           break;
                         }
                       }
-                      return focusGraph.slice(0, lastNonZeroIndex + 1);
+                      // Always show at least 30 days of data
+                      const minDataPoints = Math.min(30, focusGraph.length);
+                      const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
+                      return focusGraph.slice(0, cutoffIndex);
                     })()} />
                   </motion.div>
                 )}
