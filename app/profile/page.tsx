@@ -502,10 +502,32 @@ export default function ProfilePage() {
                     transition={{ duration: 0.4, delay: 0.1 }}
                     className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
                   >
-                    <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
-                    </p>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
+                        <p className="text-sm text-muted-foreground">
+                          90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
+                          {(() => {
+                            const filteredData = (() => {
+                              let lastMeaningfulIndex = focusGraph.length - 1;
+                              for (let i = focusGraph.length - 1; i >= 0; i--) {
+                                if (focusGraph[i].score >= 5) {
+                                  lastMeaningfulIndex = i;
+                                  break;
+                                }
+                              }
+                              return focusGraph.slice(0, lastMeaningfulIndex + 1);
+                            })();
+                            return filteredData[filteredData.length - 1]?.score || 0;
+                          })()}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">Current</p>
+                      </div>
+                    </div>
                     <FocusGraph data={(() => {
                       // Find the last data point with meaningful score (> 5)
                       // This prevents showing the natural decay to near-zero at the end
