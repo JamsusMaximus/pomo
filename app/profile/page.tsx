@@ -155,36 +155,38 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Debug info card */}
-        <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-medium text-sm">Debug & Test Data</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
-                <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
-                {isSeeding ? "Seeding..." : "Seed 40 Days"}
-              </Button>
-              {stats && stats.total.count > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleClearData}
-                  disabled={isClearing}
-                >
-                  <Trash2 className={`w-4 h-4 mr-2 ${isClearing ? "animate-pulse" : ""}`} />
-                  Clear All
+        {/* Debug info card - Development only */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-medium text-sm">Debug & Test Data</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
+                  <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
+                  {isSeeding ? "Seeding..." : "Seed 40 Days"}
                 </Button>
-              )}
+                {stats && stats.total.count > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleClearData}
+                    disabled={isClearing}
+                  >
+                    <Trash2 className={`w-4 h-4 mr-2 ${isClearing ? "animate-pulse" : ""}`} />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="text-sm space-y-1">
+              <p className="text-muted-foreground">
+                • Local storage: {localStats.total} focus sessions
+              </p>
+              <p className="text-muted-foreground">• Unsynced: {localStats.unsynced}</p>
+              <p className="text-muted-foreground">• Convex: {stats?.total.count || 0}</p>
             </div>
           </div>
-          <div className="text-sm space-y-1">
-            <p className="text-muted-foreground">
-              • Local storage: {localStats.total} focus sessions
-            </p>
-            <p className="text-muted-foreground">• Unsynced: {localStats.unsynced}</p>
-            <p className="text-muted-foreground">• Convex: {stats?.total.count || 0}</p>
-          </div>
-        </div>
+        )}
 
         {/* Combined Profile & Level Card */}
         {stats &&
