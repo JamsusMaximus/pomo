@@ -419,9 +419,15 @@ export default function Home() {
           <div className="relative mb-8">
             <svg className="w-64 h-64 sm:w-80 sm:h-80 -rotate-90" viewBox="0 0 200 200">
               <defs>
-                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                {/* Focus mode gradient (orange/primary) */}
+                <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
                   <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
+                </linearGradient>
+                {/* Break mode gradient (green/teal) */}
+                <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#14b8a6" stopOpacity="0.7" />
                 </linearGradient>
               </defs>
 
@@ -442,7 +448,7 @@ export default function Home() {
                 cy="100"
                 r="85"
                 fill="none"
-                stroke="url(#progressGradient)"
+                stroke={mode === "break" ? "url(#breakGradient)" : "url(#focusGradient)"}
                 strokeWidth="8"
                 strokeLinecap="round"
                 initial={{ strokeDasharray: 534.07, strokeDashoffset: 0 }}
