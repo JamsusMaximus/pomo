@@ -1,111 +1,58 @@
 #!/usr/bin/env node
 
 /**
- * Generate changelog from git commits
- * Reads conventional commits (feat:, fix:, etc.) and groups by day
+ * Generate changelog from git commits using Claude AI
+ * Uses Claude Haiku to intelligently summarize user-facing changes
  * Outputs to lib/changelog-data.ts
  */
 
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const Anthropic = require("@anthropic-ai/sdk").default;
 
-// Get git log with specific format
+// Check for API key
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("❌ Error: ANTHROPIC_API_KEY environment variable not set");
+  console.error("   Set it in your shell or .env file");
+  process.exit(1);
+}
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+// Get git log for the last 30 days
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+const sinceDate = thirtyDaysAgo.toISOString().split("T")[0];
+
 const gitLog = execSync(
-  'git log --pretty=format:"%H|%ad|%s" --date=format:"%Y-%m-%d" --no-merges',
+  `git log --since="${sinceDate}" --pretty=format:"%H|%ad|%s|%b" --date=format:"%Y-%m-%d" --no-merges`,
   { encoding: "utf-8" }
 );
+
+if (!gitLog.trim()) {
+  console.log("⚠️  No commits found in the last 30 days");
+  process.exit(0);
+}
 
 // Parse commits
 const commits = gitLog
   .trim()
   .split("\n")
   .map((line) => {
-    const [hash, date, message] = line.split("|");
-    return { hash, date, message };
-  });
-
-// Filter for major user-facing features only
-const userFacingKeywords = [
-  "level",
-  "profile",
-  "notification",
-  "sound",
-  "keyboard",
-  "space",
-  "avatar",
-  "heatmap",
-  "activity",
-  "stats",
-  "dark mode",
-  "theme",
-  "progress ring",
-  "timer",
-  "pomodoro feed",
-  "session",
-  "tag",
-  "mac app",
-  "download page",
-  "changelog",
-];
-
-// Keywords to exclude (infrastructure, tweaks, backend, etc.)
-const excludeKeywords = [
-  "convex",
-  "clerk",
-  "ci",
-  "build",
-  "eslint",
-  "typescript",
-  "test",
-  "vitest",
-  "backend",
-  "schema",
-  "refactor",
-  "improve",
-  "simplify",
-  "move",
-  "replace",
-  "remove",
-  "add missing",
-  "separate",
-  "better",
-  "enhanced",
-];
-
-const significantCommits = commits
-  .filter((commit) => {
-    const msg = commit.message.toLowerCase();
-
-    // Only features
-    if (!msg.startsWith("feat:")) return false;
-
-    // Must contain user-facing keywords
-    const hasUserFacing = userFacingKeywords.some((kw) => msg.includes(kw));
-    if (!hasUserFacing) return false;
-
-    // Must not contain excluded keywords
-    const hasExcluded = excludeKeywords.some((kw) => msg.includes(kw));
-    return !hasExcluded;
-  })
-  .map((commit) => {
-    // Extract title and description
-    const messageWithoutPrefix = commit.message.substring(5).trim(); // Remove "feat:"
-    const [title, ...descParts] = messageWithoutPrefix.split("\n");
-    const description = descParts.join(" ").trim();
-
+    const [hash, date, subject, body] = line.split("|");
     return {
-      hash: commit.hash.substring(0, 7),
-      date: commit.date,
-      type: "feature",
-      label: "New",
-      title: title.charAt(0).toUpperCase() + title.slice(1),
-      description: description || title,
+      hash: hash.substring(0, 7),
+      date,
+      subject,
+      body: body || "",
     };
   });
 
 // Group by date
-const groupedByDate = significantCommits.reduce((acc, commit) => {
+const commitsByDate = commits.reduce((acc, commit) => {
   if (!acc[commit.date]) {
     acc[commit.date] = [];
   }
@@ -113,27 +60,96 @@ const groupedByDate = significantCommits.reduce((acc, commit) => {
   return acc;
 }, {});
 
-// Format for TypeScript export
-const formatDate = (dateStr) => {
-  const [year, month, day] = dateStr.split("-");
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
+console.log(`📊 Found ${commits.length} commits across ${Object.keys(commitsByDate).length} days`);
+console.log(`🤖 Asking Claude Haiku to generate changelog...`);
 
-const changelog = Object.keys(groupedByDate)
-  .sort((a, b) => new Date(b) - new Date(a)) // Most recent first
-  .map((date) => ({
-    date: formatDate(date),
-    changes: groupedByDate[date].slice(0, 5), // Max 5 entries per day
-  }))
-  .filter((entry) => entry.changes.length > 0); // Remove empty days
+// Prepare prompt for Claude
+const commitSummary = Object.keys(commitsByDate)
+  .sort((a, b) => new Date(b) - new Date(a))
+  .map((date) => {
+    const dayCommits = commitsByDate[date];
+    return `## ${date}\n${dayCommits.map((c) => `- ${c.subject}\n  ${c.body}`).join("\n")}`;
+  })
+  .join("\n\n");
 
-// Generate TypeScript file
-const tsContent = `// Auto-generated from git commits by scripts/generate-changelog.js
+const prompt = `You are analyzing git commits for a Pomodoro timer web app. Extract ONLY user-facing features and changes.
+
+**Exclude:**
+- Backend infrastructure (Convex, Clerk, database, auth setup)
+- Build/CI/deployment changes
+- Code refactoring, formatting, linting
+- Bug fixes unless they significantly impact UX
+- Minor UI tweaks (moving buttons, color changes, etc.)
+- Documentation
+
+**Include:**
+- New features users can see/use
+- Major UX improvements
+- Important functionality additions
+
+**Format your response as valid JSON:**
+\`\`\`json
+[
+  {
+    "date": "October 5, 2025",
+    "changes": [
+      {
+        "title": "Feature title (2-4 words)",
+        "description": "One clear sentence describing what users can now do (max 20 words)"
+      }
+    ]
+  }
+]
+\`\`\`
+
+**Guidelines:**
+- Group similar changes together (e.g., combine "add notifications" + "add sound" into "Completion notifications with sound")
+- Maximum 5 changes per day
+- Be comprehensive but concise
+- Write from user's perspective ("You can now..." not "Added...")
+- Skip days with no user-facing changes
+
+Here are the commits:
+
+${commitSummary}`;
+
+async function generateChangelog() {
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307", // Cheapest model
+      max_tokens: 2000,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    const content = response.content[0].text;
+
+    // Extract JSON from response (Claude might wrap it in markdown code blocks)
+    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/\[([\s\S]*)\]/);
+    if (!jsonMatch) {
+      throw new Error("Could not parse JSON from Claude response");
+    }
+
+    const jsonText = jsonMatch[1] || jsonMatch[0];
+    const changelog = JSON.parse(jsonText);
+
+    // Add type and label to each change
+    const formattedChangelog = changelog.map((entry) => ({
+      ...entry,
+      changes: entry.changes.map((change) => ({
+        ...change,
+        type: "feature",
+        label: "New",
+        hash: "", // We don't track individual hashes in AI-generated changelog
+      })),
+    }));
+
+    // Generate TypeScript file
+    const tsContent = `// Auto-generated from git commits by Claude AI (scripts/generate-changelog.js)
 // Do not edit manually - run 'npm run generate:changelog' to update
 
 export interface ChangelogChange {
@@ -149,14 +165,22 @@ export interface ChangelogEntry {
   changes: ChangelogChange[];
 }
 
-export const changelog: ChangelogEntry[] = ${JSON.stringify(changelog, null, 2)};
+export const changelog: ChangelogEntry[] = ${JSON.stringify(formattedChangelog, null, 2)};
 `;
 
-// Write to file
-const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
-fs.writeFileSync(outputPath, tsContent);
+    // Write to file
+    const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
+    fs.writeFileSync(outputPath, tsContent);
 
-console.log(
-  `✅ Generated changelog with ${changelog.length} days and ${significantCommits.length} entries`
-);
-console.log(`📝 Written to: ${outputPath}`);
+    const totalChanges = formattedChangelog.reduce((sum, entry) => sum + entry.changes.length, 0);
+    console.log(
+      `✅ Generated changelog with ${formattedChangelog.length} days and ${totalChanges} user-facing changes`
+    );
+    console.log(`📝 Written to: ${outputPath}`);
+  } catch (error) {
+    console.error("❌ Error generating changelog:", error.message);
+    process.exit(1);
+  }
+}
+
+generateChangelog();

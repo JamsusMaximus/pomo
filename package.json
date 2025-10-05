@@ -37,6 +37,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.14",
     "@tauri-apps/cli": "^2.8.4",
