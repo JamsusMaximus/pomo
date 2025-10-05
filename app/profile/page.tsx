@@ -320,21 +320,33 @@ export default function ProfilePage() {
                       <Flame className="w-64 h-64" />
                     </div>
                     <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-                      {/* Flame icon with number inside - LEFT SIDE */}
+                      {/* Flame icon with animated burning effect - LEFT SIDE */}
                       <div className="flex flex-col items-center shrink-0">
-                        <div className="relative">
-                          <Flame className="w-28 h-28 sm:w-32 sm:h-32 text-orange-500 fill-orange-500" />
-                          <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: "0.15em" }}>
-                            <span className={`font-black text-white ${
-                              (stats.dailyStreak ?? 0) >= 100 ? "text-2xl sm:text-3xl" : 
-                              (stats.dailyStreak ?? 0) >= 10 ? "text-3xl sm:text-4xl" : 
-                              "text-4xl sm:text-5xl"
-                            }`}>
-                              {stats.dailyStreak ?? 0}
-                            </span>
-                          </div>
+                        <motion.div
+                          className="relative"
+                          animate={{
+                            y: [0, -3, 0, -2, 0],
+                            scale: [1, 1.02, 0.98, 1.01, 1],
+                            rotate: [0, 1, -1, 0.5, 0],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          <Flame className="w-32 h-32 sm:w-36 sm:h-36 text-orange-500 fill-orange-500 drop-shadow-lg" />
+                        </motion.div>
+                        <div className="flex flex-col items-center -mt-2">
+                          <span className={`font-black text-orange-600 dark:text-orange-400 ${
+                            (stats.dailyStreak ?? 0) >= 100 ? "text-3xl sm:text-4xl" : 
+                            (stats.dailyStreak ?? 0) >= 10 ? "text-4xl sm:text-5xl" : 
+                            "text-5xl sm:text-6xl"
+                          }`}>
+                            {stats.dailyStreak ?? 0}
+                          </span>
+                          <h2 className="text-lg sm:text-xl font-bold text-orange-500">day streak!</h2>
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-orange-500 mt-2">day streak!</h2>
                       </div>
 
                       {/* Week view - RIGHT SIDE */}
