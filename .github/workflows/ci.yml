@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for changelog generation
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -19,6 +21,13 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Generate Changelog
+        # Only run on main branch pushes to minimize API costs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run generate:changelog
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Prettier (format check)
         run: npm run format:check

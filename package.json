@@ -12,7 +12,11 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "generate:changelog": "node scripts/generate-changelog.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
@@ -33,8 +37,10 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.14",
+    "@tauri-apps/cli": "^2.8.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
