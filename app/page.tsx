@@ -24,7 +24,7 @@ import {
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
-import { User, Download } from "lucide-react";
+import { Download } from "lucide-react";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);

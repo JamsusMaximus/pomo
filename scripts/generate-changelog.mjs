@@ -6,10 +6,14 @@
  * Outputs to lib/changelog-data.ts
  */
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
-const Anthropic = require("@anthropic-ai/sdk").default;
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import Anthropic from "@anthropic-ai/sdk";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Check for API key
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -63,7 +67,7 @@ if (fs.existsSync(outputPath)) {
         process.exit(0);
       }
     }
-  } catch (e) {
+  } catch {
     // If we can't parse, continue with generation
     console.log("⚠️  Could not check existing changelog, proceeding with generation");
   }
@@ -181,7 +185,7 @@ async function generateChangelog() {
         if (match) {
           existingChangelog = JSON.parse(match[1]);
         }
-      } catch (e) {
+      } catch {
         console.log("⚠️  Could not parse existing changelog, starting fresh");
       }
     }
