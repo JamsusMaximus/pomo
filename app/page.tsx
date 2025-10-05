@@ -444,9 +444,9 @@ export default function Home() {
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Timer Card Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
           className="relative w-full bg-card rounded-2xl shadow-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
         >
           {/* Header */}
@@ -641,7 +641,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
             className="w-full bg-card rounded-2xl shadow-lg border border-border p-6"
           >
             <PomodoroFeed sessions={sessions} />

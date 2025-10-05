@@ -28,7 +28,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" aria-label="Toggle theme">
-        <Sun className="h-6 w-6" />
+        <Sun className="h-7 w-7" />
       </Button>
     );
   }
@@ -51,7 +51,7 @@ export function ThemeToggle() {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           className="absolute"
         >
-          <Sun className="h-6 w-6" />
+          <Sun className="h-7 w-7" />
         </motion.div>
         <motion.div
           initial={false}
@@ -62,7 +62,7 @@ export function ThemeToggle() {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           className="absolute"
         >
-          <Moon className="h-6 w-6" />
+          <Moon className="h-7 w-7" />
         </motion.div>
       </Button>
     </motion.div>
