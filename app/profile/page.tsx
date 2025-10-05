@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
@@ -282,29 +282,49 @@ export default function ProfilePage() {
             className="grid grid-cols-2 gap-4 mb-8"
           >
             {/* Daily Streak */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
-              <div className="absolute top-4 right-4 text-6xl opacity-10">🔥</div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Daily Streak</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-4xl font-bold">{stats.dailyStreak}</p>
-                <span className="text-2xl">🔥</span>
+            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
+              <div className="absolute -top-4 -right-4 opacity-5">
+                <Flame className="w-32 h-32" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stats.dailyStreak === 1 ? "day" : "days"} in a row
-              </p>
+              <div className="relative z-10">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Daily Streak</h3>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-orange-500 rounded-xl">
+                    <Flame className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-4xl font-bold text-orange-600 dark:text-orange-400">
+                      {stats.dailyStreak ?? 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"} in a row
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Weekly Streak */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
-              <div className="absolute top-4 right-4 text-6xl opacity-10">🔥</div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Weekly Streak</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-4xl font-bold">{stats.weeklyStreak}</p>
-                <span className="text-2xl">🔥</span>
+            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
+              <div className="absolute -top-4 -right-4 opacity-5">
+                <Flame className="w-32 h-32" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stats.weeklyStreak === 1 ? "week" : "weeks"} with 5+ pomos
-              </p>
+              <div className="relative z-10">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Weekly Streak</h3>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-orange-500 rounded-xl">
+                    <Flame className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-4xl font-bold text-orange-600 dark:text-orange-400">
+                      {stats.weeklyStreak ?? 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"} with 5+ pomos
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
