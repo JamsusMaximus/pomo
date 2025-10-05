@@ -16,6 +16,7 @@ import type {
 import type * as challenges from "../challenges.js";
 import type * as pomodoros from "../pomodoros.js";
 import type * as seed from "../seed.js";
+import type * as seedChallenges from "../seedChallenges.js";
 import type * as stats from "../stats.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   challenges: typeof challenges;
   pomodoros: typeof pomodoros;
   seed: typeof seed;
+  seedChallenges: typeof seedChallenges;
   stats: typeof stats;
   timers: typeof timers;
   users: typeof users;
