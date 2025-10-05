@@ -56,7 +56,8 @@ export default function DownloadPage() {
 
             <div className="mt-6 text-sm text-muted-foreground">
               <p>
-                <strong>Note:</strong> If you see "unidentified developer", right-click → Open
+                <strong>Note:</strong> If you see &quot;unidentified developer&quot;, right-click →
+                Open
               </p>
               <p>or go to System Settings → Privacy & Security → Open Anyway</p>
             </div>
