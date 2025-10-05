@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star, Target, Sprout, Trophy, Crown, Sparkles, Zap, Medal, Swords, type LucideIcon } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star, type LucideIcon } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -50,12 +50,25 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
 
 // Helper to render Lucide icon from string name
 const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
-  const Icon = (LucideIcons as any)[iconName] as LucideIcon;
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
   if (!Icon) {
     return <Award className={className} />; // Fallback icon
   }
   return <Icon className={className} />;
 };
+
+// Type for user challenge with progress
+interface UserChallenge {
+  _id: string;
+  name: string;
+  description: string;
+  type: string;
+  target: number;
+  badge: string;
+  progress: number;
+  completedAt?: number;
+  recurringMonth?: number;
+}
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -711,13 +724,13 @@ export default function ProfilePage() {
                         </div>
                         <div className="space-y-3">
                           {userChallenges.active
-                            .sort((a: any, b: any) => {
+                            .sort((a: UserChallenge, b: UserChallenge) => {
                               // Sort by progress percentage (highest first)
                               const aPercent = (a.progress / a.target) * 100;
                               const bPercent = (b.progress / b.target) * 100;
                               return bPercent - aPercent;
                             })
-                            .map((challenge: any, index: number) => {
+                            .map((challenge: UserChallenge, index: number) => {
                               const percentage = Math.round((challenge.progress / challenge.target) * 100);
                               return (
                                 <motion.div
@@ -775,7 +788,7 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {userChallenges.completed.map((challenge: any, index: number) => (
+                          {userChallenges.completed.map((challenge: UserChallenge, index: number) => (
                             <motion.div
                               key={challenge._id}
                               initial={{ opacity: 0, scale: 0.8 }}

@@ -45,32 +45,51 @@ export const getStats = query({
     const startOfYear = new Date(today.getFullYear(), 0, 1);
     const yearTimestamp = startOfYear.getTime();
 
-    // Filter sessions by time period
-    const weekSessions = sessions.filter((s) => s.completedAt >= weekTimestamp);
-    const monthSessions = sessions.filter((s) => s.completedAt >= monthTimestamp);
-    const yearSessions = sessions.filter((s) => s.completedAt >= yearTimestamp);
+    // Single-pass aggregation: O(N) instead of O(4N)
+    const stats = sessions.reduce(
+      (acc, session) => {
+        const minutes = session.duration / 60;
 
-    // Calculate totals
-    const totalCount = sessions.length;
-    const totalMinutes = sessions.reduce((sum, s) => sum + s.duration / 60, 0);
+        // Total (all sessions)
+        acc.total.count++;
+        acc.total.minutes += minutes;
 
-    const weekCount = weekSessions.length;
-    const weekMinutes = weekSessions.reduce((sum, s) => sum + s.duration / 60, 0);
+        // Year
+        if (session.completedAt >= yearTimestamp) {
+          acc.year.count++;
+          acc.year.minutes += minutes;
+        }
 
-    const monthCount = monthSessions.length;
-    const monthMinutes = monthSessions.reduce((sum, s) => sum + s.duration / 60, 0);
+        // Month
+        if (session.completedAt >= monthTimestamp) {
+          acc.month.count++;
+          acc.month.minutes += minutes;
+        }
 
-    const yearCount = yearSessions.length;
-    const yearMinutes = yearSessions.reduce((sum, s) => sum + s.duration / 60, 0);
+        // Week
+        if (session.completedAt >= weekTimestamp) {
+          acc.week.count++;
+          acc.week.minutes += minutes;
+        }
+
+        return acc;
+      },
+      {
+        total: { count: 0, minutes: 0 },
+        year: { count: 0, minutes: 0 },
+        month: { count: 0, minutes: 0 },
+        week: { count: 0, minutes: 0 },
+      }
+    );
 
     // Calculate streaks
     const streaks = calculateStreaks(sessions);
 
     return {
-      total: { count: totalCount, minutes: Math.round(totalMinutes) },
-      week: { count: weekCount, minutes: Math.round(weekMinutes) },
-      month: { count: monthCount, minutes: Math.round(monthMinutes) },
-      year: { count: yearCount, minutes: Math.round(yearMinutes) },
+      total: { count: stats.total.count, minutes: Math.round(stats.total.minutes) },
+      week: { count: stats.week.count, minutes: Math.round(stats.week.minutes) },
+      month: { count: stats.month.count, minutes: Math.round(stats.month.minutes) },
+      year: { count: stats.year.count, minutes: Math.round(stats.year.minutes) },
       dailyStreak: streaks.daily,
       weeklyStreak: streaks.weekly,
     };

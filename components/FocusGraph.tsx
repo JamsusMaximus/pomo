@@ -9,9 +9,9 @@ interface FocusGraphProps {
 export function FocusGraph({ data }: FocusGraphProps) {
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; score: number; date: string } | null>(null);
 
-  const { maxScore, points, pathD, dataPoints } = useMemo(() => {
+  const { pathD, dataPoints } = useMemo(() => {
     if (!data || data.length === 0) {
-      return { maxScore: 100, points: "", pathD: "", dataPoints: [] };
+      return { pathD: "", dataPoints: [] };
     }
 
     const max = Math.max(...data.map((d) => d.score), 100);
@@ -39,8 +39,6 @@ export function FocusGraph({ data }: FocusGraphProps) {
     const areaPath = `${path} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
 
     return {
-      maxScore: max,
-      points: pathPoints.join(" "),
       pathD: areaPath,
       dataPoints: pointData,
     };
