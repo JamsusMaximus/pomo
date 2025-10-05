@@ -1,5 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * Save a completed pomodoro session
@@ -23,13 +24,22 @@ export const saveSession = mutation({
 
     if (!user) throw new Error("User not found - call ensureUser first");
 
-    return await ctx.db.insert("pomodoros", {
+    const sessionId = await ctx.db.insert("pomodoros", {
       userId: user._id,
       mode: args.mode,
       duration: args.duration,
       tag: args.tag,
       completedAt: args.completedAt,
     });
+
+    // Update challenge progress after each focus session
+    if (args.mode === "focus") {
+      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+        userId: user._id,
+      });
+    }
+
+    return sessionId;
   },
 });
 
