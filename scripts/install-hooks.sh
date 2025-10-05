@@ -12,28 +12,36 @@ echo "📦 Installing git hooks..."
 cat > "$HOOKS_DIR/pre-commit" << 'EOF'
 #!/bin/bash
 
-# Auto-generate changelog on first commit after any gap
-# This runs before the commit is created
+# Pre-commit hook for code quality checks
+# 1. Auto-format with Prettier
+# 2. Generate changelog (if ANTHROPIC_API_KEY is set)
 
-# Check if ANTHROPIC_API_KEY is set
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-  echo "⚠️  ANTHROPIC_API_KEY not set. Skipping changelog generation."
-  echo "   Set it in your shell profile or run: export ANTHROPIC_API_KEY=your-key"
-  exit 0
-fi
+echo "🔍 Running pre-commit checks..."
 
-# Run changelog generator
-echo "🤖 Generating changelog from recent commits..."
-npm run generate:changelog --silent
+# 1. Auto-format staged files with Prettier
+echo "✨ Formatting code with Prettier..."
+npx prettier --write $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|json|css|md|mjs)$')
 
-# If changelog was updated, add it to the commit
-if git diff --quiet lib/changelog-data.ts; then
-  echo "✅ No changelog updates needed"
+# Re-stage files that were formatted
+git diff --name-only | grep -E '\.(js|jsx|ts|tsx|json|css|md|mjs)$' | xargs git add 2>/dev/null || true
+
+# 2. Auto-generate changelog (optional - requires API key)
+if [ -n "$ANTHROPIC_API_KEY" ]; then
+  echo "🤖 Generating changelog from recent commits..."
+  npm run generate:changelog --silent
+
+  # If changelog was updated, add it to the commit
+  if git diff --quiet lib/changelog-data.ts; then
+    echo "✅ No changelog updates needed"
+  else
+    echo "📝 Changelog updated - adding to commit"
+    git add lib/changelog-data.ts
+  fi
 else
-  echo "📝 Changelog updated - adding to commit"
-  git add lib/changelog-data.ts
+  echo "⚠️  ANTHROPIC_API_KEY not set. Skipping changelog generation."
 fi
 
+echo "✅ Pre-commit checks complete!"
 exit 0
 EOF
 
@@ -43,9 +51,8 @@ chmod +x "$HOOKS_DIR/pre-commit"
 echo "✅ Git hooks installed successfully!"
 echo ""
 echo "The pre-commit hook will:"
-echo "  1. Run on every commit"
-echo "  2. Check for commits since last changelog entry"
-echo "  3. Generate changelog using Claude Haiku"
-echo "  4. Auto-add changelog-data.ts to your commit"
+echo "  1. Auto-format code with Prettier (prevents CI failures)"
+echo "  2. Generate changelog using Claude Haiku (if ANTHROPIC_API_KEY is set)"
+echo "  3. Auto-add formatted files and changelog to your commit"
 echo ""
-echo "Make sure to set ANTHROPIC_API_KEY in your environment!"
+echo "Your commits will now always pass Prettier checks! 🎉"
