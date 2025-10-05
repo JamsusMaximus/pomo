@@ -43,13 +43,16 @@ export default function Home() {
   // Track previous sign-in state to detect when user signs in
   const prevIsSignedIn = useRef(isSignedIn);
 
-  const { remaining, duration, mode, isRunning, start, pause, reset } = useTimer({
+  const { remaining, duration, mode, isRunning, start, pause, reset, setDebugTime } = useTimer({
     focusDuration,
     breakDuration,
     autoStartBreak: false,
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
+        // Increment pomos count
+        setCyclesCompleted((prev) => prev + 1);
+
         // Save locally
         saveCompletedSession("focus", focusDuration, currentTag);
 
@@ -66,6 +69,9 @@ export default function Home() {
         }
 
         setCurrentTag(""); // Clear tag for next session
+
+        // Refresh sessions display
+        setSessions(loadSessions());
       } else if (previousMode === "break") {
         // Save locally
         saveCompletedSession("break", breakDuration);
@@ -82,11 +88,6 @@ export default function Home() {
         }
       }
       setPreviousMode(newMode);
-      // Refresh sessions after saving
-      setSessions(loadSessions());
-    },
-    onCycleComplete: () => {
-      setCyclesCompleted((prev) => prev + 1);
     },
   });
 
@@ -255,15 +256,31 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full bg-card rounded-2xl shadow-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
+          className="relative w-full bg-card rounded-2xl shadow-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
         >
           {/* Header */}
           <div className="text-center space-y-2 mb-6">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Pomodoro</h1>
             <p className="text-sm text-muted-foreground">
-              Cycles: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+              Pomos Today: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
             </p>
           </div>
+
+          {/* Debug Button - DEV ONLY */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="absolute top-2 left-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDebugTime(2);
+                }}
+                className="text-xs opacity-50 hover:opacity-100"
+              >
+                Debug: 2s
+              </Button>
+            </div>
+          )}
 
           {/* Circular Progress Ring */}
           <div className="relative mb-8">

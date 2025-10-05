@@ -17,6 +17,7 @@ interface UseTimerReturn {
   start: () => void;
   pause: () => void;
   reset: () => void;
+  setDebugTime: (seconds: number) => void;
 }
 
 export function useTimer({
@@ -158,6 +159,14 @@ export function useTimer({
     setRemaining(focusDurationRef.current);
   }, []);
 
+  const setDebugTime = useCallback((seconds: number) => {
+    setIsRunning(false);
+    startedAtRef.current = null;
+    pausedAtRef.current = null;
+    durationRef.current = seconds;
+    setRemaining(seconds);
+  }, []);
+
   return {
     remaining,
     duration: durationRef.current,
@@ -166,5 +175,6 @@ export function useTimer({
     start,
     pause,
     reset,
+    setDebugTime,
   };
 }
