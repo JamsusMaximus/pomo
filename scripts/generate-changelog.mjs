@@ -4,6 +4,8 @@
  * Generate changelog from git commits using Claude AI
  * Uses Claude Haiku to intelligently summarize user-facing changes
  * Outputs to lib/changelog-data.ts
+ *
+ * Rate limit: Once per day maximum to save costs
  */
 
 import { execSync } from "child_process";
@@ -21,6 +23,23 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.error("   Set it in your shell or .env file");
   process.exit(1);
 }
+
+// Rate limit: Only run once per day
+const RATE_LIMIT_FILE = path.join(__dirname, "../.changelog-last-run");
+const now = new Date();
+const today = now.toISOString().split("T")[0];
+
+if (fs.existsSync(RATE_LIMIT_FILE)) {
+  const lastRun = fs.readFileSync(RATE_LIMIT_FILE, "utf-8").trim();
+  if (lastRun === today) {
+    console.log("⏭️  Changelog already generated today. Skipping to save costs.");
+    console.log("   Run manually with: npm run generate:changelog");
+    process.exit(0);
+  }
+}
+
+// Update rate limit file
+fs.writeFileSync(RATE_LIMIT_FILE, today);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
