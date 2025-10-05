@@ -54,6 +54,7 @@ export default function ProfilePage() {
   const stats = useQuery(api.stats.getStats);
   const activity = useQuery(api.stats.getActivity);
   const focusGraph = useQuery(api.stats.getFocusGraph);
+  const userChallenges = useQuery(api.challenges.getUserChallenges);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
   // Debug: Log stats to see what we're getting
@@ -592,6 +593,88 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* Challenges Section */}
+                {userChallenges && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.25 }}
+                    className="space-y-6"
+                  >
+                    {/* Active Challenges */}
+                    {userChallenges.active.length > 0 && (
+                      <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                        <h2 className="text-lg font-bold mb-4">Active Challenges</h2>
+                        <div className="space-y-3">
+                          {userChallenges.active.map((challenge: any) => (
+                            <div
+                              key={challenge._id}
+                              className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border"
+                            >
+                              <span className="text-4xl">{challenge.badge}</span>
+                              <div className="flex-1">
+                                <h3 className="font-bold">{challenge.name}</h3>
+                                <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                                <div className="mt-2">
+                                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                                    <span>
+                                      {challenge.progress} / {challenge.target}
+                                    </span>
+                                    <span>{Math.round((challenge.progress / challenge.target) * 100)}%</span>
+                                  </div>
+                                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-orange-500 transition-all duration-500"
+                                      style={{
+                                        width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Completed Challenges */}
+                    {userChallenges.completed.length > 0 && (
+                      <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                        <h2 className="text-lg font-bold mb-4">Completed Challenges</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {userChallenges.completed.map((challenge: any) => (
+                            <div
+                              key={challenge._id}
+                              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20"
+                            >
+                              <span className="text-5xl">{challenge.badge}</span>
+                              <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
+                              <p className="text-xs text-muted-foreground text-center">{challenge.description}</p>
+                              {challenge.completedAt && (
+                                <p className="text-xs text-orange-500">
+                                  {new Date(challenge.completedAt).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {userChallenges.active.length === 0 && userChallenges.completed.length === 0 && (
+                      <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
+                        <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Complete your first pomodoro to start earning badges!
+                        </p>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </>
