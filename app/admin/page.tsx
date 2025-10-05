@@ -14,6 +14,7 @@ export default function AdminPage() {
   const challenges = useQuery(api.challenges.getAllChallenges);
   const createChallenge = useMutation(api.challenges.createChallenge);
   const toggleActive = useMutation(api.challenges.toggleChallengeActive);
+  const seedChallenges = useMutation(api.seedChallenges.seedDefaultChallenges);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,10 +56,17 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold">Admin Panel</h1>
             <p className="text-muted-foreground">Manage challenges and badges</p>
           </div>
-          <Button onClick={() => setShowForm(!showForm)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Challenge
-          </Button>
+          <div className="flex gap-2">
+            {(!challenges || challenges.length === 0) && (
+              <Button variant="outline" onClick={() => seedChallenges()}>
+                Seed Defaults
+              </Button>
+            )}
+            <Button onClick={() => setShowForm(!showForm)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Challenge
+            </Button>
+          </div>
         </div>
 
         {/* Create Form */}
