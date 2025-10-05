@@ -214,8 +214,8 @@ export default function ProfilePage() {
                   transition={{ duration: 0.4 }}
                   className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8 mb-6"
                 >
-                  {/* Profile Header */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
+                  {/* Profile Header with Total */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                     <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
                       <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
                       <AvatarFallback className="text-xl">
@@ -224,10 +224,10 @@ export default function ProfilePage() {
                     </Avatar>
                     <div className="flex-1">
                       <h1 className="text-2xl sm:text-3xl font-bold mb-1">{user.username || "User"}</h1>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mb-2">
                         {user.primaryEmailAddress?.emailAddress}
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <p className="text-sm font-medium">
                             Level {levelInfo.currentLevel} · {getLevelTitle(levelInfo.currentLevel)}
@@ -235,39 +235,12 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Quick Stats Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-xl p-4 border border-orange-500/10">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Total</p>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{currentPomos}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.total.minutes)}</p>
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">This Week</p>
-                      <p className="text-2xl font-bold">{stats.week.count}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.week.minutes)}</p>
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Daily Streak</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold">{stats.dailyStreak ?? 0}</p>
-                        <Flame className="w-4 h-4 text-orange-500" />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"}
+                    <div className="text-left sm:text-right">
+                      <p className="text-4xl sm:text-5xl font-bold text-orange-600 dark:text-orange-400">
+                        {currentPomos}
                       </p>
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Weekly Streak</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold">{stats.weeklyStreak ?? 0}</p>
-                        <Flame className="w-4 h-4 text-orange-500" />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Total Pomodoros</p>
+                      <p className="text-xs text-muted-foreground mt-1">{formatTime(stats.total.minutes)}</p>
                     </div>
                   </div>
 
@@ -303,12 +276,66 @@ export default function ProfilePage() {
                   </div>
                 </motion.div>
 
+                {/* Exciting Streaks */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.05 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
+                >
+                  {/* Daily Streak */}
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
+                    <div className="absolute -top-6 -right-6 opacity-5">
+                      <Flame className="w-40 h-40" />
+                    </div>
+                    <div className="relative z-10">
+                      <h3 className="text-sm font-medium text-muted-foreground mb-4">Daily Streak</h3>
+                      <div className="flex items-center gap-4">
+                        <div className="p-4 bg-orange-500 rounded-2xl shadow-lg">
+                          <Flame className="w-10 h-10 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-5xl sm:text-6xl font-bold text-orange-600 dark:text-orange-400">
+                            {stats.dailyStreak ?? 0}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {(stats.dailyStreak ?? 0) === 1 ? "day" : "days"} in a row
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weekly Streak */}
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 sm:p-8 relative overflow-hidden">
+                    <div className="absolute -top-6 -right-6 opacity-5">
+                      <Flame className="w-40 h-40" />
+                    </div>
+                    <div className="relative z-10">
+                      <h3 className="text-sm font-medium text-muted-foreground mb-4">Weekly Streak</h3>
+                      <div className="flex items-center gap-4">
+                        <div className="p-4 bg-orange-500 rounded-2xl shadow-lg">
+                          <Flame className="w-10 h-10 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-5xl sm:text-6xl font-bold text-orange-600 dark:text-orange-400">
+                            {stats.weeklyStreak ?? 0}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"} with 5+ pomos
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
                 {/* Focus Fitness */}
                 {focusGraph && focusGraph.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.05 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
                     className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
                   >
                     <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
@@ -323,35 +350,28 @@ export default function ProfilePage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6"
+                  transition={{ duration: 0.4, delay: 0.15 }}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"
                 >
+                  {/* This Week */}
+                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">This Week</p>
+                    <p className="text-3xl font-bold mb-1">{stats.week.count}</p>
+                    <p className="text-sm text-muted-foreground">{formatTime(stats.week.minutes)}</p>
+                  </div>
+
                   {/* This Month */}
-                  <div className="bg-card rounded-xl p-4 border border-border">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">This Month</p>
-                    <p className="text-2xl font-bold">{stats.month.count}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.month.minutes)}</p>
+                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">This Month</p>
+                    <p className="text-3xl font-bold mb-1">{stats.month.count}</p>
+                    <p className="text-sm text-muted-foreground">{formatTime(stats.month.minutes)}</p>
                   </div>
 
                   {/* This Year */}
-                  <div className="bg-card rounded-xl p-4 border border-border">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">This Year</p>
-                    <p className="text-2xl font-bold">{stats.year.count}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.year.minutes)}</p>
-                  </div>
-
-                  {/* All Time (repeated for grid) */}
-                  <div className="bg-card rounded-xl p-4 border border-border">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">All Time</p>
-                    <p className="text-2xl font-bold">{stats.total.count}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.total.minutes)}</p>
-                  </div>
-
-                  {/* Last 7 Days */}
-                  <div className="bg-card rounded-xl p-4 border border-border">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Last 7 Days</p>
-                    <p className="text-2xl font-bold">{stats.week.count}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatTime(stats.week.minutes)}</p>
+                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">This Year</p>
+                    <p className="text-3xl font-bold mb-1">{stats.year.count}</p>
+                    <p className="text-sm text-muted-foreground">{formatTime(stats.year.minutes)}</p>
                   </div>
                 </motion.div>
 
@@ -360,7 +380,7 @@ export default function ProfilePage() {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.15 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
                     className="bg-card rounded-2xl shadow-lg border border-border p-6"
                   >
                     <h2 className="text-lg font-bold mb-2">Activity Heatmap</h2>
