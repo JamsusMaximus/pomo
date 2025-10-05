@@ -100,13 +100,12 @@ export default function Home() {
       try {
         const notification = new Notification(title, {
           body,
-          icon: "/favicon.ico",
-          badge: "/favicon.ico",
           tag: "pomodoro-complete",
           requireInteraction: true,
+          silent: false,
         });
 
-        console.log("Notification created successfully");
+        console.log("Notification created successfully", notification);
 
         // Close notification after 10 seconds
         setTimeout(() => notification.close(), 10000);
@@ -391,6 +390,19 @@ export default function Home() {
                   🔔 Enable
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  showNotification(
+                    "Test Notification",
+                    "If you can see this, notifications are working!"
+                  );
+                }}
+                className="text-xs opacity-50 hover:opacity-100"
+              >
+                Test 🔔
+              </Button>
             </div>
           )}
 
@@ -424,9 +436,9 @@ export default function Home() {
                 stroke="url(#progressGradient)"
                 strokeWidth="8"
                 strokeLinecap="round"
-                initial={{ strokeDasharray: "534.07", strokeDashoffset: "0" }}
+                initial={{ strokeDasharray: 534.07, strokeDashoffset: 0 }}
                 animate={{
-                  strokeDashoffset: `${534.07 * (1 - percent / 100)}`,
+                  strokeDashoffset: 534.07 * (1 - percent / 100),
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
               />
