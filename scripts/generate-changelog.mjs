@@ -220,7 +220,7 @@ async function generateChangelog() {
       changes: entry.changes.map((change) => ({
         hash: change.hash || "",
         type: change.type || "feature", // Fallback only if Claude didn't provide
-        label: change.label || "New",   // Fallback only if Claude didn't provide
+        label: change.label || "New", // Fallback only if Claude didn't provide
         title: change.title,
         description: change.description,
       })),

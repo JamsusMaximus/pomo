@@ -27,7 +27,12 @@ export function ThemeToggle() {
   // Show placeholder during SSR
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" aria-label="Toggle theme">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full h-10 w-10"
+        aria-label="Toggle theme"
+      >
         <Sun className="h-7 w-7" />
       </Button>
     );

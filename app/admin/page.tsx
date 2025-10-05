@@ -34,7 +34,11 @@ function AdminPageContent() {
   type ChallengeType = "total" | "streak" | "daily" | "weekly" | "monthly" | "recurring_monthly";
 
   const [showForm, setShowForm] = useState(false);
-  const [editingLevel, setEditingLevel] = useState<{ level: number; title: string; threshold: number } | null>(null);
+  const [editingLevel, setEditingLevel] = useState<{
+    level: number;
+    title: string;
+    threshold: number;
+  } | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -115,8 +119,8 @@ function AdminPageContent() {
               </Button>
             )}
             {challenges && challenges.length > 0 && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={async () => {
                   const result = await migrateBadges();
                   alert(`Migrated ${result.updated} of ${result.total} challenges`);
@@ -371,7 +375,10 @@ function AdminPageContent() {
 
 export default function AdminPage() {
   return (
-    <ErrorBoundary fallbackTitle="Admin Panel Error" fallbackMessage="An error occurred in the admin panel. Please try again.">
+    <ErrorBoundary
+      fallbackTitle="Admin Panel Error"
+      fallbackMessage="An error occurred in the admin panel. Please try again."
+    >
       <AdminPageContent />
     </ErrorBoundary>
   );
