@@ -553,7 +553,7 @@ export default function Home() {
                 transition={
                   hasAnimatedProgress
                     ? { duration: 0.5, ease: "easeInOut" }
-                    : { duration: 0.8, delay: 0.4, ease: "easeOut" }
+                    : { duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }
                 }
               />
             </svg>
