@@ -307,17 +307,26 @@ export default function ProfilePage() {
                     </div>
                     <div className="relative">
                       <div className="h-3 w-full overflow-hidden rounded-full bg-muted/30">
-                        <div
-                          className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
-                          style={{ width: `${levelInfo.progress}%` }}
+                        <motion.div
+                          className="h-full"
+                          style={{ 
+                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)"
+                          }}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${levelInfo.progress}%` }}
+                          viewport={{ once: true, margin: "-50px" }}
+                          transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
                         />
                       </div>
-                      <div
+                      <motion.div
                         className="absolute -top-1 transform -translate-x-1/2"
-                        style={{ left: `${levelInfo.progress}%` }}
+                        initial={{ left: "0%", opacity: 0 }}
+                        whileInView={{ left: `${levelInfo.progress}%`, opacity: 1 }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
                       >
                         <div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-background shadow-lg" />
-                      </div>
+                      </motion.div>
                     </div>
                   </div>
                 </motion.div>
@@ -649,11 +658,15 @@ export default function ProfilePage() {
                               const bPercent = (b.progress / b.target) * 100;
                               return bPercent - aPercent;
                             })
-                            .map((challenge: any) => {
+                            .map((challenge: any, index: number) => {
                               const percentage = Math.round((challenge.progress / challenge.target) * 100);
                               return (
-                                <div
+                                <motion.div
                                   key={challenge._id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  whileInView={{ opacity: 1, x: 0 }}
+                                  viewport={{ once: true, margin: "-50px" }}
+                                  transition={{ duration: 0.4, delay: index * 0.05 }}
                                   className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
                                 >
                                   <span className="text-4xl">{challenge.badge}</span>
@@ -671,16 +684,20 @@ export default function ProfilePage() {
                                         <span>{challenge.target - challenge.progress} remaining</span>
                                       </div>
                                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                          className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                                        <motion.div
+                                          className="h-full"
                                           style={{
-                                            width: `${Math.min(percentage, 100)}%`,
+                                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
                                           }}
+                                          initial={{ width: 0 }}
+                                          whileInView={{ width: `${Math.min(percentage, 100)}%` }}
+                                          viewport={{ once: true, margin: "-50px" }}
+                                          transition={{ duration: 1, delay: index * 0.05 + 0.2, ease: "easeOut" }}
                                         />
                                       </div>
                                     </div>
                                   </div>
-                                </div>
+                                </motion.div>
                               );
                             })}
                         </div>
@@ -697,10 +714,18 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {userChallenges.completed.map((challenge: any) => (
-                            <div
+                          {userChallenges.completed.map((challenge: any, index: number) => (
+                            <motion.div
                               key={challenge._id}
-                              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              viewport={{ once: true, margin: "-50px" }}
+                              transition={{ 
+                                duration: 0.4, 
+                                delay: index * 0.03,
+                                ease: "easeOut"
+                              }}
+                              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
                             >
                               <span className="text-5xl">{challenge.badge}</span>
                               <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
@@ -710,7 +735,7 @@ export default function ProfilePage() {
                                   {new Date(challenge.completedAt).toLocaleDateString()}
                                 </p>
                               )}
-                            </div>
+                            </motion.div>
                           ))}
                         </div>
                       </div>
