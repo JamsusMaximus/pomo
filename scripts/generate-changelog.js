@@ -25,57 +25,81 @@ const commits = gitLog
     return { hash, date, message };
   });
 
-// Filter and categorize significant commits
-const significantPrefixes = {
-  "feat:": { type: "feature", label: "New" },
-  "fix:": { type: "fix", label: "Fixed" },
-  "perf:": { type: "improvement", label: "Improved" },
-  "refactor:": { type: "improvement", label: "Improved" },
-};
+// Filter for major user-facing features only
+const userFacingKeywords = [
+  "level",
+  "profile",
+  "notification",
+  "sound",
+  "keyboard",
+  "space",
+  "avatar",
+  "heatmap",
+  "activity",
+  "stats",
+  "dark mode",
+  "theme",
+  "progress ring",
+  "timer",
+  "pomodoro feed",
+  "session",
+  "tag",
+  "mac app",
+  "download page",
+  "changelog",
+];
 
-// Keywords to filter out minor changes
-const minorKeywords = [
-  "typo",
-  "formatting",
-  "prettier",
-  "lint",
-  "comment",
-  "readme",
-  "docs only",
-  "whitespace",
-  "missing import",
+// Keywords to exclude (infrastructure, tweaks, backend, etc.)
+const excludeKeywords = [
+  "convex",
+  "clerk",
+  "ci",
+  "build",
+  "eslint",
+  "typescript",
+  "test",
+  "vitest",
+  "backend",
+  "schema",
+  "refactor",
+  "improve",
+  "simplify",
+  "move",
+  "replace",
+  "remove",
+  "add missing",
+  "separate",
+  "better",
+  "enhanced",
 ];
 
 const significantCommits = commits
   .filter((commit) => {
-    // Check if it has a significant prefix
-    const hasPrefix = Object.keys(significantPrefixes).some((prefix) =>
-      commit.message.toLowerCase().startsWith(prefix)
-    );
-    if (!hasPrefix) return false;
+    const msg = commit.message.toLowerCase();
 
-    // Filter out minor changes
-    const isMinor = minorKeywords.some((keyword) => commit.message.toLowerCase().includes(keyword));
-    return !isMinor;
+    // Only features
+    if (!msg.startsWith("feat:")) return false;
+
+    // Must contain user-facing keywords
+    const hasUserFacing = userFacingKeywords.some((kw) => msg.includes(kw));
+    if (!hasUserFacing) return false;
+
+    // Must not contain excluded keywords
+    const hasExcluded = excludeKeywords.some((kw) => msg.includes(kw));
+    return !hasExcluded;
   })
   .map((commit) => {
-    // Determine type from prefix
-    const prefix = Object.keys(significantPrefixes).find((p) =>
-      commit.message.toLowerCase().startsWith(p)
-    );
-    const { type, label } = significantPrefixes[prefix];
-
     // Extract title and description
-    const messageWithoutPrefix = commit.message.substring(prefix.length).trim();
+    const messageWithoutPrefix = commit.message.substring(5).trim(); // Remove "feat:"
     const [title, ...descParts] = messageWithoutPrefix.split("\n");
     const description = descParts.join(" ").trim();
 
     return {
       hash: commit.hash.substring(0, 7),
       date: commit.date,
-      type,
-      label,
-      title: title.charAt(0).toUpperCase() + title.slice(1), // Capitalize
+      type: "feature",
+      label: "New",
+      title: title.charAt(0).toUpperCase() + title.slice(1),
       description: description || title,
     };
   });
@@ -104,8 +128,9 @@ const changelog = Object.keys(groupedByDate)
   .sort((a, b) => new Date(b) - new Date(a)) // Most recent first
   .map((date) => ({
     date: formatDate(date),
-    changes: groupedByDate[date],
-  }));
+    changes: groupedByDate[date].slice(0, 5), // Max 5 entries per day
+  }))
+  .filter((entry) => entry.changes.length > 0); // Remove empty days
 
 // Generate TypeScript file
 const tsContent = `// Auto-generated from git commits by scripts/generate-changelog.js
