@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for changelog generation
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -19,6 +21,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Generate Changelog
+        run: npm run generate:changelog
 
       - name: Prettier (format check)
         run: npm run format:check
