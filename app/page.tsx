@@ -131,7 +131,7 @@ export default function Home() {
   const { remaining, duration, mode, isRunning, start, pause, reset, setDebugTime } = useTimer({
     focusDuration,
     breakDuration,
-    autoStartBreak: false,
+    autoStartBreak: true,
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
@@ -468,17 +468,34 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tag Input */}
-          <div className="w-full max-w-xs mb-6">
-            <Input
-              type="text"
-              placeholder="Tag (e.g., coding)"
-              value={currentTag}
-              onChange={(e) => setCurrentTag(e.target.value)}
-              className="h-11 text-sm text-center"
-              disabled={isRunning}
-            />
-          </div>
+          {/* Break mode indicator */}
+          {mode === "break" && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-center mb-6"
+            >
+              <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
+                <span className="text-2xl">☕️</span>
+                <span>Break</span>
+              </p>
+            </motion.div>
+          )}
+
+          {/* Tag Input - only show during focus mode */}
+          {mode === "focus" && (
+            <div className="w-full max-w-xs mb-6">
+              <Input
+                type="text"
+                placeholder="Tag (e.g., coding)"
+                value={currentTag}
+                onChange={(e) => setCurrentTag(e.target.value)}
+                className="h-11 text-sm text-center"
+                disabled={isRunning}
+              />
+            </div>
+          )}
 
           {/* Controls */}
           <div className="flex flex-col items-center gap-3 w-full max-w-xs">
