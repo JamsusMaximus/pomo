@@ -419,10 +419,10 @@ export default function Home() {
           <div className="relative mb-8">
             <svg className="w-64 h-64 sm:w-80 sm:h-80 -rotate-90" viewBox="0 0 200 200">
               <defs>
-                {/* Focus mode gradient (orange/primary) */}
+                {/* Focus mode gradient (calm orange/coral) */}
                 <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--color-primary))" stopOpacity="1" />
-                  <stop offset="100%" stopColor="hsl(var(--color-primary))" stopOpacity="0.7" />
+                  <stop offset="0%" stopColor="#fb923c" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#f97316" stopOpacity="0.8" />
                 </linearGradient>
                 {/* Break mode gradient (green/teal) */}
                 <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -431,7 +431,7 @@ export default function Home() {
                 </linearGradient>
               </defs>
 
-              {/* Background circle */}
+              {/* Background circle - transparent/subtle */}
               <circle
                 cx="100"
                 cy="100"
@@ -439,7 +439,7 @@ export default function Home() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="8"
-                className="text-border"
+                className="text-border opacity-0"
               />
 
               {/* Animated progress circle */}
