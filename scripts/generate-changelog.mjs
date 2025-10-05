@@ -26,51 +26,52 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Get git log for yesterday only (to minimize API costs)
-const yesterday = new Date();
-yesterday.setDate(yesterday.getDate() - 1);
-const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-const today = new Date();
-const todayStr = today.toISOString().split("T")[0];
-
-console.log(`📅 Processing commits from ${yesterdayStr} only (to minimize costs)`);
-
-const gitLog = execSync(
-  `git log --since="${yesterdayStr} 00:00:00" --until="${todayStr} 00:00:00" --pretty=format:"%H|%ad|%s|%b" --date=format:"%Y-%m-%d" --no-merges`,
-  { encoding: "utf-8" }
-);
-
-if (!gitLog.trim()) {
-  console.log("⚠️  No commits found yesterday. Keeping existing changelog.");
-  process.exit(0);
-}
-
-// Check if we've already processed yesterday's commits
+// Get the date of the last changelog entry to determine what needs processing
 const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
+let lastChangelogDate = null;
+
 if (fs.existsSync(outputPath)) {
   try {
     const existingContent = fs.readFileSync(outputPath, "utf-8");
     const match = existingContent.match(/export const changelog: ChangelogEntry\[\] = ([\s\S]*);/);
     if (match) {
       const existingChangelog = JSON.parse(match[1]);
-      const yesterdayFormatted = new Date(yesterdayStr).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      const alreadyProcessed = existingChangelog.some((entry) => entry.date === yesterdayFormatted);
-      if (alreadyProcessed) {
-        console.log(`✅ Changelog already contains entries for ${yesterdayFormatted}`);
-        console.log(`   Skipping generation (already run today)`);
-        process.exit(0);
+      if (existingChangelog.length > 0) {
+        // Parse the first entry's date (most recent)
+        const mostRecentEntry = existingChangelog[0].date;
+        lastChangelogDate = new Date(mostRecentEntry);
       }
     }
   } catch {
-    // If we can't parse, continue with generation
-    console.log("⚠️  Could not check existing changelog, proceeding with generation");
+    console.log("⚠️  Could not parse existing changelog");
   }
+}
+
+// If no existing changelog, start from 7 days ago (to catch recent history)
+// If existing changelog, start from the day after the last entry
+let sinceDate;
+if (lastChangelogDate) {
+  sinceDate = new Date(lastChangelogDate);
+  sinceDate.setDate(sinceDate.getDate() + 1);
+} else {
+  sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - 7);
+}
+
+const sinceDateStr = sinceDate.toISOString().split("T")[0];
+const today = new Date();
+const todayStr = today.toISOString().split("T")[0];
+
+console.log(`📅 Processing commits from ${sinceDateStr} to ${todayStr}`);
+
+const gitLog = execSync(
+  `git log --since="${sinceDateStr} 00:00:00" --until="${todayStr} 23:59:59" --pretty=format:"%H|%ad|%s|%b" --date=format:"%Y-%m-%d" --no-merges`,
+  { encoding: "utf-8" }
+);
+
+if (!gitLog.trim()) {
+  console.log("⚠️  No new commits to process. Keeping existing changelog.");
+  process.exit(0);
 }
 
 // Parse commits
@@ -122,6 +123,7 @@ const prompt = `You are analyzing git commits for a Pomodoro timer web app. Extr
 - New features users can see/use
 - Major UX improvements
 - Important functionality additions
+- Significant bug fixes that improve user experience
 
 **Format your response as valid JSON:**
 \`\`\`json
@@ -130,6 +132,8 @@ const prompt = `You are analyzing git commits for a Pomodoro timer web app. Extr
     "date": "October 5, 2025",
     "changes": [
       {
+        "type": "feature",
+        "label": "New",
         "title": "Feature title (2-4 words)",
         "description": "One clear sentence describing what users can now do (max 20 words)"
       }
@@ -138,12 +142,18 @@ const prompt = `You are analyzing git commits for a Pomodoro timer web app. Extr
 ]
 \`\`\`
 
+**Type categorization:**
+- type: "feature" + label: "New" = Brand new functionality
+- type: "improvement" + label: "Improved" = Enhancement to existing feature
+- type: "fix" + label: "Fixed" = Important bug fix that improves UX
+
 **Guidelines:**
 - Group similar changes together (e.g., combine "add notifications" + "add sound" into "Completion notifications with sound")
 - Maximum 5 changes per day
 - Be comprehensive but concise
 - Write from user's perspective ("You can now..." not "Added...")
 - Skip days with no user-facing changes
+- Always include type and label fields for each change
 
 Here are the commits:
 
@@ -204,13 +214,13 @@ async function generateChangelog() {
       }
     }
 
-    // Add type and label to each change
+    // Ensure all changes have required fields (Claude should provide these now)
     const formattedChangelog = uniqueChangelog.map((entry) => ({
       date: entry.date,
       changes: entry.changes.map((change) => ({
         hash: change.hash || "",
-        type: change.type || "feature",
-        label: change.label || "New",
+        type: change.type || "feature", // Fallback only if Claude didn't provide
+        label: change.label || "New",   // Fallback only if Claude didn't provide
         title: change.title,
         description: change.description,
       })),
