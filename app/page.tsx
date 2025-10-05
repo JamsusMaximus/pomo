@@ -22,7 +22,7 @@ import {
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
-import { User } from "lucide-react";
+import { User, Download } from "lucide-react";
 
 export default function Home() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
@@ -48,7 +48,9 @@ export default function Home() {
   // Play completion sound using Web Audio API
   const playCompletionSound = useCallback(() => {
     try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioContext = new AudioContextClass();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -317,6 +319,12 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
       {/* Top Controls - Positioned to avoid overlap */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3">
+        <Link href="/download">
+          <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+            <Download className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Download App</span>
+          </Button>
+        </Link>
         <SignedOut>
           <SignUpButton mode="modal">
             <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
