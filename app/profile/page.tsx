@@ -315,7 +315,7 @@ export default function ProfilePage() {
                   transition={{ duration: 0.4, delay: 0.05 }}
                   className="mb-6"
                 >
-                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6 relative overflow-hidden">
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                       {/* Week view - LEFT SIDE */}
                       <div className="flex-1 w-full">
@@ -486,7 +486,7 @@ export default function ProfilePage() {
                           {stats.weeklyStreak ?? 0}
                         </p>
                         <p className="text-sm font-medium text-muted-foreground mt-1">
-                          {(stats.weeklyStreak ?? 0) === 1 ? "week" : "weeks"}
+                          {(stats.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
                         </p>
                         <p className="text-xs text-muted-foreground">5+ pomos</p>
                       </div>
