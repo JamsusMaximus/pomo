@@ -37,6 +37,7 @@ export default function Home() {
   const [showSpaceHint, setShowSpaceHint] = useState(true);
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
+  const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -212,6 +213,13 @@ export default function Home() {
     setSessions(loadSessions());
 
     setIsHydrated(true);
+
+    // Trigger progress bar animation after mount
+    const timer = setTimeout(() => {
+      setHasAnimatedProgress(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Persist to localStorage when preferences change
@@ -538,11 +546,15 @@ export default function Home() {
                 stroke={mode === "break" ? "url(#breakGradient)" : "url(#focusGradient)"}
                 strokeWidth="8"
                 strokeLinecap="round"
-                initial={{ strokeDasharray: 534.07, strokeDashoffset: 0 }}
+                initial={{ strokeDasharray: 534.07, strokeDashoffset: 534.07 }}
                 animate={{
                   strokeDashoffset: 534.07 * (1 - percent / 100),
                 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={
+                  hasAnimatedProgress
+                    ? { duration: 0.5, ease: "easeInOut" }
+                    : { duration: 0.8, delay: 0.4, ease: "easeOut" }
+                }
               />
             </svg>
 
