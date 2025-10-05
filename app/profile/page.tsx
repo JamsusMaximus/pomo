@@ -323,9 +323,13 @@ export default function ProfilePage() {
                       {/* Flame icon with number inside */}
                       <div className="flex flex-col items-center mb-5">
                         <div className="relative mb-3">
-                          <Flame className="w-24 h-24 sm:w-28 sm:h-28 text-orange-500 fill-orange-500" />
-                          <div className="absolute inset-0 flex items-center justify-center pb-1">
-                            <span className="text-4xl sm:text-5xl font-black text-white">
+                          <Flame className="w-32 h-32 sm:w-36 sm:h-36 text-orange-500 fill-orange-500" />
+                          <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: "0.15em" }}>
+                            <span className={`font-black text-white ${
+                              (stats.dailyStreak ?? 0) >= 100 ? "text-3xl sm:text-4xl" : 
+                              (stats.dailyStreak ?? 0) >= 10 ? "text-4xl sm:text-5xl" : 
+                              "text-5xl sm:text-6xl"
+                            }`}>
                               {stats.dailyStreak ?? 0}
                             </span>
                           </div>
@@ -336,41 +340,91 @@ export default function ProfilePage() {
                       {/* Week view */}
                       <div className="bg-background/50 rounded-xl p-4 backdrop-blur-sm">
                         <div className="flex justify-around items-start gap-2 sm:gap-3">
-                          {getWeekViewData(activity).map((day) => (
-                            <div key={day.date} className="flex flex-col items-center gap-2">
+                          {getWeekViewData(activity).map((day, index) => (
+                            <motion.div
+                              key={day.date}
+                              className="flex flex-col items-center gap-2"
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{
+                                delay: 0.05 + index * 0.2,
+                                duration: 0.3,
+                                ease: "easeOut",
+                              }}
+                            >
                               <span className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}>
                                 {day.dayOfWeek}
                               </span>
                               {day.isToday && day.completed ? (
                                 <motion.div
                                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
+                                  initial={{ scale: 0 }}
                                   animate={{
+                                    scale: [0, 1.2, 1],
                                     boxShadow: [
+                                      "0 0 0 0 rgba(249, 115, 22, 0.6)",
+                                      "0 0 0 12px rgba(249, 115, 22, 0)",
                                       "0 0 0 0 rgba(249, 115, 22, 0.4)",
                                       "0 0 0 8px rgba(249, 115, 22, 0)",
                                       "0 0 0 0 rgba(249, 115, 22, 0)",
                                     ],
                                   }}
                                   transition={{
-                                    duration: 2,
-                                    repeat: Infinity,
-                                    ease: "easeOut",
+                                    scale: {
+                                      delay: 0.05 + index * 0.2,
+                                      duration: 0.3,
+                                      ease: "easeOut",
+                                    },
+                                    boxShadow: {
+                                      delay: 0.05 + index * 0.2,
+                                      duration: 0.6,
+                                      ease: "easeOut",
+                                      repeat: Infinity,
+                                      repeatDelay: 1.4,
+                                    },
                                   }}
                                 >
                                   <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
                                 </motion.div>
                               ) : day.isToday ? (
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+                                <motion.div
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: [0, 1.2, 1] }}
+                                  transition={{
+                                    delay: 0.05 + index * 0.2,
+                                    duration: 0.3,
+                                    ease: "easeOut",
+                                  }}
+                                >
                                   <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
-                                </div>
+                                </motion.div>
                               ) : day.completed ? (
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+                                <motion.div
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: [0, 1.2, 1] }}
+                                  transition={{
+                                    delay: 0.05 + index * 0.2,
+                                    duration: 0.3,
+                                    ease: "easeOut",
+                                  }}
+                                >
                                   <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-[3]" />
-                                </div>
+                                </motion.div>
                               ) : (
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted/50 border-2 border-border" />
+                                <motion.div
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted/50 border-2 border-border"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: [0, 1.1, 1] }}
+                                  transition={{
+                                    delay: 0.05 + index * 0.2,
+                                    duration: 0.3,
+                                    ease: "easeOut",
+                                  }}
+                                />
                               )}
-                            </div>
+                            </motion.div>
                           ))}
                         </div>
                       </div>
