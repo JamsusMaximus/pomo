@@ -22,18 +22,23 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Get git log for the last 30 days
-const thirtyDaysAgo = new Date();
-thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-const sinceDate = thirtyDaysAgo.toISOString().split("T")[0];
+// Get git log for yesterday only (to minimize API costs)
+const yesterday = new Date();
+yesterday.setDate(yesterday.getDate() - 1);
+const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+const today = new Date();
+const todayStr = today.toISOString().split("T")[0];
+
+console.log(`📅 Processing commits from ${yesterdayStr} only (to minimize costs)`);
 
 const gitLog = execSync(
-  `git log --since="${sinceDate}" --pretty=format:"%H|%ad|%s|%b" --date=format:"%Y-%m-%d" --no-merges`,
+  `git log --since="${yesterdayStr} 00:00:00" --until="${todayStr} 00:00:00" --pretty=format:"%H|%ad|%s|%b" --date=format:"%Y-%m-%d" --no-merges`,
   { encoding: "utf-8" }
 );
 
 if (!gitLog.trim()) {
-  console.log("⚠️  No commits found in the last 30 days");
+  console.log("⚠️  No commits found yesterday. Keeping existing changelog.");
   process.exit(0);
 }
 
@@ -135,16 +140,48 @@ async function generateChangelog() {
     }
 
     const jsonText = jsonMatch[1] || jsonMatch[0];
-    const changelog = JSON.parse(jsonText);
+    const newEntries = JSON.parse(jsonText);
+
+    // Load existing changelog
+    const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
+    let existingChangelog = [];
+
+    if (fs.existsSync(outputPath)) {
+      try {
+        const existingContent = fs.readFileSync(outputPath, "utf-8");
+        const match = existingContent.match(
+          /export const changelog: ChangelogEntry\[\] = ([\s\S]*);/
+        );
+        if (match) {
+          existingChangelog = JSON.parse(match[1]);
+        }
+      } catch (e) {
+        console.log("⚠️  Could not parse existing changelog, starting fresh");
+      }
+    }
+
+    // Merge new entries with existing (prepend new entries)
+    const mergedChangelog = [...newEntries, ...existingChangelog];
+
+    // Remove duplicates by date and keep only the first occurrence
+    const uniqueChangelog = [];
+    const seenDates = new Set();
+
+    for (const entry of mergedChangelog) {
+      if (!seenDates.has(entry.date)) {
+        seenDates.add(entry.date);
+        uniqueChangelog.push(entry);
+      }
+    }
 
     // Add type and label to each change
-    const formattedChangelog = changelog.map((entry) => ({
+    const formattedChangelog = uniqueChangelog.map((entry) => ({
       ...entry,
       changes: entry.changes.map((change) => ({
         ...change,
-        type: "feature",
-        label: "New",
-        hash: "", // We don't track individual hashes in AI-generated changelog
+        type: change.type || "feature",
+        label: change.label || "New",
+        hash: change.hash || "",
       })),
     }));
 
@@ -169,13 +206,13 @@ export const changelog: ChangelogEntry[] = ${JSON.stringify(formattedChangelog, 
 `;
 
     // Write to file
-    const outputPath = path.join(__dirname, "../lib/changelog-data.ts");
     fs.writeFileSync(outputPath, tsContent);
 
     const totalChanges = formattedChangelog.reduce((sum, entry) => sum + entry.changes.length, 0);
-    console.log(
-      `✅ Generated changelog with ${formattedChangelog.length} days and ${totalChanges} user-facing changes`
-    );
+    const newChanges = newEntries.reduce((sum, entry) => sum + entry.changes.length, 0);
+
+    console.log(`✅ Added ${newChanges} new changes from yesterday`);
+    console.log(`📊 Total changelog: ${formattedChangelog.length} days, ${totalChanges} changes`);
     console.log(`📝 Written to: ${outputPath}`);
   } catch (error) {
     console.error("❌ Error generating changelog:", error.message);

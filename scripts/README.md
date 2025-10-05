@@ -28,12 +28,13 @@ npm run generate:changelog
 
 This will:
 
-1. Read git commits from the last 30 days
+1. Read git commits from **yesterday only** (to minimize costs)
 2. Send them to Claude Haiku (cheapest model)
 3. Claude intelligently extracts user-facing features
 4. Groups similar changes together
 5. Generates comprehensive but concise descriptions
-6. Outputs to `lib/changelog-data.ts`
+6. **Merges** with existing changelog (doesn't overwrite)
+7. Outputs to `lib/changelog-data.ts`
 
 ### What Claude Does
 
@@ -60,25 +61,40 @@ This will:
 
 ### When to Run
 
-Run this script:
+The script runs automatically once per day in CI when code is pushed to `main`.
 
-- Before deploying to production
-- After significant feature development
-- When you want to update the changelog page
-- **Runs automatically in CI** on every build
+You can also run it manually:
+
+- After a day of development to see the changelog
+- To test the generator locally
 
 The generated file is committed to git so the changelog is available at build time.
 
-### Cost
+### Cost Optimization
 
-Uses Claude 3 Haiku (cheapest model):
+**Yesterday-only processing:**
 
-- ~$0.25 per 1M input tokens
-- ~$1.25 per 1M output tokens
-- Typical cost per run: **< $0.01**
+- Only processes commits from yesterday (not last 30 days)
+- Merges incrementally with existing changelog
+- Runs once per day maximum
+
+**CI optimization:**
+
+- Only runs on `main` branch pushes (not PRs)
+- Skipped if no commits yesterday
+
+**Typical cost:**
+
+- Claude 3 Haiku: ~$0.25 per 1M input tokens, ~$1.25 per 1M output tokens
+- **< $0.01 per run**
+- **~$0.30/month** if you commit every day
 
 ### CI/CD
 
-In GitHub Actions, set `ANTHROPIC_API_KEY` as a repository secret.
+In GitHub Actions, set `ANTHROPIC_API_KEY` as a repository secret:
 
-The workflow automatically generates the changelog on every build.
+1. Go to Settings → Secrets and variables → Actions
+2. Add secret: `ANTHROPIC_API_KEY`
+3. Value: Your API key from console.anthropic.com
+
+The workflow automatically generates the changelog once per day on main branch pushes.
