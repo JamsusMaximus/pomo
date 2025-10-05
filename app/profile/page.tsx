@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const activity = useQuery(api.stats.getActivity);
   const focusGraph = useQuery(api.stats.getFocusGraph);
   const userChallenges = useQuery(api.challenges.getUserChallenges);
+  const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
   // Debug: Log stats to see what we're getting
@@ -68,6 +69,7 @@ export default function ProfilePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isSyncingChallenges, setIsSyncingChallenges] = useState(false);
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
 
   // Check localStorage stats
@@ -607,7 +609,22 @@ export default function ProfilePage() {
                     {/* Active Challenges */}
                     {userChallenges.active.length > 0 && (
                       <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-                        <h2 className="text-lg font-bold mb-4">Active Challenges</h2>
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-lg font-bold">Active Challenges</h2>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              setIsSyncingChallenges(true);
+                              await syncProgress();
+                              setIsSyncingChallenges(false);
+                            }}
+                            disabled={isSyncingChallenges}
+                          >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`} />
+                            Sync Progress
+                          </Button>
+                        </div>
                         <div className="space-y-3">
                           {userChallenges.active.map((challenge: any) => (
                             <div
