@@ -6,9 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { ArrowLeft, Plus, Power, PowerOff } from "lucide-react";
+import { ArrowLeft, Plus, Power, PowerOff, Award, type LucideIcon } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { Id } from "@/convex/_generated/dataModel";
+
+// Helper to render Lucide icon from string name
+const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
+  const Icon = (LucideIcons as any)[iconName] as LucideIcon;
+  if (!Icon) {
+    return <Award className={className} />; // Fallback icon
+  }
+  return <Icon className={className} />;
+};
 
 export default function AdminPage() {
   const challenges = useQuery(api.challenges.getAllChallenges);
@@ -22,7 +32,7 @@ export default function AdminPage() {
     description: "",
     type: "total" as const,
     target: 0,
-    badge: "🏆",
+    badge: "Trophy",
     recurring: false,
     recurringMonth: undefined as number | undefined,
   });
@@ -123,11 +133,11 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Badge (Emoji)</label>
+                  <label className="text-sm font-medium">Icon (Lucide)</label>
                   <Input
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    placeholder="🏆"
+                    placeholder="Trophy, Star, Flame, etc."
                     required
                   />
                 </div>
@@ -165,7 +175,9 @@ export default function AdminPage() {
           {challenges?.map((challenge) => (
             <Card key={challenge._id} className="p-4">
               <div className="flex items-start gap-4">
-                <span className="text-4xl">{challenge.badge}</span>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
+                  <ChallengeIcon iconName={challenge.badge} className="w-6 h-6 text-orange-500" />
+                </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg">{challenge.name}</h3>
                   <p className="text-sm text-muted-foreground">{challenge.description}</p>

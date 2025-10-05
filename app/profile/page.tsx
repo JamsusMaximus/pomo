@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star, Target, Sprout, Trophy, Crown, Sparkles, Zap, Medal, Swords, type LucideIcon } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
@@ -46,6 +47,15 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
   
   return weekView;
 }
+
+// Helper to render Lucide icon from string name
+const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
+  const Icon = (LucideIcons as any)[iconName] as LucideIcon;
+  if (!Icon) {
+    return <Award className={className} />; // Fallback icon
+  }
+  return <Icon className={className} />;
+};
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -669,7 +679,9 @@ export default function ProfilePage() {
                                   transition={{ duration: 0.4, delay: index * 0.05 }}
                                   className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
                                 >
-                                  <span className="text-4xl">{challenge.badge}</span>
+                                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
+                                    <ChallengeIcon iconName={challenge.badge} className="w-6 h-6 text-orange-500" />
+                                  </div>
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                       <h3 className="font-bold">{challenge.name}</h3>
@@ -727,7 +739,9 @@ export default function ProfilePage() {
                               }}
                               className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
                             >
-                              <span className="text-5xl">{challenge.badge}</span>
+                              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
+                                <ChallengeIcon iconName={challenge.badge} className="w-8 h-8 text-orange-500" />
+                              </div>
                               <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
                               <p className="text-xs text-muted-foreground text-center">{challenge.description}</p>
                               {challenge.completedAt && (
