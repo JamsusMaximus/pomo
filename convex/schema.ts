@@ -30,4 +30,35 @@ export default defineSchema({
     cyclesCompleted: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  challenges: defineTable({
+    name: v.string(),
+    description: v.string(),
+    type: v.union(
+      v.literal("streak"),
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly"),
+      v.literal("recurring_monthly"),
+      v.literal("total")
+    ),
+    target: v.number(),
+    badge: v.string(), // emoji or icon name
+    recurring: v.boolean(),
+    recurringMonth: v.optional(v.number()), // 1-12 for monthly challenges
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active"]),
+
+  userChallenges: defineTable({
+    userId: v.id("users"),
+    challengeId: v.id("challenges"),
+    progress: v.number(),
+    completed: v.boolean(),
+    completedAt: v.optional(v.number()),
+    periodKey: v.optional(v.string()), // "2025-01" for recurring monthly
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_challenge", ["userId", "challengeId"])
+    .index("by_user_completed", ["userId", "completed"]),
 });
