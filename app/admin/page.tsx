@@ -25,6 +25,7 @@ export default function AdminPage() {
   const createChallenge = useMutation(api.challenges.createChallenge);
   const toggleActive = useMutation(api.challenges.toggleChallengeActive);
   const seedChallenges = useMutation(api.seedChallenges.seedDefaultChallenges);
+  const migrateBadges = useMutation(api.migrateChallenges.migrateChallengeBadges);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,6 +71,17 @@ export default function AdminPage() {
             {(!challenges || challenges.length === 0) && (
               <Button variant="outline" onClick={() => seedChallenges()}>
                 Seed Defaults
+              </Button>
+            )}
+            {challenges && challenges.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  const result = await migrateBadges();
+                  alert(`Migrated ${result.updated} of ${result.total} challenges`);
+                }}
+              >
+                Migrate to Icons
               </Button>
             )}
             <Button onClick={() => setShowForm(!showForm)}>
