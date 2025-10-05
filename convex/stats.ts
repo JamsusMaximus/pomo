@@ -252,7 +252,8 @@ export const getFocusGraph = query({
     });
 
     // Calculate focus score for each day using exponential weighted moving average
-    const DECAY_FACTOR = 0.97; // 3% daily decay
+    // Uses Strava's CTL (Chronic Training Load) algorithm: 42-day EWMA
+    const DECAY_FACTOR = 0.976; // ~2.4% daily decay (matches Strava's 42-day time constant)
     const POMO_WEIGHT = 10; // Each pomo adds 10 points
     
     const focusData: Array<{ date: string; score: number }> = [];
