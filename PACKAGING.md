@@ -3,12 +3,14 @@
 ## Option 1: Tauri (Recommended)
 
 ### Setup
+
 ```bash
 npm install -D @tauri-apps/cli
 npx tauri init
 ```
 
 When prompted:
+
 - App name: `Pomo`
 - Window title: `Pomo Timer`
 - Web assets location: `out` (for Next.js static export)
@@ -17,10 +19,12 @@ When prompted:
 - Frontend build command: `npm run build`
 
 ### Configure Next.js for static export
+
 Add to `next.config.ts`:
+
 ```typescript
 const config = {
-  output: 'export',
+  output: "export",
   images: {
     unoptimized: true,
   },
@@ -28,6 +32,7 @@ const config = {
 ```
 
 ### Build & Run
+
 ```bash
 npm run tauri dev      # Test in development
 npm run tauri build    # Build Mac app (.dmg)
@@ -36,7 +41,9 @@ npm run tauri build    # Build Mac app (.dmg)
 App will be in: `src-tauri/target/release/bundle/dmg/`
 
 ### Customize (optional)
+
 Edit `src-tauri/tauri.conf.json`:
+
 - Window size
 - Icon (add .icns to src-tauri/icons/)
 - Menu bar options
@@ -47,14 +54,16 @@ Edit `src-tauri/tauri.conf.json`:
 ## Option 2: Electron (More Mature)
 
 ### Setup
+
 ```bash
 npm install -D electron electron-builder
 ```
 
 Create `electron/main.js`:
+
 ```javascript
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -66,10 +75,10 @@ function createWindow() {
     },
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    win.loadURL('http://localhost:3000');
+  if (process.env.NODE_ENV === "development") {
+    win.loadURL("http://localhost:3000");
   } else {
-    win.loadFile(path.join(__dirname, '../out/index.html'));
+    win.loadFile(path.join(__dirname, "../out/index.html"));
   }
 }
 
@@ -77,6 +86,7 @@ app.whenReady().then(createWindow);
 ```
 
 Add to `package.json`:
+
 ```json
 {
   "main": "electron/main.js",
@@ -98,11 +108,13 @@ Add to `package.json`:
 ## Option 3: Quickest - Nativefier (5 minutes)
 
 Install globally:
+
 ```bash
 npm install -g nativefier
 ```
 
 After deploying to Vercel:
+
 ```bash
 nativefier "https://your-pomo-app.vercel.app" \
   --name "Pomo" \
@@ -117,12 +129,14 @@ Instant Mac app! But needs to be online.
 ## Option 4: PWA (No packaging needed)
 
 Add to `app/layout.tsx` head:
+
 ```typescript
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#000000" />
 ```
 
 Create `public/manifest.json`:
+
 ```json
 {
   "name": "Pomo Timer",
