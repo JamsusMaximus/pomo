@@ -340,13 +340,13 @@ export default function Home() {
             href="/profile"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-              Lv {stats ? getLevelInfo(stats.total.count).currentLevel : "..."}
-            </span>
             <Avatar className="w-8 h-8 cursor-pointer">
               <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
               <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
+            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+              [Level {stats ? getLevelInfo(stats.total.count).currentLevel : "..."}]
+            </span>
           </Link>
         </SignedIn>
         <ThemeToggle />
