@@ -491,7 +491,7 @@ function ProfilePageContent() {
                   className="mb-6"
                 >
                   <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
                       {/* Week view - LEFT SIDE */}
                       <div className="flex-1 w-full">
                         <div className="flex justify-around items-start gap-2 sm:gap-3">
@@ -596,7 +596,12 @@ function ProfilePageContent() {
                         </div>
                         {/* Encouragement text */}
                         <p className="text-center mt-4 text-xs sm:text-sm text-muted-foreground">
-                          {stats.dailyStreak && stats.dailyStreak > 0 ? (
+                          {stats.dailyStreak === 1 ? (
+                            <>
+                              A journey of a thousand miles begins with a{" "}
+                              <span className="text-orange-500 font-semibold">single pomodoro</span>
+                            </>
+                          ) : stats.dailyStreak && stats.dailyStreak > 1 ? (
                             <>
                               Keep your{" "}
                               <span className="text-orange-500 font-semibold">perfect streak</span>{" "}
@@ -613,7 +618,7 @@ function ProfilePageContent() {
                         </p>
                       </div>
 
-                      {/* Streak number and label - RIGHT SIDE */}
+                      {/* Streak number and label - Centered on mobile, right-aligned on desktop */}
                       <div className="flex flex-col items-center sm:items-end shrink-0">
                         <motion.div
                           animate={{
