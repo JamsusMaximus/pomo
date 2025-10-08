@@ -832,9 +832,9 @@ function ProfilePageContent() {
                     transition={{ duration: 0.4, delay: 0.15 }}
                     className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
                   >
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      {/* Left side - Heatmap */}
-                      <div className="flex-1">
+                    <div className="space-y-4">
+                      {/* Heatmap */}
+                      <div>
                         <h2 className="text-lg font-bold mb-2">Activity Heatmap</h2>
                         <p className="text-sm text-muted-foreground mb-4">
                           Your productivity patterns at a glance
@@ -842,45 +842,45 @@ function ProfilePageContent() {
                         <ActivityHeatmap data={activity} />
                       </div>
 
-                      {/* Right side - Stats */}
-                      <div className="flex flex-col gap-3 lg:w-64 shrink-0">
+                      {/* Stats Row - 3 columns */}
+                      <div className="grid grid-cols-3 gap-3">
                         {/* This Week */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">
-                              This Week
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatTime(stats?.week.minutes ?? 0)}
-                            </p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats?.week.count ?? 0}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Week
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats?.week.count ?? 0}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats?.week.minutes ?? 0)}
+                          </p>
                         </div>
 
                         {/* This Month */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">
-                              This Month
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatTime(stats.month.minutes)}
-                            </p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats.month.count}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Month
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats.month.count}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats.month.minutes)}
+                          </p>
                         </div>
 
                         {/* This Year */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">
-                              This Year
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatTime(stats.year.minutes)}
-                            </p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats.year.count}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Year
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats.year.count}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats.year.minutes)}
+                          </p>
                         </div>
                       </div>
                     </div>
