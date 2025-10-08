@@ -38,6 +38,7 @@ import {
   markSessionsSynced,
 } from "@/lib/storage/sessions";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
+import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -61,6 +62,7 @@ function HomeContent() {
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [showSpaceHint, setShowSpaceHint] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
   const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
@@ -307,6 +309,19 @@ function HomeContent() {
         });
       }
     }
+  }, []);
+
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Hydrate from localStorage on mount
@@ -861,7 +876,7 @@ function HomeContent() {
             </motion.div>
 
             {/* Space bar hint */}
-            {showSpaceHint && !isRunning && !isPaused && (
+            {showSpaceHint && !isRunning && !isPaused && !isMobile && (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -891,6 +906,16 @@ function HomeContent() {
               </motion.div>
             )}
           </div>
+        </motion.div>
+
+        {/* Ambient Sound Controls */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+          className="w-full"
+        >
+          <AmbientSoundControls />
         </motion.div>
 
         {/* Pomodoro Feed */}
