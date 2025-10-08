@@ -406,34 +406,36 @@ function ProfilePageContent() {
                   className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8 mb-6"
                 >
                   {/* Profile Header with Total */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                    <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
+                  <div className="flex items-start gap-3 sm:gap-6">
+                    <Avatar className="w-12 h-12 sm:w-20 sm:h-20 shrink-0">
                       <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
-                      <AvatarFallback className="text-xl">
+                      <AvatarFallback className="text-lg sm:text-xl">
                         {user.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl sm:text-3xl font-bold mb-1 truncate">
                         {user.username || "User"}
                       </h1>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-2 truncate">
                         {user.primaryEmailAddress?.emailAddress}
                       </p>
                       <div className="flex items-center gap-2">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                          <p className="text-sm font-medium">
+                          <p className="text-xs sm:text-sm font-medium">
                             Level {levelInfo.currentLevel} · {levelInfo.title}
                           </p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <p className="text-4xl sm:text-5xl font-bold text-orange-600 dark:text-orange-400">
+                    <div className="text-right shrink-0">
+                      <p className="text-3xl sm:text-5xl font-bold text-orange-600 dark:text-orange-400">
                         {currentPomos}
                       </p>
-                      <p className="text-sm text-muted-foreground">Total Pomodoros</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                        Total Pomodoros
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                         {formatTime(stats.total.minutes)}
                       </p>
                     </div>
@@ -455,25 +457,25 @@ function ProfilePageContent() {
                       </p>
                     </div>
                     <div className="relative">
-                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted/30">
+                      <div className="h-3 w-full overflow-visible rounded-full bg-muted/30">
                         <motion.div
-                          className="h-full"
+                          className="h-full rounded-full"
                           style={{
                             background:
                               "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
+                            minWidth:
+                              levelInfo.progress > 0 && levelInfo.progress < 5 ? "5%" : "0%",
                           }}
                           initial={{ width: 0 }}
-                          whileInView={{ width: `${levelInfo.progress}%` }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
+                          animate={{ width: `${levelInfo.progress}%` }}
+                          transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
                         />
                       </div>
                       <motion.div
                         className="absolute -top-1 transform -translate-x-1/2"
                         initial={{ left: "0%", opacity: 0 }}
-                        whileInView={{ left: `${levelInfo.progress}%`, opacity: 1 }}
-                        viewport={{ once: true, margin: "-50px" }}
-                        transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
+                        animate={{ left: `${levelInfo.progress}%`, opacity: 1 }}
+                        transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
                       >
                         <div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-background shadow-lg" />
                       </motion.div>
