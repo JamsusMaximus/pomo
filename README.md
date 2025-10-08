@@ -82,6 +82,16 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 
    Open [http://localhost:3000](http://localhost:3000)
 
+5. **Install git hooks** (recommended)
+
+   ```bash
+   bash scripts/install-hooks.sh
+   ```
+
+   This installs:
+   - **Pre-commit hook**: Auto-formats code, fixes ESLint errors, checks docs
+   - **Pre-push hook**: Runs `npm run build` before push (catches build errors before Vercel)
+
 📖 **Detailed setup guide:** See [DEV_SETUP.md](./DEV_SETUP.md) for troubleshooting, VS Code setup, and more.
 
 ## 🎯 How It Works
