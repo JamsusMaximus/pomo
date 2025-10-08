@@ -104,47 +104,26 @@ function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
-  const stats = useQuery(api.stats.getStats);
-  const activity = useQuery(api.stats.getActivity);
-  const focusGraph = useQuery(api.stats.getFocusGraph);
-  const userChallenges = useQuery(api.challenges.getUserChallenges);
-  const levelConfig = useQuery(api.levels.getLevelConfig);
+  // Fitness period state (7 or 90 days)
+  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
+
+  // Single optimized query that fetches all profile data at once
+  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
 
-  // Debug: Log stats and challenges to see what we're getting
+  // Debug: Log profile data
   useEffect(() => {
-    if (stats) {
-      console.log("Stats data:", stats);
+    if (profileData) {
+      console.log("Profile data:", profileData);
       console.log("Streak breakdown:", {
-        currentDailyStreak: stats.dailyStreak,
-        bestDailyStreak: stats.bestDailyStreak,
-        currentWeekPomos: stats.week.count,
-        weeklyStreak: stats.weeklyStreak,
-        message:
-          stats.weeklyStreak > 0
-            ? `${stats.weeklyStreak} weeks with 5+ pomos each`
-            : "No active streak (need 5+ pomos per week)",
+        currentDailyStreak: profileData.stats.dailyStreak,
+        bestDailyStreak: profileData.stats.bestDailyStreak,
+        currentWeekPomos: profileData.stats.week.count,
       });
     }
-  }, [stats]);
+  }, [profileData]);
 
-  useEffect(() => {
-    if (activity) {
-      console.log("Activity data (last 10 days):", activity.slice(-10));
-    }
-  }, [activity]);
-
-  useEffect(() => {
-    if (userChallenges) {
-      console.log("Challenges data:", {
-        active: userChallenges.active,
-        completed: userChallenges.completed,
-        activeCount: userChallenges.active.length,
-        completedCount: userChallenges.completed.length,
-      });
-    }
-  }, [userChallenges]);
   const seedTestData = useMutation(api.seed.seedTestData);
   const clearAllData = useMutation(api.seed.clearAllData);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -154,31 +133,29 @@ function ProfilePageContent() {
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
   const [hasAutoSynced, setHasAutoSynced] = useState(false);
 
-  // Fitness period state (7 or 90 days)
-  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
-
   // Challenges expansion state
   const [showAllChallenges, setShowAllChallenges] = useState(false);
 
   // Determine default fitness period based on user age
   useEffect(() => {
-    if (stats?.userCreatedAt) {
-      const daysSinceCreation = (Date.now() - stats.userCreatedAt) / (1000 * 60 * 60 * 24);
+    if (profileData?.stats.userCreatedAt) {
+      const daysSinceCreation =
+        (Date.now() - profileData.stats.userCreatedAt) / (1000 * 60 * 60 * 24);
       const defaultPeriod = daysSinceCreation <= 7 ? 7 : 90;
       setFitnessPeriod(defaultPeriod);
     }
-  }, [stats?.userCreatedAt]);
+  }, [profileData?.stats.userCreatedAt]);
 
   // Auto-sync challenges on page load
   useEffect(() => {
-    if (user && stats && !hasAutoSynced) {
+    if (user && profileData && !hasAutoSynced) {
       console.log("Auto-syncing challenge progress...");
       setHasAutoSynced(true);
       syncProgress().catch((err) => {
         console.error("Auto-sync failed:", err);
       });
     }
-  }, [user, stats, hasAutoSynced, syncProgress]);
+  }, [user, profileData, hasAutoSynced, syncProgress]);
 
   // Check localStorage stats
   useEffect(() => {
@@ -269,24 +246,13 @@ function ProfilePageContent() {
     );
   }
 
-  // Show loading state while queries are fetching
-  if (
-    stats === undefined ||
-    activity === undefined ||
-    focusGraph === undefined ||
-    userChallenges === undefined ||
-    levelConfig === undefined
-  ) {
-    return (
-      <main className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
-          <h1 className="text-2xl font-bold mb-2">Loading your profile...</h1>
-          <p className="text-muted-foreground">Fetching your stats and achievements</p>
-        </div>
-      </main>
-    );
+  // Show nothing while profile data is loading (immediate render for speed)
+  if (!profileData) {
+    return null; // Render nothing - fast load
   }
+
+  // Extract data from profile
+  const { stats, activity, focusGraph, userChallenges, levelConfig } = profileData;
 
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
