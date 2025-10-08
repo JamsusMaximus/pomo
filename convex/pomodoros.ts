@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Pomodoro session management (queries and mutations)
+ * @module convex/pomodoros
+ *
+ * Key responsibilities:
+ * - Save completed pomodoro sessions (focus and break)
+ * - Retrieve user's session history with pagination
+ * - Calculate today's session count
+ * - Trigger challenge progress updates after focus sessions
+ *
+ * Dependencies: Convex server runtime, challenges.ts (scheduler)
+ * Used by: app/page.tsx (timer), app/profile/page.tsx (session history)
+ */
+
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";

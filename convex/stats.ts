@@ -1,3 +1,18 @@
+/**
+ * @fileoverview User statistics and activity queries
+ * @module convex/stats
+ *
+ * Key responsibilities:
+ * - Calculate user stats (total, weekly, monthly, yearly pomodoro counts)
+ * - Compute current daily and weekly streaks
+ * - Track best historical daily streak (never decreases)
+ * - Generate daily activity data for heatmap visualization
+ * - Update user's bestDailyStreak field when new records achieved
+ *
+ * Dependencies: Convex server runtime
+ * Used by: app/profile/page.tsx (stats display), components/ActivityHeatmap.tsx
+ */
+
 import { query } from "./_generated/server";
 
 /**
@@ -85,6 +100,13 @@ export const getStats = query({
     // Calculate streaks
     const streaks = calculateStreaks(sessions);
 
+    // Calculate best historical streak from all sessions
+    const historicalBest = calculateBestHistoricalStreak(sessions);
+
+    // Get the actual best (either stored or calculated)
+    const currentBest = user.bestDailyStreak ?? 0;
+    const actualBest = Math.max(historicalBest, currentBest, streaks.daily);
+
     return {
       total: { count: stats.total.count, minutes: Math.round(stats.total.minutes) },
       week: { count: stats.week.count, minutes: Math.round(stats.week.minutes) },
@@ -92,6 +114,7 @@ export const getStats = query({
       year: { count: stats.year.count, minutes: Math.round(stats.year.minutes) },
       dailyStreak: streaks.daily,
       weeklyStreak: streaks.weekly,
+      bestDailyStreak: actualBest,
     };
   },
 });
@@ -147,6 +170,58 @@ export const getActivity = query({
     }));
   },
 });
+
+/**
+ * Calculate the best historical streak from all sessions
+ * Finds the longest consecutive daily streak in the entire history
+ */
+function calculateBestHistoricalStreak(sessions: Array<{ completedAt: number }>): number {
+  if (sessions.length === 0) {
+    return 0;
+  }
+
+  // Group sessions by date
+  const sessionsByDate: Record<string, number> = {};
+  sessions.forEach((session) => {
+    const date = new Date(session.completedAt);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
+  });
+
+  // Get all dates sorted chronologically
+  const sortedDates = Object.keys(sessionsByDate).sort();
+
+  if (sortedDates.length === 0) {
+    return 0;
+  }
+
+  let maxStreak = 0;
+  let currentStreak = 1;
+
+  // Iterate through sorted dates to find longest consecutive streak
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prevDate = new Date(sortedDates[i - 1]);
+    const currDate = new Date(sortedDates[i]);
+
+    // Calculate difference in days
+    const diffTime = currDate.getTime() - prevDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      // Consecutive day
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else {
+      // Gap in streak, reset
+      currentStreak = 1;
+    }
+  }
+
+  // Don't forget the last streak
+  maxStreak = Math.max(maxStreak, currentStreak);
+
+  return maxStreak;
+}
 
 /**
  * Calculate daily and weekly streaks

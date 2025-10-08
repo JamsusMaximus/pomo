@@ -1,3 +1,19 @@
+/**
+ * @fileoverview User profile page with stats, challenges, and activity visualization
+ * @module app/profile/page
+ *
+ * Key responsibilities:
+ * - Display user statistics (total, weekly, monthly, yearly pomodoros)
+ * - Show daily and weekly streaks with visual indicators
+ * - Render challenge progress (active and completed)
+ * - Display activity heatmap and focus graph
+ * - Provide sync controls for challenge progress
+ * - Handle user sign-out
+ *
+ * Dependencies: Convex (stats/challenges), Clerk (auth), Framer Motion (animations)
+ * Used by: Root layout (route "/profile")
+ */
+
 "use client";
 
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -19,6 +35,7 @@ import {
   Flame,
   Check,
   Star,
+  Hourglass,
   type LucideIcon,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -99,8 +116,24 @@ function ProfilePageContent() {
   useEffect(() => {
     if (stats) {
       console.log("Stats data:", stats);
+      console.log("Streak breakdown:", {
+        currentDailyStreak: stats.dailyStreak,
+        bestDailyStreak: stats.bestDailyStreak,
+        currentWeekPomos: stats.week.count,
+        weeklyStreak: stats.weeklyStreak,
+        message:
+          stats.weeklyStreak > 0
+            ? `${stats.weeklyStreak} weeks with 5+ pomos each`
+            : "No active streak (need 5+ pomos per week)",
+      });
     }
   }, [stats]);
+
+  useEffect(() => {
+    if (activity) {
+      console.log("Activity data (last 10 days):", activity.slice(-10));
+    }
+  }, [activity]);
 
   useEffect(() => {
     if (userChallenges) {
@@ -119,6 +152,18 @@ function ProfilePageContent() {
   const [isClearing, setIsClearing] = useState(false);
   const [isSyncingChallenges, setIsSyncingChallenges] = useState(false);
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
+  const [hasAutoSynced, setHasAutoSynced] = useState(false);
+
+  // Auto-sync challenges on page load
+  useEffect(() => {
+    if (user && stats && !hasAutoSynced) {
+      console.log("Auto-syncing challenge progress...");
+      setHasAutoSynced(true);
+      syncProgress().catch((err) => {
+        console.error("Auto-sync failed:", err);
+      });
+    }
+  }, [user, stats, hasAutoSynced, syncProgress]);
 
   // Check localStorage stats
   useEffect(() => {
@@ -163,12 +208,12 @@ function ProfilePageContent() {
   };
 
   const handleSeedData = async () => {
-    if (!confirm("Generate test pomodoros for the past 40 days?")) return;
+    if (!confirm("Generate test pomodoros for the past 50 days with a 6-week streak?")) return;
 
     setIsSeeding(true);
     try {
       const result = await seedTestData();
-      alert(`✅ Generated ${result.count} pomodoros over ${result.days} days!`);
+      alert(`✅ ${result.message}\nGenerated ${result.count} pomodoros over ${result.days} days!`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       alert(`❌ Failed: ${message}`);
@@ -255,7 +300,7 @@ function ProfilePageContent() {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
                   <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
-                  {isSeeding ? "Seeding..." : "Seed 40 Days"}
+                  {isSeeding ? "Seeding..." : "Seed 6-Week Streak"}
                 </Button>
                 {stats && stats.total.count > 0 && (
                   <Button
@@ -481,16 +526,28 @@ function ProfilePageContent() {
                                 </motion.div>
                               ) : day.isToday ? (
                                 <motion.div
-                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: [0, 1.2, 1] }}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted/30 flex items-center justify-center border-2 border-dashed border-muted-foreground/40"
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{
+                                    scale: [0, 1.1, 1],
+                                    opacity: [0, 0.5, 0.7, 0.5],
+                                  }}
                                   transition={{
-                                    delay: 0.05 + index * 0.2,
-                                    duration: 0.3,
-                                    ease: "easeOut",
+                                    scale: {
+                                      delay: 0.05 + index * 0.2,
+                                      duration: 0.3,
+                                      ease: "easeOut",
+                                    },
+                                    opacity: {
+                                      delay: 0.05 + index * 0.2 + 0.3,
+                                      duration: 2,
+                                      ease: "easeInOut",
+                                      repeat: Infinity,
+                                      repeatType: "reverse",
+                                    },
                                   }}
                                 >
-                                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+                                  <Hourglass className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
                                 </motion.div>
                               ) : day.completed ? (
                                 <motion.div
@@ -569,58 +626,89 @@ function ProfilePageContent() {
                         <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">
                           day streak!
                         </h2>
+                        {stats.bestDailyStreak !== undefined &&
+                          stats.bestDailyStreak > (stats.dailyStreak ?? 0) && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Best:{" "}
+                              <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                {stats.bestDailyStreak}
+                              </span>{" "}
+                              days
+                            </p>
+                          )}
                       </div>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Weekly Streak - More Exciting */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.08 }}
-                  className="mb-6"
-                >
-                  <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-5 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex gap-1">
-                          {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map(
-                            (_, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{
-                                  delay: 0.1 + i * 0.1,
-                                  duration: 0.5,
-                                  type: "spring",
-                                  stiffness: 200,
-                                }}
-                              >
-                                <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
-                              </motion.div>
-                            )
-                          )}
-                          {(stats.weeklyStreak ?? 0) > 8 && (
-                            <span className="text-xl font-bold text-orange-500 ml-1">
-                              +{(stats.weeklyStreak ?? 0) - 8}
-                            </span>
-                          )}
+                {/* Weekly Streak - Hidden for now (keeping backend logic) */}
+                {false && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.08 }}
+                    className="mb-6"
+                  >
+                    <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-5 relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-1">
+                            {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map(
+                              (_, i) => (
+                                <motion.div
+                                  key={i}
+                                  initial={{ scale: 0, rotate: -180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{
+                                    delay: 0.1 + i * 0.1,
+                                    duration: 0.5,
+                                    type: "spring",
+                                    stiffness: 200,
+                                  }}
+                                >
+                                  <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
+                                </motion.div>
+                              )
+                            )}
+                            {(stats.weeklyStreak ?? 0) > 8 && (
+                              <span className="text-xl font-bold text-orange-500 ml-1">
+                                +{(stats.weeklyStreak ?? 0) - 8}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
+                            {stats.weeklyStreak ?? 0}
+                          </p>
+                          <p className="text-sm font-medium text-muted-foreground mt-1">
+                            {(stats.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {(stats.weeklyStreak ?? 0) > 0 ? (
+                              <>
+                                <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                  {Math.min(stats.week.count, 5)}/5 pomos
+                                </span>{" "}
+                                this week
+                                {stats.week.count < 5 && " - Keep it going! 🔥"}
+                                {stats.week.count >= 5 && " - Streak secured! 🎉"}
+                              </>
+                            ) : (
+                              <>
+                                <span className="font-semibold">{stats.week.count}/5 pomos</span>{" "}
+                                this week
+                                {stats.week.count === 0 && " - Start your streak today!"}
+                                {stats.week.count > 0 && stats.week.count < 5 && " - Keep going!"}
+                                {stats.week.count >= 5 && " - Streak will start next week! 🚀"}
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
-                          {stats.weeklyStreak ?? 0}
-                        </p>
-                        <p className="text-sm font-medium text-muted-foreground mt-1">
-                          {(stats.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">5+ pomos</p>
-                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                )}
 
                 {/* Focus Fitness */}
                 {focusGraph && focusGraph.length > 0 && (

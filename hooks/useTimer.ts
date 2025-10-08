@@ -1,3 +1,18 @@
+/**
+ * @fileoverview Custom React hook for Pomodoro timer functionality
+ * @module hooks/useTimer
+ *
+ * Key responsibilities:
+ * - Manage timer countdown state (remaining time, running/paused)
+ * - Handle focus/break mode transitions with callbacks
+ * - Provide start, pause, reset, and skip controls
+ * - Auto-start break mode when focus completes (configurable)
+ * - Support debug mode for testing (set custom duration)
+ *
+ * Dependencies: React hooks
+ * Used by: app/page.tsx (main timer UI)
+ */
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Mode } from "@/types/pomodoro";
 

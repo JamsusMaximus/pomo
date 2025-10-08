@@ -42,7 +42,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 - **Analytics**: [Vercel Analytics](https://vercel.com/analytics)
 - **AI**: [Anthropic Claude](https://www.anthropic.com/) (Haiku) for changelog generation
 
-## 📦 Installation
+## 📦 Quick Start
 
 ### Prerequisites
 
@@ -53,61 +53,36 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
 
 ### Setup
 
-1. **Clone the repository**
+1. **Clone and install**
 
    ```bash
    git clone https://github.com/yourusername/pomo.git
    cd pomo
-   ```
-
-2. **Install dependencies**
-
-   ```bash
    npm install
    ```
 
-3. **Configure environment variables**
-
-   Copy `.env.example` to `.env.local`:
+2. **Configure environment**
 
    ```bash
    cp .env.example .env.local
+   # Edit .env.local with your Clerk and Convex credentials
    ```
 
-   Add your credentials:
-
-   ```env
-   # Convex
-   CONVEX_DEPLOYMENT=your-convex-deployment
-   NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-
-   # Clerk
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-   CLERK_SECRET_KEY=sk_test_...
-
-   # Optional: AI Changelog
-   ANTHROPIC_API_KEY=sk-ant-...
-   ```
-
-4. **Set up Convex**
+3. **Verify setup**
 
    ```bash
-   npx convex dev
+   npm run verify-setup
    ```
 
-   In the Convex dashboard, set the `ADMIN_EMAILS` environment variable:
-
-   ```
-   ADMIN_EMAILS=admin@example.com,admin2@example.com
-   ```
-
-5. **Run the development server**
+4. **Start development servers** (automatically starts Next.js + Convex)
 
    ```bash
    npm run dev
    ```
 
    Open [http://localhost:3000](http://localhost:3000)
+
+📖 **Detailed setup guide:** See [DEV_SETUP.md](./DEV_SETUP.md) for troubleshooting, VS Code setup, and more.
 
 ## 🎯 How It Works
 
@@ -163,40 +138,25 @@ Error boundaries catch sync failures and show user-friendly messages.
 
 ## 🤖 AI Changelog Generation
 
-The project includes an automated changelog system using Claude Haiku:
-
-### How It Works
-
-1. Git pre-commit hook triggers on every commit
-2. Script analyzes all commits since last changelog entry
-3. Claude Haiku extracts user-facing changes
-4. Changelog is generated and auto-added to commit
-
-### Setup
-
-```bash
-# Install git hooks
-bash scripts/install-hooks.sh
-
-# Set API key
-export ANTHROPIC_API_KEY=sk-ant-...
-```
-
-### Features
-
-- Handles multi-day gaps (e.g., commits → 2 days no activity → next commit still summarizes)
-- Categorizes changes as "New", "Improved", or "Fixed"
-- Filters out backend/infrastructure changes
-- Groups similar changes together
-- Max 5 changes per day for clarity
+The project includes a changelog generation system using Claude Haiku.
 
 ### Manual Generation
 
 ```bash
+# Requires ANTHROPIC_API_KEY environment variable
 npm run generate:changelog
 ```
 
-Output: `lib/changelog-data.ts`
+**Output:** `lib/changelog-data.ts`
+
+### Features
+
+- Analyzes all commits since last changelog entry
+- Categorizes changes as "New", "Improved", or "Fixed"
+- Filters out backend/infrastructure changes
+- Groups similar changes together
+- Max 5 changes per day for clarity
+- Handles multi-day gaps in commit history
 
 ## 📁 Project Structure
 
@@ -218,11 +178,12 @@ pomo/
 │   ├── challenges.ts     # Challenge system
 │   └── levels.ts         # Leveling system
 ├── lib/                  # Utilities
-│   ├── changelog-data.ts # Auto-generated changelog
+│   ├── changelog-data.ts # Generated changelog
 │   └── utils.ts          # Helper functions
 └── scripts/              # Build scripts
     ├── generate-changelog.mjs  # AI changelog generator
     └── install-hooks.sh        # Git hook installer
+    └── doc-check-pre-commit.sh # Documentation validation
 ```
 
 ## 🚀 Deployment
@@ -256,17 +217,22 @@ Set this in Convex dashboard:
 ### Available Scripts
 
 ```bash
-npm run dev          # Start dev server with Turbopack
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # Lint code
-npm run lint:strict  # Lint with zero warnings
-npm run format       # Format with Prettier
-npm run typecheck    # TypeScript type checking
-npm run test         # Run Vitest tests
-npm run test:watch   # Run tests in watch mode
+npm run dev             # Start Next.js + Convex dev servers (with auto env validation)
+npm run dev:next        # Start only Next.js
+npm run dev:convex      # Start only Convex
+npm run verify-setup    # Verify development environment is configured correctly
+npm run build           # Production build
+npm run start           # Start production server
+npm run lint            # Lint code
+npm run lint:strict     # Lint with zero warnings
+npm run format          # Format with Prettier
+npm run typecheck       # TypeScript type checking
+npm run test            # Run Vitest tests
+npm run test:watch      # Run tests in watch mode
 npm run generate:changelog  # Generate changelog manually
 ```
+
+💡 **Tip:** Run `npm run verify-setup` after pulling changes to catch environment issues early.
 
 ### Code Quality
 

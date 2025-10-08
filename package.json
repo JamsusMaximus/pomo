@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "predev": "node scripts/check-env.js",
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:convex\" --names \"next,convex\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail --restart-tries 3",
+    "dev:next": "next dev --turbopack",
+    "dev:convex": "convex dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -16,7 +19,9 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "generate:changelog": "node scripts/generate-changelog.mjs"
+    "generate:changelog": "node scripts/generate-changelog.mjs",
+    "verify-setup": "node scripts/verify-setup.js",
+    "postinstall": "node scripts/verify-setup.js || true"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
@@ -46,6 +51,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
     "convex-test": "^0.0.38",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
