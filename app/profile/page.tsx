@@ -937,7 +937,7 @@ function ProfilePageContent() {
                                   viewport={{ once: true, margin: "-50px" }}
                                   transition={{ duration: 0.4, delay: index * 0.05 }}
                                   className={`flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors relative ${
-                                    isBlurred ? "blur-sm" : ""
+                                    isBlurred ? "blur-[3px]" : ""
                                   }`}
                                 >
                                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
@@ -991,7 +991,7 @@ function ProfilePageContent() {
 
                           {/* See all challenges button - centered over 4th challenge */}
                           {!showAllChallenges && userChallenges.active.length > 3 && (
-                            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pointer-events-none">
+                            <div className="absolute bottom-0 left-0 right-0 h-[110px] flex items-center justify-center pointer-events-none">
                               <Button
                                 variant="outline"
                                 className="border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 bg-card/95 backdrop-blur-sm pointer-events-auto shadow-lg"
