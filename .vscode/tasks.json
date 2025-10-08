@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Dev Server",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Verify Setup",
+      "type": "npm",
+      "script": "verify-setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests (Watch)",
+      "type": "npm",
+      "script": "test:watch",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Lint & Format",
+      "type": "npm",
+      "script": "format",
+      "problemMatcher": []
+    }
+  ]
+}

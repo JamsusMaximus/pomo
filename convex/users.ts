@@ -1,10 +1,34 @@
+/**
+ * @fileoverview User profile management and authentication
+ * @module convex/users
+ *
+ * Key responsibilities:
+ * - Ensure user exists in database (create on first sign-in)
+ * - Generate unique usernames from Clerk profile data
+ * - Retrieve current user profile
+ * - Handle username collision resolution with numeric suffixes
+ *
+ * Dependencies: Convex server runtime, Clerk (auth via ctx.auth)
+ * Used by: app/page.tsx (ensureUser on sign-in), app/profile/page.tsx
+ */
+
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 
 /**
  * Generates a unique username from a full name.
- * If the username exists, appends numbers (1, 2, 3...).
+ * Only adds numeric suffix if there's a collision.
+ *
+ * Algorithm:
+ * 1. Sanitize name to create base username
+ * 2. Check if base username is available
+ * 3. If taken, try incrementing numbers (1, 2, 3...) until unique
+ *
+ * @param ctx - Mutation context with database access
+ * @param firstName - User's first name (optional)
+ * @param lastName - User's last name (optional)
+ * @returns Unique username string
  */
 async function generateUniqueUsername(
   ctx: MutationCtx,
@@ -26,22 +50,22 @@ async function generateUniqueUsername(
     baseUsername = "user";
   }
 
-  // Check if base username is available
-  const existingWithBase = await ctx.db
+  // Try base username first (no suffix)
+  let candidate = baseUsername;
+  let existing = await ctx.db
     .query("users")
-    .filter((q) => q.eq(q.field("username"), baseUsername))
+    .filter((q) => q.eq(q.field("username"), candidate))
     .first();
 
-  if (!existingWithBase) {
-    return baseUsername;
+  if (!existing) {
+    return candidate;
   }
 
-  // Try appending numbers until we find an available username
-  let counter = 1;
-  while (counter < 1000) {
-    // Sanity limit
-    const candidate = `${baseUsername}${counter}`;
-    const existing = await ctx.db
+  // Base username is taken, try adding numbers
+  let suffix = 1;
+  while (existing) {
+    candidate = `${baseUsername}${suffix}`;
+    existing = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("username"), candidate))
       .first();
@@ -49,19 +73,34 @@ async function generateUniqueUsername(
     if (!existing) {
       return candidate;
     }
-    counter++;
+
+    suffix++;
+
+    // Safety limit to prevent infinite loop
+    if (suffix > 10000) {
+      return `${baseUsername}${Date.now()}`;
+    }
   }
 
-  // Fallback: use timestamp
-  return `${baseUsername}${Date.now()}`;
+  return candidate;
 }
 
 /**
  * Ensures a user exists in the database.
- * Uses Clerk auth context - cannot be spoofed by clients.
- * Auto-generates username from firstName + lastName.
- * Returns { userId, username, isNew } so frontend can sync to Clerk.
- * Idempotent: safe to call multiple times.
+ *
+ * Security: Uses Clerk auth context - cannot be spoofed by clients.
+ * The clerkId comes from verified JWT, not user input.
+ *
+ * Features:
+ * - Auto-generates unique username from firstName + lastName
+ * - Idempotent: safe to call multiple times
+ * - Returns user info for frontend sync
+ *
+ * @param args.firstName - User's first name from Clerk (optional)
+ * @param args.lastName - User's last name from Clerk (optional)
+ * @param args.avatarUrl - User's avatar URL from Clerk (optional)
+ * @returns Object with userId, username, and isNew flag
+ * @throws Error if not authenticated
  */
 export const ensureUser = mutation({
   args: {
@@ -105,7 +144,8 @@ export const ensureUser = mutation({
 
 /**
  * Gets the current authenticated user.
- * Returns null if not authenticated.
+ *
+ * @returns User object if authenticated, null otherwise
  */
 export const me = query({
   args: {},
@@ -126,7 +166,12 @@ export const me = query({
 
 /**
  * Gets a user by their ID.
- * Only returns user if requester is authenticated.
+ *
+ * Security: Requires authentication to access user data.
+ *
+ * @param args.userId - The ID of the user to fetch
+ * @returns User object or null if not found
+ * @throws Error if not authenticated
  */
 export const getUser = query({
   args: { userId: v.id("users") },

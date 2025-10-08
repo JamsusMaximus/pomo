@@ -3,11 +3,13 @@
 ## Issue: Development Keys in Production
 
 You're seeing this warning:
+
 ```
 Clerk has been loaded with development keys. Development instances have strict usage limits...
 ```
 
 And these errors:
+
 - CORS errors from `ethical-lamprey-64.accounts.dev`
 - Convex authentication failures
 
@@ -43,6 +45,7 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-production-app.clerk.accounts.com
 ```
 
 3. Also ensure you have:
+
 ```
 NEXT_PUBLIC_CONVEX_URL=https://next-dachshund-902.convex.cloud
 ANTHROPIC_API_KEY=sk-ant-...
@@ -87,11 +90,13 @@ After redeploying, check:
 ## Development vs Production
 
 **Development:**
+
 - Use `.env.local` with development keys
 - Domain: `ethical-lamprey-64.accounts.dev`
 - Limited to testing
 
 **Production:**
+
 - Use Vercel environment variables with production keys
 - Domain: `your-app.clerk.accounts.com` (custom domain)
 - No rate limits
@@ -99,12 +104,15 @@ After redeploying, check:
 ## Common Issues
 
 ### Issue: CORS Errors Persist
+
 **Solution:** Ensure you're using production Clerk instance, not dev instance
 
 ### Issue: Convex Authentication Fails
+
 **Solution:** Make sure `CLERK_JWT_ISSUER_DOMAIN` matches between Clerk and Convex
 
 ### Issue: Users Can't Sign In
+
 **Solution:** Check that production keys are set in Vercel for **Production** environment (not just Preview)
 
 ## Need Help?

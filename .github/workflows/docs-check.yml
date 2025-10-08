@@ -1,0 +1,152 @@
+name: Documentation Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history to compare with base branch
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+      - name: Check for schema changes
+        id: schema-check
+        run: |
+          echo "Checking for schema changes..."
+
+          SCHEMA_CHANGED=false
+          CONVEX_README_CHANGED=false
+          ARCH_CHANGED=false
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "convex/schema.ts"; then
+            SCHEMA_CHANGED=true
+            echo "::notice::Schema changed in this PR"
+          fi
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "convex/README.md"; then
+            CONVEX_README_CHANGED=true
+          fi
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "ARCHITECTURE.md"; then
+            ARCH_CHANGED=true
+          fi
+
+          # If schema changed but docs didn't, warn
+          if [ "$SCHEMA_CHANGED" = true ] && [ "$CONVEX_README_CHANGED" = false ]; then
+            echo "::warning file=convex/schema.ts::Schema changed but convex/README.md was not updated. Consider updating the Schema Overview section."
+          fi
+
+          if [ "$SCHEMA_CHANGED" = true ] && [ "$ARCH_CHANGED" = false ]; then
+            echo "::warning file=convex/schema.ts::Schema changed but ARCHITECTURE.md was not updated. Consider updating the Data Model section."
+          fi
+
+      - name: Check for new Convex functions
+        id: convex-functions
+        run: |
+          echo "Checking for new Convex functions..."
+
+          # Check for new Convex files
+          NEW_CONVEX=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD | grep "^convex/.*\.ts$" | grep -v "_generated" | grep -v "schema.ts" || true)
+
+          if [ -n "$NEW_CONVEX" ]; then
+            echo "::notice::New Convex file(s) detected:"
+            echo "$NEW_CONVEX" | while read file; do
+              echo "::notice::  - $file"
+            done
+
+            # Check if README was updated
+            if ! git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "convex/README.md"; then
+              echo "::warning::New Convex files added but convex/README.md was not updated. Consider documenting new functions in the API Reference."
+            fi
+          fi
+
+          # Check for new exports in existing files
+          MODIFIED_CONVEX=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep "^convex/.*\.ts$" | grep -v "_generated" | grep -v "schema.ts" || true)
+
+          for file in $MODIFIED_CONVEX; do
+            if git diff origin/${{ github.base_ref }}...HEAD "$file" | grep -q "^+export.*=.*\(mutation\|query\|action\)"; then
+              echo "::notice::New Convex function(s) added to $file"
+
+              if ! git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "convex/README.md"; then
+                echo "::warning file=$file::New Convex function(s) added but convex/README.md was not updated."
+              fi
+              break
+            fi
+          done
+
+      - name: Check for auth flow changes
+        run: |
+          echo "Checking for auth flow changes..."
+
+          AUTH_CHANGED=false
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE "(middleware\.ts|convex/auth\.config\.ts)"; then
+            AUTH_CHANGED=true
+            echo "::notice::Auth configuration changed"
+          fi
+
+          if [ "$AUTH_CHANGED" = true ]; then
+            if ! git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "ARCHITECTURE.md"; then
+              echo "::warning::Auth flow modified but ARCHITECTURE.md was not updated. Consider updating the Authentication & Authorization section."
+            fi
+          fi
+
+      - name: Check for offline sync changes
+        run: |
+          echo "Checking for offline sync changes..."
+
+          SYNC_CHANGED=false
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "^lib/storage/"; then
+            SYNC_CHANGED=true
+            echo "::notice::Offline sync logic changed"
+          fi
+
+          if [ "$SYNC_CHANGED" = true ]; then
+            if ! git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "ARCHITECTURE.md"; then
+              echo "::warning::Offline sync modified but ARCHITECTURE.md was not updated. Consider updating the Offline-First Design section."
+            fi
+          fi
+
+      - name: Check for missing file headers
+        run: |
+          echo "Checking for missing file headers..."
+
+          # Check new TypeScript files for headers
+          NEW_TS_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD | grep -E '\.(ts|tsx)$' | grep -v "\.next" | grep -v "_generated" || true)
+
+          MISSING_HEADERS=0
+
+          for file in $NEW_TS_FILES; do
+            if [ -f "$file" ]; then
+              if ! head -5 "$file" | grep -q "@fileoverview"; then
+                echo "::warning file=$file::New file missing @fileoverview header. See .claude/templates/file-header.template.ts"
+                MISSING_HEADERS=$((MISSING_HEADERS + 1))
+              fi
+            fi
+          done
+
+          if [ $MISSING_HEADERS -gt 0 ]; then
+            echo "::notice::Found $MISSING_HEADERS file(s) without headers"
+          else
+            echo "::notice::All new files have proper headers ✓"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### Documentation Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Documentation validation complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the annotations above for any warnings." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📖 See [AI_CONTEXT.md](../blob/${{ github.head_ref }}/AI_CONTEXT.md) for documentation requirements." >> $GITHUB_STEP_SUMMARY

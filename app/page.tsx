@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Main Pomodoro timer page - core application functionality
+ * @module app/page
+ *
+ * Key responsibilities:
+ * - Render pomodoro timer UI with circular progress ring
+ * - Manage timer state (running, paused, reset) via useTimer hook
+ * - Handle session completion and local storage saving
+ * - Sync completed sessions to Convex with offline support
+ * - Display user stats, level progress, and session feed
+ * - Manage browser notifications and sound alerts
+ *
+ * Dependencies: Convex (backend sync), Clerk (auth), Framer Motion (animations)
+ * Used by: Root layout (main route "/" )
+ */
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -24,9 +40,20 @@ import {
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-export default function Home() {
+// Calculate pomos completed today from sessions
+const calculatePomosToday = (sessions: PomodoroSession[]) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayTimestamp = today.getTime();
+
+  return sessions.filter(
+    (session) => session.mode === "focus" && session.completedAt >= todayTimestamp
+  ).length;
+};
+
+function HomeContent() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
@@ -38,6 +65,9 @@ export default function Home() {
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
   const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "error" | "success">("idle");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [syncRetryCount, setSyncRetryCount] = useState(0);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -141,42 +171,58 @@ export default function Home() {
         playCompletionSound();
         showNotification("Pomodoro Complete! 🎉", "Great work! Time for a break.");
 
-        // Increment pomos count
-        setCyclesCompleted((prev) => prev + 1);
+        // Save locally first to get the session ID
+        const localSession = saveCompletedSession("focus", focusDuration, currentTag);
 
-        // Save locally
-        saveCompletedSession("focus", focusDuration, currentTag);
-
-        // Also save to Convex if signed in
+        // Save to Convex if signed in, then mark as synced
         if (isSignedIn) {
           saveSession({
             mode: "focus",
             duration: focusDuration,
             tag: currentTag || undefined,
             completedAt: Date.now(),
-          }).catch((err) => {
-            console.error("Failed to save session to Convex:", err);
-          });
+          })
+            .then(() => {
+              // Mark as synced in localStorage after successful Convex save
+              markSessionsSynced([localSession.id]);
+              console.log("✅ Focus session synced to Convex");
+            })
+            .catch((err) => {
+              console.error("Failed to save session to Convex:", err);
+              // Session remains unsynced and will be retried later
+            });
         }
 
         setCurrentTag(""); // Clear tag for next session
 
-        // Refresh sessions display
-        setSessions(loadSessions());
+        // Refresh sessions display and recalculate today's count
+        const updatedSessions = loadSessions();
+        setSessions(updatedSessions);
+        setCyclesCompleted(calculatePomosToday(updatedSessions));
       } else if (previousMode === "break") {
-        // Save locally
-        saveCompletedSession("break", breakDuration);
+        // Save locally first to get the session ID
+        const localSession = saveCompletedSession("break", breakDuration);
 
-        // Also save to Convex if signed in
+        // Save to Convex if signed in, then mark as synced
         if (isSignedIn) {
           saveSession({
             mode: "break",
             duration: breakDuration,
             completedAt: Date.now(),
-          }).catch((err) => {
-            console.error("Failed to save session to Convex:", err);
-          });
+          })
+            .then(() => {
+              // Mark as synced in localStorage after successful Convex save
+              markSessionsSynced([localSession.id]);
+              console.log("✅ Break session synced to Convex");
+            })
+            .catch((err) => {
+              console.error("Failed to save session to Convex:", err);
+              // Session remains unsynced and will be retried later
+            });
         }
+
+        // Refresh sessions display
+        setSessions(loadSessions());
       }
       setPreviousMode(newMode);
     },
@@ -206,11 +252,12 @@ export default function Home() {
     if (prefs) {
       setFocusDuration(prefs.focusDuration);
       setBreakDuration(prefs.breakDuration);
-      setCyclesCompleted(prefs.cyclesCompleted);
     }
 
-    // Load sessions
-    setSessions(loadSessions());
+    // Load sessions and calculate today's count
+    const loadedSessions = loadSessions();
+    setSessions(loadedSessions);
+    setCyclesCompleted(calculatePomosToday(loadedSessions));
 
     setIsHydrated(true);
 
@@ -229,9 +276,9 @@ export default function Home() {
       focusDuration,
       breakDuration,
       lastMode: mode,
-      cyclesCompleted,
+      cyclesCompleted: 0, // Not used anymore, kept for backwards compatibility
     });
-  }, [focusDuration, breakDuration, mode, cyclesCompleted, isHydrated]);
+  }, [focusDuration, breakDuration, mode, isHydrated]);
 
   // Ensure user exists in Convex when signed in
   useEffect(() => {
@@ -257,23 +304,35 @@ export default function Home() {
     savePrefs({
       focusDuration,
       breakDuration,
-      cyclesCompleted,
+      cyclesCompleted: 0, // Not used anymore, server calculates from actual sessions
     }).catch((err) => {
       console.error("Failed to sync preferences to Convex:", err);
     });
-  }, [isSignedIn, focusDuration, breakDuration, cyclesCompleted, isHydrated, savePrefs]);
+  }, [isSignedIn, focusDuration, breakDuration, isHydrated, savePrefs]);
 
-  // Sync local pomodoros to Convex when user signs in
-  useEffect(() => {
-    // Detect when user transitions from signed out to signed in
-    if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
+  // Sync local pomodoros to Convex with retry mechanism
+  const syncLocalSessionsRef = useRef<((options?: { silent: boolean }) => Promise<void>) | null>(
+    null
+  );
+
+  const syncLocalSessions = useCallback(
+    async (options = { silent: false }) => {
       const unsyncedSessions = getUnsyncedSessions();
 
-      if (unsyncedSessions.length > 0) {
-        console.log(`Syncing ${unsyncedSessions.length} local pomodoros to Convex...`);
+      if (unsyncedSessions.length === 0) {
+        setSyncStatus("idle");
+        return;
+      }
 
+      // Only show sync status toast if not silent
+      if (!options.silent) {
+        setSyncStatus("syncing");
+      }
+      console.log(`Syncing ${unsyncedSessions.length} local pomodoros to Convex...`);
+
+      try {
         // Upload each unsynced session to Convex
-        Promise.all(
+        await Promise.all(
           unsyncedSessions.map((session) =>
             saveSession({
               mode: session.mode,
@@ -282,23 +341,100 @@ export default function Home() {
               completedAt: session.completedAt,
             })
           )
-        )
-          .then(() => {
-            // Mark all as synced in localStorage
-            markSessionsSynced(unsyncedSessions.map((s) => s.id));
-            console.log("✅ Local pomodoros synced successfully!");
-            // Refresh the sessions display
-            setSessions(loadSessions());
-          })
-          .catch((err) => {
-            console.error("Failed to sync local sessions to Convex:", err);
-          });
+        );
+
+        // Mark all as synced in localStorage
+        markSessionsSynced(unsyncedSessions.map((s) => s.id));
+        console.log("✅ Local pomodoros synced successfully!");
+
+        if (!options.silent) {
+          setSyncStatus("success");
+          // Reset success status after 3 seconds
+          setTimeout(() => setSyncStatus("idle"), 3000);
+        }
+        setSyncRetryCount(0);
+
+        // Refresh the sessions display and recalculate today's count
+        const updatedSessions = loadSessions();
+        setSessions(updatedSessions);
+        setCyclesCompleted(calculatePomosToday(updatedSessions));
+      } catch (err) {
+        console.error("Failed to sync local sessions to Convex:", err);
+
+        if (!options.silent) {
+          setSyncStatus("error");
+        }
+
+        // Auto-retry up to 3 times with exponential backoff
+        setSyncRetryCount((prev) => {
+          const newCount = prev + 1;
+          if (newCount <= 3) {
+            const retryDelay = Math.pow(2, prev) * 2000; // 2s, 4s, 8s
+            console.log(`Retrying sync in ${retryDelay / 1000}s... (attempt ${newCount}/3)`);
+
+            setTimeout(() => {
+              syncLocalSessionsRef.current?.(options);
+            }, retryDelay);
+          }
+          return newCount;
+        });
       }
+    },
+    [saveSession]
+  );
+
+  // Store ref for retry mechanism
+  syncLocalSessionsRef.current = syncLocalSessions;
+
+  // Sync local pomodoros to Convex when user signs in OR when app loads
+  useEffect(() => {
+    // Sync when user transitions from signed out to signed in (show toast)
+    if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
+      console.log("User just signed in, syncing local sessions...");
+      syncLocalSessions({ silent: false }); // Show toast for sign-in
+    }
+    // Also sync when app loads and user is already signed in (silent)
+    else if (isSignedIn && isHydrated && prevIsSignedIn.current === undefined) {
+      console.log("App loaded with signed-in user, checking for unsynced sessions...");
+      syncLocalSessions({ silent: true }); // Silent sync on load
     }
 
     // Update the ref for next render
     prevIsSignedIn.current = isSignedIn;
-  }, [isSignedIn, isHydrated, saveSession]);
+  }, [isSignedIn, isHydrated, syncLocalSessions]);
+
+  // Periodic sync check - every 60 seconds, sync any unsynced sessions
+  useEffect(() => {
+    if (!isSignedIn || !isHydrated) return;
+
+    const interval = setInterval(() => {
+      const unsynced = getUnsyncedSessions();
+      if (unsynced.length > 0) {
+        console.log(`Periodic sync check: ${unsynced.length} unsynced sessions found`);
+        syncLocalSessions({ silent: true }); // Silent background sync
+      }
+    }, 60000); // Check every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [isSignedIn, isHydrated, syncLocalSessions]);
+
+  // Sync when tab becomes visible again (user returns to app)
+  useEffect(() => {
+    if (!isSignedIn || !isHydrated) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const unsynced = getUnsyncedSessions();
+        if (unsynced.length > 0) {
+          console.log(`Tab visible: ${unsynced.length} unsynced sessions, syncing...`);
+          syncLocalSessions({ silent: true }); // Silent sync on tab focus
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isSignedIn, isHydrated, syncLocalSessions]);
 
   // Keyboard shortcut: Space bar to start/pause
   useEffect(() => {
@@ -323,6 +459,27 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [isRunning, start, pause]);
 
+  // Update browser tab title with live countdown
+  useEffect(() => {
+    const { mm, ss } = formatTime(remaining);
+
+    if (isRunning) {
+      if (mode === "focus") {
+        document.title = `${mm}:${ss} 💡 focused`;
+      } else {
+        document.title = `${mm}:${ss} ☕️ break`;
+      }
+    } else {
+      // Reset to default title when not running
+      document.title = "Pomodoro";
+    }
+
+    // Cleanup: reset title when component unmounts
+    return () => {
+      document.title = "Pomodoro";
+    };
+  }, [remaining, mode, isRunning]);
+
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
 
@@ -331,121 +488,179 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
+      {/* Sync Status Toast */}
+      {syncStatus !== "idle" && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-20 right-4 z-50 bg-card border border-border rounded-lg shadow-lg p-3 max-w-xs"
+        >
+          {syncStatus === "syncing" && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <span>Syncing sessions...</span>
+            </div>
+          )}
+          {syncStatus === "success" && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>Sessions synced!</span>
+            </div>
+          )}
+          {syncStatus === "error" && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Sync failed</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSyncRetryCount(0);
+                  syncLocalSessions();
+                }}
+                className="text-xs"
+              >
+                Retry Now
+              </Button>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Top Controls - Positioned to avoid overlap */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 h-10">
-        <Link href="/download">
-          <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
-            <Download className="w-4 h-4 mr-1" />
-            <span className="hidden sm:inline">Download App</span>
-          </Button>
-        </Link>
-        <SignedOut>
-          <SignUpButton mode="modal">
-            <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
-              Signup / Signin
-            </Button>
-          </SignUpButton>
-        </SignedOut>
-        <SignedIn>
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <Avatar className="w-8 h-8 cursor-pointer">
-              <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
-              <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-            </Avatar>
-            {(() => {
-              if (!stats) {
+        <motion.div
+          className="flex items-center gap-2 sm:gap-3"
+          animate={{
+            opacity: isRunning ? 0.3 : 1,
+          }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          style={{
+            pointerEvents: isRunning ? "none" : "auto",
+          }}
+        >
+          <SignedOut>
+            <SignUpButton mode="modal">
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+                Signup / Signin
+              </Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <Avatar className="w-8 h-8 cursor-pointer">
+                <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
+                <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+              </Avatar>
+              {(() => {
+                if (!stats) {
+                  return (
+                    <motion.div
+                      className="flex flex-col gap-1"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <span className="text-sm font-medium">Level 1</span>
+                      <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
+                          initial={{ width: 0 }}
+                          animate={{ width: 0 }}
+                          transition={{ duration: 0.8, delay: 0.4 }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                }
+
+                // Get level info from database config or fallback to lib
+                const getLevelInfoFromDb = (pomos: number) => {
+                  // Use lib fallback if levelConfig is still loading or empty
+                  if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
+                    const info = getLevelInfo(pomos);
+                    return { ...info, title: getLevelTitle(info.currentLevel) };
+                  }
+
+                  let currentLevel = levelConfig[0];
+                  for (const level of levelConfig) {
+                    if (level.threshold <= pomos) {
+                      currentLevel = level;
+                    } else {
+                      break;
+                    }
+                  }
+
+                  const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
+                  const nextLevel = levelConfig[currentIndex + 1];
+
+                  if (!nextLevel) {
+                    return {
+                      currentLevel: currentLevel.level,
+                      pomosForCurrentLevel: currentLevel.threshold,
+                      pomosForNextLevel: currentLevel.threshold,
+                      pomosRemaining: 0,
+                      progress: 100,
+                      title: currentLevel.title,
+                    };
+                  }
+
+                  const pomosInCurrentLevel = pomos - currentLevel.threshold;
+                  const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
+                  const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+                  return {
+                    currentLevel: currentLevel.level,
+                    pomosForCurrentLevel: currentLevel.threshold,
+                    pomosForNextLevel: nextLevel.threshold,
+                    pomosRemaining: nextLevel.threshold - pomos,
+                    progress: Math.min(100, Math.max(0, progress)),
+                    title: currentLevel.title,
+                  };
+                };
+
+                const levelInfo = getLevelInfoFromDb(stats.total.count);
+
                 return (
-                  <motion.div 
+                  <motion.div
                     className="flex flex-col gap-1"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    <span className="text-sm font-medium">Level 1</span>
+                    <span className="text-sm font-medium">Level {levelInfo.currentLevel}</span>
                     <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
-                      <motion.div 
+                      <motion.div
                         className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
                         initial={{ width: 0 }}
-                        animate={{ width: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
+                        animate={{ width: `${levelInfo.progress}%` }}
+                        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
                       />
                     </div>
                   </motion.div>
                 );
-              }
-
-              // Get level info from database config or fallback to lib
-              const getLevelInfoFromDb = (pomos: number) => {
-                if (!levelConfig || levelConfig.length === 0) {
-                  const info = getLevelInfo(pomos);
-                  return { ...info, title: getLevelTitle(info.currentLevel) };
-                }
-
-                let currentLevel = levelConfig[0];
-                for (const level of levelConfig) {
-                  if (level.threshold <= pomos) {
-                    currentLevel = level;
-                  } else {
-                    break;
-                  }
-                }
-
-                const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
-                const nextLevel = levelConfig[currentIndex + 1];
-                
-                if (!nextLevel) {
-                  return {
-                    currentLevel: currentLevel.level,
-                    pomosForCurrentLevel: currentLevel.threshold,
-                    pomosForNextLevel: currentLevel.threshold,
-                    pomosRemaining: 0,
-                    progress: 100,
-                    title: currentLevel.title,
-                  };
-                }
-
-                const pomosInCurrentLevel = pomos - currentLevel.threshold;
-                const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-                const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-                return {
-                  currentLevel: currentLevel.level,
-                  pomosForCurrentLevel: currentLevel.threshold,
-                  pomosForNextLevel: nextLevel.threshold,
-                  pomosRemaining: nextLevel.threshold - pomos,
-                  progress: Math.min(100, Math.max(0, progress)),
-                  title: currentLevel.title,
-                };
-              };
-
-              const levelInfo = getLevelInfoFromDb(stats.total.count);
-
-              return (
-                <motion.div 
-                  className="flex flex-col gap-1"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <span className="text-sm font-medium">
-                    Level {levelInfo.currentLevel}
-                  </span>
-                  <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${levelInfo.progress}%` }}
-                      transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })()}
-          </Link>
-        </SignedIn>
+              })()}
+            </Link>
+          </SignedIn>
+        </motion.div>
         <ThemeToggle />
       </div>
 
@@ -647,12 +862,12 @@ export default function Home() {
               >
                 <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
                   <Button variant="outline" onClick={reset} size="default" className="w-full">
-            Reset
-          </Button>
+                    Reset
+                  </Button>
                 </motion.div>
               </motion.div>
             )}
-        </div>
+          </div>
         </motion.div>
 
         {/* Pomodoro Feed */}
@@ -668,5 +883,16 @@ export default function Home() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <ErrorBoundary
+      fallbackTitle="Timer Error"
+      fallbackMessage="The pomodoro timer encountered an error. Your progress has been saved."
+    >
+      <HomeContent />
+    </ErrorBoundary>
   );
 }

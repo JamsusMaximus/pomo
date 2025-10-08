@@ -7,6 +7,7 @@ export default defineSchema({
     username: v.string(),
     avatarUrl: v.optional(v.string()),
     createdAt: v.number(),
+    bestDailyStreak: v.optional(v.number()), // Historical best daily streak
   }).index("by_clerk", ["clerkId"]),
 
   pomodoros: defineTable({

@@ -1,3 +1,19 @@
+/**
+ * @fileoverview User profile page with stats, challenges, and activity visualization
+ * @module app/profile/page
+ *
+ * Key responsibilities:
+ * - Display user statistics (total, weekly, monthly, yearly pomodoros)
+ * - Show daily and weekly streaks with visual indicators
+ * - Render challenge progress (active and completed)
+ * - Display activity heatmap and focus graph
+ * - Provide sync controls for challenge progress
+ * - Handle user sign-out
+ *
+ * Dependencies: Convex (stats/challenges), Clerk (auth), Framer Motion (animations)
+ * Used by: Root layout (route "/profile")
+ */
+
 "use client";
 
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -8,13 +24,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Trash2, Database, Award, LogOut, Settings, Flame, Check, Star, Target, Sprout, Trophy, Crown, Sparkles, Zap, Medal, Swords, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  RefreshCw,
+  Trash2,
+  Database,
+  Award,
+  LogOut,
+  Settings,
+  Flame,
+  Check,
+  Star,
+  Hourglass,
+  type LucideIcon,
+} from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import { useRouter } from "next/navigation";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -24,18 +54,18 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
   today.setHours(0, 0, 0, 0);
 
   const weekView = [];
-  
+
   // Generate 7 days: last 5 days + today + next day
   for (let i = -5; i <= 1; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    
+
     const dayData = activity.find((a) => a.date === dateKey);
     const isToday = i === 0;
     const isFuture = i > 0;
     const hasPomodoro = dayData && dayData.count > 0;
-    
+
     weekView.push({
       dayOfWeek: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][date.getDay()],
       date: dateKey,
@@ -44,20 +74,33 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
       completed: hasPomodoro && !isFuture,
     });
   }
-  
+
   return weekView;
 }
 
 // Helper to render Lucide icon from string name
 const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
-  const Icon = (LucideIcons as any)[iconName] as LucideIcon;
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
   if (!Icon) {
     return <Award className={className} />; // Fallback icon
   }
   return <Icon className={className} />;
 };
 
-export default function ProfilePage() {
+// Type for user challenge with progress
+interface UserChallenge {
+  _id: string;
+  name: string;
+  description: string;
+  type: string;
+  target: number;
+  badge: string;
+  progress: number;
+  completedAt?: number;
+  recurringMonth?: number;
+}
+
+function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
@@ -73,8 +116,24 @@ export default function ProfilePage() {
   useEffect(() => {
     if (stats) {
       console.log("Stats data:", stats);
+      console.log("Streak breakdown:", {
+        currentDailyStreak: stats.dailyStreak,
+        bestDailyStreak: stats.bestDailyStreak,
+        currentWeekPomos: stats.week.count,
+        weeklyStreak: stats.weeklyStreak,
+        message:
+          stats.weeklyStreak > 0
+            ? `${stats.weeklyStreak} weeks with 5+ pomos each`
+            : "No active streak (need 5+ pomos per week)",
+      });
     }
   }, [stats]);
+
+  useEffect(() => {
+    if (activity) {
+      console.log("Activity data (last 10 days):", activity.slice(-10));
+    }
+  }, [activity]);
 
   useEffect(() => {
     if (userChallenges) {
@@ -93,6 +152,33 @@ export default function ProfilePage() {
   const [isClearing, setIsClearing] = useState(false);
   const [isSyncingChallenges, setIsSyncingChallenges] = useState(false);
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
+  const [hasAutoSynced, setHasAutoSynced] = useState(false);
+
+  // Fitness period state (7 or 90 days)
+  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
+
+  // Challenges expansion state
+  const [showAllChallenges, setShowAllChallenges] = useState(false);
+
+  // Determine default fitness period based on user age
+  useEffect(() => {
+    if (stats?.userCreatedAt) {
+      const daysSinceCreation = (Date.now() - stats.userCreatedAt) / (1000 * 60 * 60 * 24);
+      const defaultPeriod = daysSinceCreation <= 7 ? 7 : 90;
+      setFitnessPeriod(defaultPeriod);
+    }
+  }, [stats?.userCreatedAt]);
+
+  // Auto-sync challenges on page load
+  useEffect(() => {
+    if (user && stats && !hasAutoSynced) {
+      console.log("Auto-syncing challenge progress...");
+      setHasAutoSynced(true);
+      syncProgress().catch((err) => {
+        console.error("Auto-sync failed:", err);
+      });
+    }
+  }, [user, stats, hasAutoSynced, syncProgress]);
 
   // Check localStorage stats
   useEffect(() => {
@@ -137,12 +223,12 @@ export default function ProfilePage() {
   };
 
   const handleSeedData = async () => {
-    if (!confirm("Generate test pomodoros for the past 40 days?")) return;
+    if (!confirm("Generate test pomodoros for the past 50 days with a 6-week streak?")) return;
 
     setIsSeeding(true);
     try {
       const result = await seedTestData();
-      alert(`✅ Generated ${result.count} pomodoros over ${result.days} days!`);
+      alert(`✅ ${result.message}\nGenerated ${result.count} pomodoros over ${result.days} days!`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       alert(`❌ Failed: ${message}`);
@@ -229,7 +315,7 @@ export default function ProfilePage() {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
                   <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
-                  {isSeeding ? "Seeding..." : "Seed 40 Days"}
+                  {isSeeding ? "Seeding..." : "Seed 6-Week Streak"}
                 </Button>
                 {stats && stats.total.count > 0 && (
                   <Button
@@ -276,9 +362,9 @@ export default function ProfilePage() {
                 }
               }
 
-              const currentIndex = levelConfig.findIndex(l => l.level === currentLevel.level);
+              const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
               const nextLevel = levelConfig[currentIndex + 1];
-              
+
               if (!nextLevel) {
                 // Max level reached
                 return {
@@ -320,32 +406,38 @@ export default function ProfilePage() {
                   className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8 mb-6"
                 >
                   {/* Profile Header with Total */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                    <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
+                  <div className="flex items-start gap-3 sm:gap-6">
+                    <Avatar className="w-12 h-12 sm:w-20 sm:h-20 shrink-0">
                       <AvatarImage src={user.imageUrl} alt={user.username || "User"} />
-                      <AvatarFallback className="text-xl">
+                      <AvatarFallback className="text-lg sm:text-xl">
                         {user.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <h1 className="text-2xl sm:text-3xl font-bold mb-1">{user.username || "User"}</h1>
-                      <p className="text-sm text-muted-foreground mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl sm:text-3xl font-bold mb-1 truncate">
+                        {user.username || "User"}
+                      </h1>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-2 truncate">
                         {user.primaryEmailAddress?.emailAddress}
                       </p>
                       <div className="flex items-center gap-2">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                          <p className="text-sm font-medium">
+                          <p className="text-xs sm:text-sm font-medium">
                             Level {levelInfo.currentLevel} · {levelInfo.title}
                           </p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <p className="text-4xl sm:text-5xl font-bold text-orange-600 dark:text-orange-400">
+                    <div className="text-right shrink-0">
+                      <p className="text-3xl sm:text-5xl font-bold text-orange-600 dark:text-orange-400">
                         {currentPomos}
                       </p>
-                      <p className="text-sm text-muted-foreground">Total Pomodoros</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatTime(stats.total.minutes)}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                        Total Pomodoros
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                        {formatTime(stats.total.minutes)}
+                      </p>
                     </div>
                   </div>
 
@@ -365,24 +457,25 @@ export default function ProfilePage() {
                       </p>
                     </div>
                     <div className="relative">
-                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted/30">
+                      <div className="h-3 w-full overflow-visible rounded-full bg-muted/30">
                         <motion.div
-                          className="h-full"
-                          style={{ 
-                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)"
+                          className="h-full rounded-full"
+                          style={{
+                            background:
+                              "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
+                            minWidth:
+                              levelInfo.progress > 0 && levelInfo.progress < 5 ? "5%" : "0%",
                           }}
                           initial={{ width: 0 }}
-                          whileInView={{ width: `${levelInfo.progress}%` }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
+                          animate={{ width: `${levelInfo.progress}%` }}
+                          transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
                         />
                       </div>
                       <motion.div
                         className="absolute -top-1 transform -translate-x-1/2"
                         initial={{ left: "0%", opacity: 0 }}
-                        whileInView={{ left: `${levelInfo.progress}%`, opacity: 1 }}
-                        viewport={{ once: true, margin: "-50px" }}
-                        transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
+                        animate={{ left: `${levelInfo.progress}%`, opacity: 1 }}
+                        transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
                       >
                         <div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-background shadow-lg" />
                       </motion.div>
@@ -398,7 +491,7 @@ export default function ProfilePage() {
                   className="mb-6"
                 >
                   <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-6 relative overflow-hidden">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
                       {/* Week view - LEFT SIDE */}
                       <div className="flex-1 w-full">
                         <div className="flex justify-around items-start gap-2 sm:gap-3">
@@ -414,7 +507,9 @@ export default function ProfilePage() {
                                 ease: "easeOut",
                               }}
                             >
-                              <span className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}>
+                              <span
+                                className={`text-xs font-medium ${day.isToday ? "text-orange-500" : "text-muted-foreground"}`}
+                              >
                                 {day.dayOfWeek}
                               </span>
                               {day.isToday && day.completed ? (
@@ -448,16 +543,28 @@ export default function ProfilePage() {
                                 </motion.div>
                               ) : day.isToday ? (
                                 <motion.div
-                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: [0, 1.2, 1] }}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted/30 flex items-center justify-center border-2 border-dashed border-muted-foreground/40"
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{
+                                    scale: [0, 1.1, 1],
+                                    opacity: [0, 0.5, 0.7, 0.5],
+                                  }}
                                   transition={{
-                                    delay: 0.05 + index * 0.2,
-                                    duration: 0.3,
-                                    ease: "easeOut",
+                                    scale: {
+                                      delay: 0.05 + index * 0.2,
+                                      duration: 0.3,
+                                      ease: "easeOut",
+                                    },
+                                    opacity: {
+                                      delay: 0.05 + index * 0.2 + 0.3,
+                                      duration: 2,
+                                      ease: "easeInOut",
+                                      repeat: Infinity,
+                                      repeatType: "reverse",
+                                    },
                                   }}
                                 >
-                                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+                                  <Hourglass className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
                                 </motion.div>
                               ) : day.completed ? (
                                 <motion.div
@@ -489,19 +596,29 @@ export default function ProfilePage() {
                         </div>
                         {/* Encouragement text */}
                         <p className="text-center mt-4 text-xs sm:text-sm text-muted-foreground">
-                          {stats.dailyStreak && stats.dailyStreak > 0 ? (
+                          {stats.dailyStreak === 1 ? (
                             <>
-                              Keep your <span className="text-orange-500 font-semibold">perfect streak</span> going!
+                              A journey of a thousand miles begins with a{" "}
+                              <span className="text-orange-500 font-semibold">single pomodoro</span>
+                            </>
+                          ) : stats.dailyStreak && stats.dailyStreak > 1 ? (
+                            <>
+                              Keep your{" "}
+                              <span className="text-orange-500 font-semibold">perfect streak</span>{" "}
+                              going!
                             </>
                           ) : (
                             <>
-                              Complete a pomodoro to <span className="text-orange-500 font-semibold">start your streak</span>
+                              Complete a pomodoro to{" "}
+                              <span className="text-orange-500 font-semibold">
+                                start your streak
+                              </span>
                             </>
                           )}
                         </p>
                       </div>
 
-                      {/* Streak number and label - RIGHT SIDE */}
+                      {/* Streak number and label - Centered on mobile, right-aligned on desktop */}
                       <div className="flex flex-col items-center sm:items-end shrink-0">
                         <motion.div
                           animate={{
@@ -517,64 +634,107 @@ export default function ProfilePage() {
                         >
                           <Flame className="w-16 h-16 sm:w-20 sm:h-20 text-orange-500 fill-orange-500 mb-2" />
                         </motion.div>
-                        <span className={`font-black text-orange-600 dark:text-orange-400 ${
-                          (stats.dailyStreak ?? 0) >= 100 ? "text-4xl sm:text-5xl" : 
-                          (stats.dailyStreak ?? 0) >= 10 ? "text-5xl sm:text-6xl" : 
-                          "text-6xl sm:text-7xl"
-                        }`}>
+                        <span
+                          className={`font-black text-orange-600 dark:text-orange-400 ${
+                            (stats.dailyStreak ?? 0) >= 100
+                              ? "text-4xl sm:text-5xl"
+                              : (stats.dailyStreak ?? 0) >= 10
+                                ? "text-5xl sm:text-6xl"
+                                : "text-6xl sm:text-7xl"
+                          }`}
+                        >
                           {stats.dailyStreak ?? 0}
                         </span>
-                        <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">day streak!</h2>
+                        <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">
+                          day streak!
+                        </h2>
+                        {stats.bestDailyStreak !== undefined && stats.bestDailyStreak > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Best:{" "}
+                            <span className="font-semibold text-orange-600 dark:text-orange-400">
+                              {stats.bestDailyStreak}
+                            </span>{" "}
+                            {stats.bestDailyStreak === 1 ? "day" : "days"}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Weekly Streak - More Exciting */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.08 }}
-                  className="mb-6"
-                >
-                  <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-5 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex gap-1">
-                          {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map((_, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              transition={{
-                                delay: 0.1 + i * 0.1,
-                                duration: 0.5,
-                                type: "spring",
-                                stiffness: 200,
-                              }}
-                            >
-                              <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
-                            </motion.div>
-                          ))}
-                          {(stats.weeklyStreak ?? 0) > 8 && (
-                            <span className="text-xl font-bold text-orange-500 ml-1">
-                              +{(stats.weeklyStreak ?? 0) - 8}
-                            </span>
-                          )}
+                {/* Weekly Streak - Hidden for now (keeping backend logic) */}
+                {false && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.08 }}
+                    className="mb-6"
+                  >
+                    <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl shadow-lg border border-orange-500/20 p-5 relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-1">
+                            {Array.from({ length: Math.min(stats?.weeklyStreak ?? 0, 8) }).map(
+                              (_, i) => (
+                                <motion.div
+                                  key={i}
+                                  initial={{ scale: 0, rotate: -180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{
+                                    delay: 0.1 + i * 0.1,
+                                    duration: 0.5,
+                                    type: "spring",
+                                    stiffness: 200,
+                                  }}
+                                >
+                                  <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500 fill-orange-500" />
+                                </motion.div>
+                              )
+                            )}
+                            {(stats?.weeklyStreak ?? 0) > 8 && (
+                              <span className="text-xl font-bold text-orange-500 ml-1">
+                                +{(stats?.weeklyStreak ?? 0) - 8}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
+                            {stats?.weeklyStreak ?? 0}
+                          </p>
+                          <p className="text-sm font-medium text-muted-foreground mt-1">
+                            {(stats?.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {(stats?.weeklyStreak ?? 0) > 0 ? (
+                              <>
+                                <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                  {Math.min(stats?.week.count ?? 0, 5)}/5 pomos
+                                </span>{" "}
+                                this week
+                                {(stats?.week.count ?? 0) < 5 && " - Keep it going! 🔥"}
+                                {(stats?.week.count ?? 0) >= 5 && " - Streak secured! 🎉"}
+                              </>
+                            ) : (
+                              <>
+                                <span className="font-semibold">
+                                  {stats?.week.count ?? 0}/5 pomos
+                                </span>{" "}
+                                this week
+                                {(stats?.week.count ?? 0) === 0 && " - Start your streak today!"}
+                                {(stats?.week.count ?? 0) > 0 &&
+                                  (stats?.week.count ?? 0) < 5 &&
+                                  " - Keep going!"}
+                                {(stats?.week.count ?? 0) >= 5 &&
+                                  " - Streak will start next week! 🚀"}
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
-                          {stats.weeklyStreak ?? 0}
-                        </p>
-                        <p className="text-sm font-medium text-muted-foreground mt-1">
-                          {(stats.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">5+ pomos</p>
-                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                )}
 
                 {/* Focus Fitness */}
                 {focusGraph && focusGraph.length > 0 && (
@@ -586,23 +746,52 @@ export default function ProfilePage() {
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h2 className="text-lg font-bold">Focus Fitness</h2>
+                          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                            <button
+                              onClick={() => setFitnessPeriod(7)}
+                              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                                fitnessPeriod === 7
+                                  ? "bg-orange-500 text-white"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              7 days
+                            </button>
+                            <button
+                              onClick={() => setFitnessPeriod(90)}
+                              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                                fitnessPeriod === 90
+                                  ? "bg-orange-500 text-white"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              90 days
+                            </button>
+                          </div>
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          90-day trend. Focused days increase your Focus Fitness. Days off, or unfocused days, cause it to drop.
+                          Focused days increase your Focus Fitness. Days off, or unfocused days,
+                          cause it to drop.
                         </p>
                       </div>
                       <div className="text-right ml-4">
                         <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
                           {(() => {
+                            // Filter data based on selected period
+                            const periodData =
+                              fitnessPeriod === 7 ? focusGraph.slice(-7) : focusGraph;
+
                             const filteredData = (() => {
-                              let lastMeaningfulIndex = focusGraph.length - 1;
-                              for (let i = focusGraph.length - 1; i >= 0; i--) {
-                                if (focusGraph[i].score >= 5) {
+                              let lastMeaningfulIndex = periodData.length - 1;
+                              for (let i = periodData.length - 1; i >= 0; i--) {
+                                if (periodData[i].score >= 5) {
                                   lastMeaningfulIndex = i;
                                   break;
                                 }
                               }
-                              return focusGraph.slice(0, lastMeaningfulIndex + 1);
+                              return periodData.slice(0, lastMeaningfulIndex + 1);
                             })();
                             return filteredData[filteredData.length - 1]?.score || 0;
                           })()}
@@ -610,21 +799,28 @@ export default function ProfilePage() {
                         <p className="text-xs text-muted-foreground mt-1">Current</p>
                       </div>
                     </div>
-                    <FocusGraph data={(() => {
-                      // Find the last data point with meaningful score (> 5)
-                      // This prevents showing the natural decay to near-zero at the end
-                      let lastMeaningfulIndex = focusGraph.length - 1;
-                      for (let i = focusGraph.length - 1; i >= 0; i--) {
-                        if (focusGraph[i].score >= 5) {
-                          lastMeaningfulIndex = i;
-                          break;
+                    <FocusGraph
+                      data={(() => {
+                        // Filter data based on selected period
+                        const periodData = fitnessPeriod === 7 ? focusGraph.slice(-7) : focusGraph;
+
+                        // Find the last data point with meaningful score (> 5)
+                        // This prevents showing the natural decay to near-zero at the end
+                        let lastMeaningfulIndex = periodData.length - 1;
+                        for (let i = periodData.length - 1; i >= 0; i--) {
+                          if (periodData[i].score >= 5) {
+                            lastMeaningfulIndex = i;
+                            break;
+                          }
                         }
-                      }
-                      // Always show at least 30 days of data
-                      const minDataPoints = Math.min(30, focusGraph.length);
-                      const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
-                      return focusGraph.slice(0, cutoffIndex);
-                    })()} />
+
+                        // For 7-day view, show all data. For 90-day, show at least 30 days
+                        const minDataPoints =
+                          fitnessPeriod === 7 ? periodData.length : Math.min(30, periodData.length);
+                        const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
+                        return periodData.slice(0, cutoffIndex);
+                      })()}
+                    />
                   </motion.div>
                 )}
 
@@ -634,43 +830,57 @@ export default function ProfilePage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.15 }}
-                    className="bg-card rounded-2xl shadow-lg border border-border p-6"
+                    className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
                   >
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      {/* Left side - Heatmap */}
-                      <div className="flex-1">
+                    <div className="space-y-4">
+                      {/* Heatmap */}
+                      <div>
                         <h2 className="text-lg font-bold mb-2">Activity Heatmap</h2>
-                        <p className="text-sm text-muted-foreground mb-4">Your productivity patterns at a glance</p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Your productivity patterns at a glance
+                        </p>
                         <ActivityHeatmap data={activity} />
                       </div>
 
-                      {/* Right side - Stats */}
-                      <div className="flex flex-col gap-3 lg:w-64 shrink-0">
+                      {/* Stats Row - 3 columns */}
+                      <div className="grid grid-cols-3 gap-3">
                         {/* This Week */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Week</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.week.minutes)}</p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats.week.count}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Week
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats?.week.count ?? 0}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats?.week.minutes ?? 0)}
+                          </p>
                         </div>
 
                         {/* This Month */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Month</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.month.minutes)}</p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats.month.count}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Month
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats.month.count}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats.month.minutes)}
+                          </p>
                         </div>
 
                         {/* This Year */}
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">This Year</p>
-                            <p className="text-sm text-muted-foreground">{formatTime(stats.year.minutes)}</p>
-                          </div>
-                          <p className="text-3xl font-bold">{stats.year.count}</p>
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            This Year
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5">
+                            {stats.year.count}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTime(stats.year.minutes)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -692,7 +902,8 @@ export default function ProfilePage() {
                           <div>
                             <h2 className="text-lg font-bold">Active Challenges</h2>
                             <p className="text-sm text-muted-foreground">
-                              {userChallenges.active.length} challenge{userChallenges.active.length !== 1 ? "s" : ""} in progress
+                              {userChallenges.active.length} challenge
+                              {userChallenges.active.length !== 1 ? "s" : ""} in progress
                             </p>
                           </div>
                           <Button
@@ -705,20 +916,26 @@ export default function ProfilePage() {
                             }}
                             disabled={isSyncingChallenges}
                           >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`} />
+                            <RefreshCw
+                              className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`}
+                            />
                             Sync Progress
                           </Button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 relative">
                           {userChallenges.active
-                            .sort((a: any, b: any) => {
+                            .sort((a: UserChallenge, b: UserChallenge) => {
                               // Sort by progress percentage (highest first)
                               const aPercent = (a.progress / a.target) * 100;
                               const bPercent = (b.progress / b.target) * 100;
                               return bPercent - aPercent;
                             })
-                            .map((challenge: any, index: number) => {
-                              const percentage = Math.round((challenge.progress / challenge.target) * 100);
+                            .slice(0, showAllChallenges ? undefined : 4)
+                            .map((challenge: UserChallenge, index: number) => {
+                              const percentage = Math.round(
+                                (challenge.progress / challenge.target) * 100
+                              );
+                              const isBlurred = !showAllChallenges && index === 3;
                               return (
                                 <motion.div
                                   key={challenge._id}
@@ -726,34 +943,51 @@ export default function ProfilePage() {
                                   whileInView={{ opacity: 1, x: 0 }}
                                   viewport={{ once: true, margin: "-50px" }}
                                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                                  className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
+                                  className={`flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors relative ${
+                                    isBlurred ? "blur-[3px]" : ""
+                                  }`}
                                 >
                                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
-                                    <ChallengeIcon iconName={challenge.badge} className="w-6 h-6 text-orange-500" />
+                                    <ChallengeIcon
+                                      iconName={challenge.badge}
+                                      className="w-6 h-6 text-orange-500"
+                                    />
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                       <h3 className="font-bold">{challenge.name}</h3>
-                                      <span className="text-sm font-bold text-orange-500">{percentage}%</span>
+                                      <span className="text-sm font-bold text-orange-500">
+                                        {percentage}%
+                                      </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {challenge.description}
+                                    </p>
                                     <div className="mt-2">
                                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                         <span>
-                                          {challenge.progress} / {challenge.target} {challenge.type === "streak" ? "days" : "pomodoros"}
+                                          {challenge.progress} / {challenge.target}{" "}
+                                          {challenge.type === "streak" ? "days" : "pomodoros"}
                                         </span>
-                                        <span>{challenge.target - challenge.progress} remaining</span>
+                                        <span>
+                                          {challenge.target - challenge.progress} remaining
+                                        </span>
                                       </div>
                                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                                         <motion.div
                                           className="h-full"
                                           style={{
-                                            background: "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
+                                            background:
+                                              "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
                                           }}
                                           initial={{ width: 0 }}
                                           whileInView={{ width: `${Math.min(percentage, 100)}%` }}
                                           viewport={{ once: true, margin: "-50px" }}
-                                          transition={{ duration: 1, delay: index * 0.05 + 0.2, ease: "easeOut" }}
+                                          transition={{
+                                            duration: 1,
+                                            delay: index * 0.05 + 0.2,
+                                            ease: "easeOut",
+                                          }}
                                         />
                                       </div>
                                     </div>
@@ -761,6 +995,19 @@ export default function ProfilePage() {
                                 </motion.div>
                               );
                             })}
+
+                          {/* See all challenges button - centered over 4th challenge */}
+                          {!showAllChallenges && userChallenges.active.length > 3 && (
+                            <div className="absolute bottom-0 left-0 right-0 h-[110px] flex items-center justify-center pointer-events-none">
+                              <Button
+                                variant="outline"
+                                className="border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 bg-card/95 backdrop-blur-sm pointer-events-auto shadow-lg"
+                                onClick={() => setShowAllChallenges(true)}
+                              >
+                                See all {userChallenges.active.length} challenges
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -771,49 +1018,58 @@ export default function ProfilePage() {
                         <div className="mb-4">
                           <h2 className="text-lg font-bold">Completed Challenges</h2>
                           <p className="text-sm text-muted-foreground">
-                            {userChallenges.completed.length} badge{userChallenges.completed.length !== 1 ? "s" : ""} earned
+                            {userChallenges.completed.length} badge
+                            {userChallenges.completed.length !== 1 ? "s" : ""} earned
                           </p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {userChallenges.completed.map((challenge: any, index: number) => (
-                            <motion.div
-                              key={challenge._id}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              whileInView={{ opacity: 1, scale: 1 }}
-                              viewport={{ once: true, margin: "-50px" }}
-                              transition={{ 
-                                duration: 0.4, 
-                                delay: index * 0.03,
-                                ease: "easeOut"
-                              }}
-                              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
-                            >
-                              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
-                                <ChallengeIcon iconName={challenge.badge} className="w-8 h-8 text-orange-500" />
-                              </div>
-                              <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
-                              <p className="text-xs text-muted-foreground text-center">{challenge.description}</p>
-                              {challenge.completedAt && (
-                                <p className="text-xs text-orange-500">
-                                  {new Date(challenge.completedAt).toLocaleDateString()}
+                          {userChallenges.completed.map(
+                            (challenge: UserChallenge, index: number) => (
+                              <motion.div
+                                key={challenge._id}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{
+                                  duration: 0.4,
+                                  delay: index * 0.03,
+                                  ease: "easeOut",
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
+                              >
+                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
+                                  <ChallengeIcon
+                                    iconName={challenge.badge}
+                                    className="w-8 h-8 text-orange-500"
+                                  />
+                                </div>
+                                <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
+                                <p className="text-xs text-muted-foreground text-center">
+                                  {challenge.description}
                                 </p>
-                              )}
-                            </motion.div>
-                          ))}
+                                {challenge.completedAt && (
+                                  <p className="text-xs text-orange-500">
+                                    {new Date(challenge.completedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </motion.div>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
 
                     {/* Empty State */}
-                    {userChallenges.active.length === 0 && userChallenges.completed.length === 0 && (
-                      <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
-                        <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Complete your first pomodoro to start earning badges!
-                        </p>
-                      </div>
-                    )}
+                    {userChallenges.active.length === 0 &&
+                      userChallenges.completed.length === 0 && (
+                        <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
+                          <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Complete your first pomodoro to start earning badges!
+                          </p>
+                        </div>
+                      )}
                   </motion.div>
                 )}
               </>
@@ -821,5 +1077,16 @@ export default function ProfilePage() {
           })()}
       </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ErrorBoundary
+      fallbackTitle="Profile Error"
+      fallbackMessage="An error occurred while loading your profile. Please refresh the page."
+    >
+      <ProfilePageContent />
+    </ErrorBoundary>
   );
 }

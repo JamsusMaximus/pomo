@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // Essential
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+
+    // TypeScript/React
+    "dsznajder.es7-react-js-snippets",
+
+    // Convex
+    "convex-dev.convex",
+
+    // Git
+    "github.vscode-pull-request-github",
+
+    // Productivity
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag"
+  ],
+  "unwantedRecommendations": []
+}

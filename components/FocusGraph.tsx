@@ -7,14 +7,21 @@ interface FocusGraphProps {
 }
 
 export function FocusGraph({ data }: FocusGraphProps) {
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; score: number; date: string } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    x: number;
+    y: number;
+    score: number;
+    date: string;
+  } | null>(null);
 
-  const { maxScore, points, pathD, dataPoints } = useMemo(() => {
+  const { linePath, areaPath, dataPoints } = useMemo(() => {
     if (!data || data.length === 0) {
-      return { maxScore: 100, points: "", pathD: "", dataPoints: [] };
+      return { linePath: "", areaPath: "", dataPoints: [] };
     }
 
-    const max = Math.max(...data.map((d) => d.score), 100);
+    // Use actual max from data, with minimum of 1 to avoid division by zero
+    const dataMax = Math.max(...data.map((d) => d.score));
+    const max = Math.max(dataMax, 1);
     const width = 800;
     const height = 200;
     const padding = 20;
@@ -35,13 +42,15 @@ export function FocusGraph({ data }: FocusGraphProps) {
       pointData.push({ x, y, score: point.score, date: point.date });
     });
 
-    const path = `M ${pathPoints.join(" L ")}`;
-    const areaPath = `${path} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
+    // Line path: just connect the data points
+    const linePath = `M ${pathPoints.join(" L ")}`;
+
+    // Area path: for gradient fill under the curve
+    const areaPath = `${linePath} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
 
     return {
-      maxScore: max,
-      points: pathPoints.join(" "),
-      pathD: areaPath,
+      linePath,
+      areaPath,
       dataPoints: pointData,
     };
   }, [data]);
@@ -56,11 +65,7 @@ export function FocusGraph({ data }: FocusGraphProps) {
 
   return (
     <div className="w-full relative">
-      <svg
-        viewBox="0 0 800 200"
-        className="w-full h-auto"
-        preserveAspectRatio="xMidYMid meet"
-      >
+      <svg viewBox="0 0 800 200" className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((percent) => (
           <line
@@ -76,15 +81,11 @@ export function FocusGraph({ data }: FocusGraphProps) {
         ))}
 
         {/* Area fill */}
-        <path
-          d={pathD}
-          fill="url(#focusGradient)"
-          opacity="0.2"
-        />
+        <path d={areaPath} fill="url(#focusGradient)" opacity="0.2" />
 
-        {/* Line */}
+        {/* Line - only the data points, no baseline */}
         <path
-          d={pathD.split(" Z")[0]}
+          d={linePath}
           fill="none"
           stroke="url(#focusGradient)"
           strokeWidth="3"
@@ -150,14 +151,16 @@ export function FocusGraph({ data }: FocusGraphProps) {
             transform: "translate(-50%, -120%)",
           }}
         >
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{hoveredPoint.score}</p>
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            {hoveredPoint.score}
+          </p>
           <p className="text-xs text-muted-foreground whitespace-nowrap">{hoveredPoint.date}</p>
         </div>
       )}
 
       {/* Legend */}
       <div className="flex justify-between text-xs text-muted-foreground mt-2 px-2">
-        <span>90 days ago</span>
+        <span>{data.length} days ago</span>
         <span>Today</span>
       </div>
     </div>

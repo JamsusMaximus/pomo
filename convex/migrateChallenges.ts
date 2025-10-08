@@ -32,11 +32,10 @@ export const migrateChallengeBadges = mutation({
       }
     }
 
-    return { 
-      message: "Challenge badges migrated", 
+    return {
+      message: "Challenge badges migrated",
       total: challenges.length,
-      updated: updatedCount 
+      updated: updatedCount,
     };
   },
 });
-
