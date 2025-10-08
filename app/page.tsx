@@ -66,6 +66,7 @@ function HomeContent() {
     useState<NotificationPermission>("default");
   const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "error" | "success">("idle");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [syncRetryCount, setSyncRetryCount] = useState(0);
 
   // Convex integration (optional - only when signed in)

@@ -653,7 +653,7 @@ function ProfilePageContent() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="flex gap-1">
-                            {Array.from({ length: Math.min(stats.weeklyStreak ?? 0, 8) }).map(
+                            {Array.from({ length: Math.min(stats?.weeklyStreak ?? 0, 8) }).map(
                               (_, i) => (
                                 <motion.div
                                   key={i}
@@ -670,37 +670,42 @@ function ProfilePageContent() {
                                 </motion.div>
                               )
                             )}
-                            {(stats.weeklyStreak ?? 0) > 8 && (
+                            {(stats?.weeklyStreak ?? 0) > 8 && (
                               <span className="text-xl font-bold text-orange-500 ml-1">
-                                +{(stats.weeklyStreak ?? 0) - 8}
+                                +{(stats?.weeklyStreak ?? 0) - 8}
                               </span>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
-                            {stats.weeklyStreak ?? 0}
+                            {stats?.weeklyStreak ?? 0}
                           </p>
                           <p className="text-sm font-medium text-muted-foreground mt-1">
-                            {(stats.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
+                            {(stats?.weeklyStreak ?? 0) === 1 ? "week in a row" : "weeks in a row"}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {(stats.weeklyStreak ?? 0) > 0 ? (
+                            {(stats?.weeklyStreak ?? 0) > 0 ? (
                               <>
                                 <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                  {Math.min(stats.week.count, 5)}/5 pomos
+                                  {Math.min(stats?.week.count ?? 0, 5)}/5 pomos
                                 </span>{" "}
                                 this week
-                                {stats.week.count < 5 && " - Keep it going! 🔥"}
-                                {stats.week.count >= 5 && " - Streak secured! 🎉"}
+                                {(stats?.week.count ?? 0) < 5 && " - Keep it going! 🔥"}
+                                {(stats?.week.count ?? 0) >= 5 && " - Streak secured! 🎉"}
                               </>
                             ) : (
                               <>
-                                <span className="font-semibold">{stats.week.count}/5 pomos</span>{" "}
+                                <span className="font-semibold">
+                                  {stats?.week.count ?? 0}/5 pomos
+                                </span>{" "}
                                 this week
-                                {stats.week.count === 0 && " - Start your streak today!"}
-                                {stats.week.count > 0 && stats.week.count < 5 && " - Keep going!"}
-                                {stats.week.count >= 5 && " - Streak will start next week! 🚀"}
+                                {(stats?.week.count ?? 0) === 0 && " - Start your streak today!"}
+                                {(stats?.week.count ?? 0) > 0 &&
+                                  (stats?.week.count ?? 0) < 5 &&
+                                  " - Keep going!"}
+                                {(stats?.week.count ?? 0) >= 5 &&
+                                  " - Streak will start next week! 🚀"}
                               </>
                             )}
                           </p>
@@ -792,10 +797,10 @@ function ProfilePageContent() {
                               This Week
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {formatTime(stats.week.minutes)}
+                              {formatTime(stats?.week.minutes ?? 0)}
                             </p>
                           </div>
-                          <p className="text-3xl font-bold">{stats.week.count}</p>
+                          <p className="text-3xl font-bold">{stats?.week.count ?? 0}</p>
                         </div>
 
                         {/* This Month */}
