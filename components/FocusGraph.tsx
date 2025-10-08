@@ -19,7 +19,9 @@ export function FocusGraph({ data }: FocusGraphProps) {
       return { pathD: "", dataPoints: [] };
     }
 
-    const max = Math.max(...data.map((d) => d.score), 100);
+    // Use actual max from data, with minimum of 1 to avoid division by zero
+    const dataMax = Math.max(...data.map((d) => d.score));
+    const max = Math.max(dataMax, 1);
     const width = 800;
     const height = 200;
     const padding = 20;
