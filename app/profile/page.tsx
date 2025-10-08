@@ -457,7 +457,7 @@ function ProfilePageContent() {
                         />
                       </div>
                       <motion.div
-                        className="absolute -top-1"
+                        className="absolute -top-1 transform -translate-x-1/2"
                         initial={{ left: "0%", opacity: 0 }}
                         animate={{
                           left: `${Math.max(levelInfo.progress, 5)}%`,
