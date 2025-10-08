@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install git hooks for changelog generation
+# Install git hooks for code quality and documentation checks
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -14,7 +14,8 @@ cat > "$HOOKS_DIR/pre-commit" << 'EOF'
 
 # Pre-commit hook for code quality checks
 # 1. Auto-format with Prettier
-# 2. Generate changelog (if ANTHROPIC_API_KEY is set)
+# 2. Auto-fix ESLint errors
+# 3. Check documentation updates
 
 echo "🔍 Running pre-commit checks..."
 
@@ -34,20 +35,15 @@ if [ -n "$STAGED_CODE" ]; then
   git add $STAGED_CODE
 fi
 
-# 2. Auto-generate changelog (optional - requires API key)
-if [ -n "$ANTHROPIC_API_KEY" ]; then
-  echo "🤖 Generating changelog from recent commits..."
-  npm run generate:changelog --silent
+# 3. Check documentation updates
+if [ -f "scripts/doc-check-pre-commit.sh" ]; then
+  bash scripts/doc-check-pre-commit.sh
+  DOC_CHECK_RESULT=$?
 
-  # If changelog was updated, add it to the commit
-  if git diff --quiet lib/changelog-data.ts; then
-    echo "✅ No changelog updates needed"
-  else
-    echo "📝 Changelog updated - adding to commit"
-    git add lib/changelog-data.ts
+  # Exit code 1 means blocking errors (currently none, all warnings)
+  if [ $DOC_CHECK_RESULT -eq 1 ]; then
+    exit 1
   fi
-else
-  echo "⚠️  ANTHROPIC_API_KEY not set. Skipping changelog generation."
 fi
 
 echo "✅ Pre-commit checks complete!"
@@ -62,7 +58,7 @@ echo ""
 echo "The pre-commit hook will:"
 echo "  1. Auto-format code with Prettier"
 echo "  2. Auto-fix ESLint errors"
-echo "  3. Generate changelog using Claude Haiku (if ANTHROPIC_API_KEY is set)"
+echo "  3. Check for documentation updates needed"
 echo "  4. Auto-add all fixed files to your commit"
 echo ""
 echo "Your commits will now always pass CI checks! 🎉"

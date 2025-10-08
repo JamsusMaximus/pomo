@@ -48,14 +48,31 @@ export const seedTestData = mutation({
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
 
-    // Generate data for the past 40 days
-    for (let daysAgo = 0; daysAgo < 40; daysAgo++) {
+    // Generate data for the past 50 days with guaranteed weekly streaks
+    // Goal: Create a 6-week streak (current week + 5 previous weeks)
+    for (let daysAgo = 0; daysAgo < 50; daysAgo++) {
       const dayStart = new Date(now - daysAgo * oneDayMs);
       dayStart.setHours(9, 0, 0, 0); // Start at 9am
 
-      // Variable number of pomodoros per day (0-8)
-      // More productive on some days, less on others
-      const pomodorosToday = Math.floor(Math.random() * 9);
+      // For the first 42 days (6 weeks), ensure each week has at least 5 pomos
+      // by making most weekdays productive (5-8 pomos) and weekends lighter (0-2 pomos)
+      let pomodorosToday;
+
+      if (daysAgo < 42) {
+        // Within the 6-week streak period
+        const dayOfWeek = dayStart.getDay(); // 0 = Sunday, 6 = Saturday
+
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          // Weekend: fewer pomos (0-2)
+          pomodorosToday = Math.floor(Math.random() * 3);
+        } else {
+          // Weekday: more pomos (2-4) to ensure 5+ per week
+          pomodorosToday = 2 + Math.floor(Math.random() * 3);
+        }
+      } else {
+        // Older data: variable (0-8)
+        pomodorosToday = Math.floor(Math.random() * 9);
+      }
 
       for (let i = 0; i < pomodorosToday; i++) {
         // Spread sessions throughout the day (9am - 6pm)
@@ -80,7 +97,8 @@ export const seedTestData = mutation({
 
     return {
       count: sessions.length,
-      days: 40,
+      days: 50,
+      message: "Seeded with 6-week streak data (5+ pomos per week)",
     };
   },
 });

@@ -1,3 +1,17 @@
+/**
+ * @fileoverview User profile management and authentication
+ * @module convex/users
+ *
+ * Key responsibilities:
+ * - Ensure user exists in database (create on first sign-in)
+ * - Generate unique usernames from Clerk profile data
+ * - Retrieve current user profile
+ * - Handle username collision resolution with numeric suffixes
+ *
+ * Dependencies: Convex server runtime, Clerk (auth via ctx.auth)
+ * Used by: app/page.tsx (ensureUser on sign-in), app/profile/page.tsx
+ */
+
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";

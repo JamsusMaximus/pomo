@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch full history for changelog generation
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -21,23 +19,6 @@ jobs:
 
       - name: Install
         run: npm ci
-
-      - name: Generate Changelog
-        # Only run on main branch pushes to minimize API costs
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npm run generate:changelog
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Commit Changelog
-        # Only commit if changelog was updated
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add lib/changelog-data.ts .changelog-last-run
-          git diff --staged --quiet || git commit -m "chore: Update changelog [skip ci]"
-          git push
 
       - name: Prettier (format check)
         run: npm run format:check

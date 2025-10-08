@@ -1,5 +1,72 @@
+/**
+ * @fileoverview Challenge system (gamification)
+ * @module convex/challenges
+ *
+ * Key responsibilities:
+ * - Retrieve active challenges and user progress
+ * - Update user challenge progress after session completion
+ * - Admin functions for challenge CRUD operations
+ * - Calculate progress for different challenge types (streak, daily, weekly, monthly, total)
+ * - Mark challenges as completed when target reached
+ *
+ * Dependencies: Convex server runtime, pomodoros.ts (triggered by scheduler)
+ * Used by: app/profile/page.tsx (challenge display), app/admin/page.tsx (management)
+ */
+
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+
+/**
+ * Calculate the best historical streak from all sessions
+ * Finds the longest consecutive daily streak in the entire history
+ */
+function calculateBestHistoricalStreak(sessions: Array<{ completedAt: number }>): number {
+  if (sessions.length === 0) {
+    return 0;
+  }
+
+  // Group sessions by date
+  const sessionsByDate: Record<string, number> = {};
+  sessions.forEach((session) => {
+    const date = new Date(session.completedAt);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
+  });
+
+  // Get all dates sorted chronologically
+  const sortedDates = Object.keys(sessionsByDate).sort();
+
+  if (sortedDates.length === 0) {
+    return 0;
+  }
+
+  let maxStreak = 0;
+  let currentStreak = 1;
+
+  // Iterate through sorted dates to find longest consecutive streak
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prevDate = new Date(sortedDates[i - 1]);
+    const currDate = new Date(sortedDates[i]);
+
+    // Calculate difference in days
+    const diffTime = currDate.getTime() - prevDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      // Consecutive day
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else {
+      // Gap in streak, reset
+      currentStreak = 1;
+    }
+  }
+
+  // Don't forget the last streak
+  maxStreak = Math.max(maxStreak, currentStreak);
+
+  return maxStreak;
+}
 
 /**
  * Get all active challenges
@@ -93,18 +160,30 @@ export const syncMyProgress = mutation({
 
     if (!user) throw new Error("User not found");
 
+    // Get user's pomodoros to calculate best streak
+    const pomodoros = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("mode"), "focus"))
+      .collect();
+
+    // Calculate best historical streak
+    const historicalBest = calculateBestHistoricalStreak(pomodoros);
+    const currentBest = user.bestDailyStreak ?? 0;
+    const actualBest = Math.max(historicalBest, currentBest);
+
+    // Update user's best streak if needed
+    if (actualBest > currentBest) {
+      await ctx.db.patch(user._id, { bestDailyStreak: actualBest });
+    }
+
     // Get all active challenges
     const challenges = await ctx.db
       .query("challenges")
       .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
-    // Get user's pomodoros
-    const pomodoros = await ctx.db
-      .query("pomodoros")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .filter((q) => q.eq(q.field("mode"), "focus"))
-      .collect();
+    // Reuse pomodoros already fetched above (no need to query again)
 
     // Get current date info
     const now = new Date();
@@ -152,24 +231,9 @@ export const syncMyProgress = mutation({
         }
 
         case "streak": {
-          let streak = 0;
-          const checkDate = new Date(today);
-
-          while (true) {
-            const dayStart = checkDate.getTime();
-            const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-            const dayPomos = pomodoros.filter(
-              (p) => p.completedAt >= dayStart && p.completedAt < dayEnd
-            );
-
-            if (dayPomos.length > 0) {
-              streak++;
-              checkDate.setDate(checkDate.getDate() - 1);
-            } else {
-              break;
-            }
-          }
-          progress = streak;
+          // Use best historical streak instead of current streak
+          // This way challenges don't reset when you lose your streak
+          progress = user.bestDailyStreak ?? 0;
           break;
         }
       }
@@ -185,10 +249,15 @@ export const syncMyProgress = mutation({
         .first();
 
       if (existing) {
+        // Once completed, always stay completed (preserve completion date)
+        const shouldStayCompleted = existing.completed || completed;
+        const finalCompletedAt =
+          existing.completedAt || (completed && !existing.completed ? Date.now() : undefined);
+
         await ctx.db.patch(existing._id, {
-          progress,
-          completed,
-          completedAt: completed && !existing.completed ? Date.now() : existing.completedAt,
+          progress: Math.max(existing.progress, progress), // Only increase progress
+          completed: shouldStayCompleted,
+          completedAt: finalCompletedAt,
         });
       } else {
         await ctx.db.insert("userChallenges", {
@@ -215,6 +284,10 @@ export const updateChallengeProgress = internalMutation({
     userId: v.id("users"),
   },
   handler: async (ctx, { userId }) => {
+    // Get user for bestDailyStreak
+    const user = await ctx.db.get(userId);
+    if (!user) return;
+
     // Get all active challenges
     const challenges = await ctx.db
       .query("challenges")
@@ -273,25 +346,8 @@ export const updateChallengeProgress = internalMutation({
         }
 
         case "streak": {
-          // Calculate current streak
-          let streak = 0;
-          const checkDate = new Date(today);
-
-          while (true) {
-            const dayStart = checkDate.getTime();
-            const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-            const dayPomos = pomodoros.filter(
-              (p) => p.completedAt >= dayStart && p.completedAt < dayEnd
-            );
-
-            if (dayPomos.length > 0) {
-              streak++;
-              checkDate.setDate(checkDate.getDate() - 1);
-            } else {
-              break;
-            }
-          }
-          progress = streak;
+          // Use best historical streak instead of current streak
+          progress = user.bestDailyStreak ?? 0;
           break;
         }
       }
@@ -307,11 +363,15 @@ export const updateChallengeProgress = internalMutation({
       const completed = progress >= challenge.target;
 
       if (existing) {
-        // Update existing
+        // Once completed, always stay completed (preserve completion date)
+        const shouldStayCompleted = existing.completed || completed;
+        const finalCompletedAt =
+          existing.completedAt || (completed && !existing.completed ? Date.now() : undefined);
+
         await ctx.db.patch(existing._id, {
-          progress,
-          completed,
-          completedAt: completed && !existing.completed ? Date.now() : existing.completedAt,
+          progress: Math.max(existing.progress, progress), // Only increase progress
+          completed: shouldStayCompleted,
+          completedAt: finalCompletedAt,
         });
       } else {
         // Create new

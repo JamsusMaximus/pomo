@@ -1,6 +1,6 @@
-# Production Setup Guide
+# Development & Production Setup Guide
 
-This guide walks you through setting up Clerk, Convex, and Vercel for production deployment.
+This guide walks you through setting up your development environment and deploying to production.
 
 ## 🎯 Overview
 
