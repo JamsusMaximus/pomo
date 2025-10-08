@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install git hooks for code quality and documentation checks
+# Install git hooks for code quality, documentation checks, and build verification
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -53,6 +53,16 @@ EOF
 # Make hook executable
 chmod +x "$HOOKS_DIR/pre-commit"
 
+# Create pre-push hook
+cat > "$HOOKS_DIR/pre-push" << 'EOF'
+#!/bin/bash
+# Pre-push hook: Run build before pushing
+bash scripts/pre-push.sh
+EOF
+
+# Make hook executable
+chmod +x "$HOOKS_DIR/pre-push"
+
 echo "✅ Git hooks installed successfully!"
 echo ""
 echo "The pre-commit hook will:"
@@ -60,5 +70,10 @@ echo "  1. Auto-format code with Prettier"
 echo "  2. Auto-fix ESLint errors"
 echo "  3. Check for documentation updates needed"
 echo "  4. Auto-add all fixed files to your commit"
+echo ""
+echo "The pre-push hook will:"
+echo "  1. Run 'npm run build' before pushing"
+echo "  2. Abort push if build fails (catches errors before Vercel)"
+echo "  3. Can bypass with 'git push --no-verify' if needed"
 echo ""
 echo "Your commits will now always pass CI checks! 🎉"

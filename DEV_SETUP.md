@@ -71,12 +71,55 @@ npm run test             # Run tests once
 npm run test:watch       # Run tests in watch mode
 ```
 
+### Build
+
+```bash
+npm run build            # Build production bundle
+```
+
 ### Other
 
 ```bash
 npm run generate:changelog  # Generate changelog from git history (requires ANTHROPIC_API_KEY)
 npm run tauri:dev           # Run Tauri desktop app (if building desktop version)
 ```
+
+---
+
+## 🪝 Git Hooks
+
+The project includes automated git hooks to catch issues before pushing.
+
+### Install Hooks
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+### Pre-commit Hook
+
+Runs automatically before each commit:
+
+1. ✨ **Auto-formats** code with Prettier
+2. 🔧 **Auto-fixes** ESLint errors
+3. 📝 **Checks** for documentation updates needed
+4. ➕ **Auto-adds** fixed files to your commit
+
+### Pre-push Hook (NEW!)
+
+Runs automatically before each push:
+
+1. 🔨 **Builds** the project with `npm run build`
+2. ❌ **Aborts** push if build fails
+3. ✅ **Prevents** broken code from reaching Vercel
+
+**Bypass if needed:**
+
+```bash
+git push --no-verify  # Skip pre-push build check
+```
+
+This hook catches TypeScript errors, build failures, and type issues before they reach Vercel, saving you from failed deployments.
 
 ---
 
