@@ -154,6 +154,18 @@ function ProfilePageContent() {
   const [localStats, setLocalStats] = useState({ total: 0, unsynced: 0 });
   const [hasAutoSynced, setHasAutoSynced] = useState(false);
 
+  // Fitness period state (7 or 90 days)
+  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
+
+  // Determine default fitness period based on user age
+  useEffect(() => {
+    if (stats?.userCreatedAt) {
+      const daysSinceCreation = (Date.now() - stats.userCreatedAt) / (1000 * 60 * 60 * 24);
+      const defaultPeriod = daysSinceCreation <= 7 ? 7 : 90;
+      setFitnessPeriod(defaultPeriod);
+    }
+  }, [stats?.userCreatedAt]);
+
   // Auto-sync challenges on page load
   useEffect(() => {
     if (user && stats && !hasAutoSynced) {
@@ -626,16 +638,15 @@ function ProfilePageContent() {
                         <h2 className="text-lg sm:text-xl font-bold text-orange-500 mt-1">
                           day streak!
                         </h2>
-                        {stats.bestDailyStreak !== undefined &&
-                          stats.bestDailyStreak > (stats.dailyStreak ?? 0) && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Best:{" "}
-                              <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                {stats.bestDailyStreak}
-                              </span>{" "}
-                              days
-                            </p>
-                          )}
+                        {stats.bestDailyStreak !== undefined && stats.bestDailyStreak > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Best:{" "}
+                            <span className="font-semibold text-orange-600 dark:text-orange-400">
+                              {stats.bestDailyStreak}
+                            </span>{" "}
+                            {stats.bestDailyStreak === 1 ? "day" : "days"}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -725,24 +736,52 @@ function ProfilePageContent() {
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h2 className="text-lg font-bold">Focus Fitness</h2>
+                          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                            <button
+                              onClick={() => setFitnessPeriod(7)}
+                              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                                fitnessPeriod === 7
+                                  ? "bg-orange-500 text-white"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              7 days
+                            </button>
+                            <button
+                              onClick={() => setFitnessPeriod(90)}
+                              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                                fitnessPeriod === 90
+                                  ? "bg-orange-500 text-white"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              90 days
+                            </button>
+                          </div>
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          90-day trend. Focused days increase your Focus Fitness. Days off, or
-                          unfocused days, cause it to drop.
+                          Focused days increase your Focus Fitness. Days off, or unfocused days,
+                          cause it to drop.
                         </p>
                       </div>
                       <div className="text-right ml-4">
                         <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
                           {(() => {
+                            // Filter data based on selected period
+                            const periodData =
+                              fitnessPeriod === 7 ? focusGraph.slice(-7) : focusGraph;
+
                             const filteredData = (() => {
-                              let lastMeaningfulIndex = focusGraph.length - 1;
-                              for (let i = focusGraph.length - 1; i >= 0; i--) {
-                                if (focusGraph[i].score >= 5) {
+                              let lastMeaningfulIndex = periodData.length - 1;
+                              for (let i = periodData.length - 1; i >= 0; i--) {
+                                if (periodData[i].score >= 5) {
                                   lastMeaningfulIndex = i;
                                   break;
                                 }
                               }
-                              return focusGraph.slice(0, lastMeaningfulIndex + 1);
+                              return periodData.slice(0, lastMeaningfulIndex + 1);
                             })();
                             return filteredData[filteredData.length - 1]?.score || 0;
                           })()}
@@ -752,19 +791,24 @@ function ProfilePageContent() {
                     </div>
                     <FocusGraph
                       data={(() => {
+                        // Filter data based on selected period
+                        const periodData = fitnessPeriod === 7 ? focusGraph.slice(-7) : focusGraph;
+
                         // Find the last data point with meaningful score (> 5)
                         // This prevents showing the natural decay to near-zero at the end
-                        let lastMeaningfulIndex = focusGraph.length - 1;
-                        for (let i = focusGraph.length - 1; i >= 0; i--) {
-                          if (focusGraph[i].score >= 5) {
+                        let lastMeaningfulIndex = periodData.length - 1;
+                        for (let i = periodData.length - 1; i >= 0; i--) {
+                          if (periodData[i].score >= 5) {
                             lastMeaningfulIndex = i;
                             break;
                           }
                         }
-                        // Always show at least 30 days of data
-                        const minDataPoints = Math.min(30, focusGraph.length);
+
+                        // For 7-day view, show all data. For 90-day, show at least 30 days
+                        const minDataPoints =
+                          fitnessPeriod === 7 ? periodData.length : Math.min(30, periodData.length);
                         const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
-                        return focusGraph.slice(0, cutoffIndex);
+                        return periodData.slice(0, cutoffIndex);
                       })()}
                     />
                   </motion.div>

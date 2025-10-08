@@ -104,6 +104,57 @@ export const seedTestData = mutation({
 });
 
 /**
+ * Seeds minimal test data: just 1 completed pomodoro from today
+ * Perfect for testing fresh user experience
+ */
+export const seedMinimalData = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if user already has data
+    const existingSessions = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    if (existingSessions.length > 0) {
+      throw new Error("User already has pomodoro data. Delete existing data first.");
+    }
+
+    // Create just 1 pomodoro from today
+    const now = Date.now();
+    const today = new Date(now);
+    today.setHours(10, 30, 0, 0); // 10:30am today
+
+    await ctx.db.insert("pomodoros", {
+      userId: user._id,
+      mode: "focus",
+      duration: 25 * 60, // 25 minutes
+      tag: "Testing",
+      completedAt: today.getTime(),
+    });
+
+    return {
+      count: 1,
+      message: "Seeded with 1 pomodoro from today",
+    };
+  },
+});
+
+/**
  * Deletes all pomodoro data for the authenticated user
  * Use this to reset before seeding new data
  */
@@ -132,6 +183,14 @@ export const clearAllData = mutation({
 
     await Promise.all(sessions.map((session) => ctx.db.delete(session._id)));
 
-    return { deleted: sessions.length };
+    // Also delete user challenges
+    const challenges = await ctx.db
+      .query("userChallenges")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    await Promise.all(challenges.map((challenge) => ctx.db.delete(challenge._id)));
+
+    return { deleted: sessions.length, challengesDeleted: challenges.length };
   },
 });

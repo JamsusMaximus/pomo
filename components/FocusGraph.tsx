@@ -154,7 +154,7 @@ export function FocusGraph({ data }: FocusGraphProps) {
 
       {/* Legend */}
       <div className="flex justify-between text-xs text-muted-foreground mt-2 px-2">
-        <span>90 days ago</span>
+        <span>{data.length} days ago</span>
         <span>Today</span>
       </div>
     </div>

@@ -115,6 +115,7 @@ export const getStats = query({
       dailyStreak: streaks.daily,
       weeklyStreak: streaks.weekly,
       bestDailyStreak: actualBest,
+      userCreatedAt: user.createdAt,
     };
   },
 });
