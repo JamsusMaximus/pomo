@@ -925,7 +925,6 @@ function ProfilePageContent() {
                             })
                             .slice(0, showAllChallenges ? undefined : 4)
                             .map((challenge: UserChallenge, index: number) => {
-                              const isBlurredPreview = !showAllChallenges && index === 3;
                               const percentage = Math.round(
                                 (challenge.progress / challenge.target) * 100
                               );
@@ -936,21 +935,8 @@ function ProfilePageContent() {
                                   whileInView={{ opacity: 1, x: 0 }}
                                   viewport={{ once: true, margin: "-50px" }}
                                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                                  className={`flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors relative ${
-                                    isBlurredPreview ? "overflow-hidden max-h-[60px]" : ""
-                                  }`}
+                                  className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors"
                                 >
-                                  {isBlurredPreview && (
-                                    <div
-                                      className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none z-10"
-                                      style={{
-                                        maskImage:
-                                          "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.8) 80%, black 100%)",
-                                        WebkitMaskImage:
-                                          "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.8) 80%, black 100%)",
-                                      }}
-                                    />
-                                  )}
                                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
                                     <ChallengeIcon
                                       iconName={challenge.badge}
@@ -1000,17 +986,29 @@ function ProfilePageContent() {
                               );
                             })}
 
-                          {/* See all challenges button */}
+                          {/* See all challenges button - positioned over 4th challenge */}
                           {!showAllChallenges && userChallenges.active.length > 3 && (
-                            <div className="relative pt-4 -mt-4">
-                              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-transparent to-card pointer-events-none" />
-                              <Button
-                                variant="outline"
-                                className="w-full relative z-20 border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500"
-                                onClick={() => setShowAllChallenges(true)}
-                              >
-                                See all {userChallenges.active.length} challenges
-                              </Button>
+                            <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none">
+                              {/* Gradient blur overlay */}
+                              <div
+                                className="absolute inset-0 backdrop-blur-[2px] bg-gradient-to-b from-transparent via-card/60 to-card"
+                                style={{
+                                  maskImage:
+                                    "linear-gradient(to bottom, transparent 0%, black 50%)",
+                                  WebkitMaskImage:
+                                    "linear-gradient(to bottom, transparent 0%, black 50%)",
+                                }}
+                              />
+                              {/* Button */}
+                              <div className="absolute bottom-0 left-0 right-0 pb-3 px-3 pointer-events-auto">
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 bg-card/95 backdrop-blur-sm"
+                                  onClick={() => setShowAllChallenges(true)}
+                                >
+                                  See all {userChallenges.active.length} challenges
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
