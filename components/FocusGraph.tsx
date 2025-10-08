@@ -14,9 +14,9 @@ export function FocusGraph({ data }: FocusGraphProps) {
     date: string;
   } | null>(null);
 
-  const { pathD, dataPoints } = useMemo(() => {
+  const { linePath, areaPath, dataPoints } = useMemo(() => {
     if (!data || data.length === 0) {
-      return { pathD: "", dataPoints: [] };
+      return { linePath: "", areaPath: "", dataPoints: [] };
     }
 
     // Use actual max from data, with minimum of 1 to avoid division by zero
@@ -42,11 +42,15 @@ export function FocusGraph({ data }: FocusGraphProps) {
       pointData.push({ x, y, score: point.score, date: point.date });
     });
 
-    const path = `M ${pathPoints.join(" L ")}`;
-    const areaPath = `${path} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
+    // Line path: just connect the data points
+    const linePath = `M ${pathPoints.join(" L ")}`;
+
+    // Area path: for gradient fill under the curve
+    const areaPath = `${linePath} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
 
     return {
-      pathD: areaPath,
+      linePath,
+      areaPath,
       dataPoints: pointData,
     };
   }, [data]);
@@ -77,11 +81,11 @@ export function FocusGraph({ data }: FocusGraphProps) {
         ))}
 
         {/* Area fill */}
-        <path d={pathD} fill="url(#focusGradient)" opacity="0.2" />
+        <path d={areaPath} fill="url(#focusGradient)" opacity="0.2" />
 
-        {/* Line */}
+        {/* Line - only the data points, no baseline */}
         <path
-          d={pathD.split(" Z")[0]}
+          d={linePath}
           fill="none"
           stroke="url(#focusGradient)"
           strokeWidth="3"
