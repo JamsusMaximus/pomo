@@ -8,6 +8,14 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     createdAt: v.number(),
     bestDailyStreak: v.optional(v.number()), // Historical best daily streak
+    // Cached pomodoro counts for performance (updated on each session)
+    totalPomos: v.optional(v.number()), // All-time total focus sessions
+    todayPomos: v.optional(v.number()), // Focus sessions today
+    todayDate: v.optional(v.string()), // "YYYY-MM-DD" to track when to reset
+    weekPomos: v.optional(v.number()), // Focus sessions this week
+    weekStartDate: v.optional(v.string()), // "YYYY-MM-DD" of Monday
+    monthPomos: v.optional(v.number()), // Focus sessions this month
+    monthKey: v.optional(v.string()), // "YYYY-MM" to track month changes
   }).index("by_clerk", ["clerkId"]),
 
   pomodoros: defineTable({

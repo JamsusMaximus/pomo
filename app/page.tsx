@@ -16,8 +16,8 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { motion } from "@/components/motion";
 import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -38,6 +38,7 @@ import {
   markSessionsSynced,
 } from "@/lib/storage/sessions";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
+import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -56,12 +57,12 @@ const calculatePomosToday = (sessions: PomodoroSession[]) => {
 function HomeContent() {
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
-  const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentTag, setCurrentTag] = useState("");
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [showSpaceHint, setShowSpaceHint] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
   const [hasAnimatedProgress, setHasAnimatedProgress] = useState(false);
@@ -73,6 +74,59 @@ function HomeContent() {
   const { user, isSignedIn } = useUser();
   const stats = useQuery(api.stats.getStats);
   const levelConfig = useQuery(api.levels.getLevelConfig);
+
+  // Memoize today's pomodoro count to avoid recalculating on every render
+  const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
+
+  // Memoize level info calculation to avoid expensive recalculation
+  const levelInfo = useMemo(() => {
+    if (!stats) return null;
+
+    const pomos = stats.total.count;
+
+    // Use lib fallback if levelConfig is still loading or empty
+    if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
+      const info = getLevelInfo(pomos);
+      return { ...info, title: getLevelTitle(info.currentLevel) };
+    }
+
+    let currentLevel = levelConfig[0];
+    for (const level of levelConfig) {
+      if (level.threshold <= pomos) {
+        currentLevel = level;
+      } else {
+        break;
+      }
+    }
+
+    const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
+    const nextLevel = levelConfig[currentIndex + 1];
+
+    if (!nextLevel) {
+      return {
+        currentLevel: currentLevel.level,
+        pomosForCurrentLevel: currentLevel.threshold,
+        pomosForNextLevel: currentLevel.threshold,
+        pomosRemaining: 0,
+        progress: 100,
+        title: currentLevel.title,
+      };
+    }
+
+    const pomosInCurrentLevel = pomos - currentLevel.threshold;
+    const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
+    const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+    return {
+      currentLevel: currentLevel.level,
+      pomosForCurrentLevel: currentLevel.threshold,
+      pomosForNextLevel: nextLevel.threshold,
+      pomosRemaining: nextLevel.threshold - pomos,
+      progress: Math.min(100, Math.max(0, progress)),
+      title: currentLevel.title,
+    };
+  }, [stats, levelConfig]);
+
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
   const saveSession = useMutation(api.pomodoros.saveSession);
@@ -80,13 +134,31 @@ function HomeContent() {
   // Track previous sign-in state to detect when user signs in
   const prevIsSignedIn = useRef(isSignedIn);
 
+  // Store AudioContext in ref to prevent memory leaks
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
+
   // Play completion sound using Web Audio API
   const playCompletionSound = useCallback(() => {
     try {
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioContext = new AudioContextClass();
+      // Create AudioContext only once and reuse
+      if (!audioContextRef.current) {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        audioContextRef.current = new AudioContextClass();
+      }
+
+      const audioContext = audioContextRef.current;
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -195,10 +267,9 @@ function HomeContent() {
 
         setCurrentTag(""); // Clear tag for next session
 
-        // Refresh sessions display and recalculate today's count
+        // Refresh sessions display (cyclesCompleted auto-updates via useMemo)
         const updatedSessions = loadSessions();
         setSessions(updatedSessions);
-        setCyclesCompleted(calculatePomosToday(updatedSessions));
       } else if (previousMode === "break") {
         // Save locally first to get the session ID
         const localSession = saveCompletedSession("break", breakDuration);
@@ -240,6 +311,19 @@ function HomeContent() {
     }
   }, []);
 
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Hydrate from localStorage on mount
   useEffect(() => {
     // Seed test pomodoros in development only (only if no sessions exist)
@@ -254,10 +338,9 @@ function HomeContent() {
       setBreakDuration(prefs.breakDuration);
     }
 
-    // Load sessions and calculate today's count
+    // Load sessions (cyclesCompleted auto-updates via useMemo)
     const loadedSessions = loadSessions();
     setSessions(loadedSessions);
-    setCyclesCompleted(calculatePomosToday(loadedSessions));
 
     setIsHydrated(true);
 
@@ -354,10 +437,9 @@ function HomeContent() {
         }
         setSyncRetryCount(0);
 
-        // Refresh the sessions display and recalculate today's count
+        // Refresh the sessions display (cyclesCompleted auto-updates via useMemo)
         const updatedSessions = loadSessions();
         setSessions(updatedSessions);
-        setCyclesCompleted(calculatePomosToday(updatedSessions));
       } catch (err) {
         console.error("Failed to sync local sessions to Convex:", err);
 
@@ -592,52 +674,8 @@ function HomeContent() {
                   );
                 }
 
-                // Get level info from database config or fallback to lib
-                const getLevelInfoFromDb = (pomos: number) => {
-                  // Use lib fallback if levelConfig is still loading or empty
-                  if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
-                    const info = getLevelInfo(pomos);
-                    return { ...info, title: getLevelTitle(info.currentLevel) };
-                  }
-
-                  let currentLevel = levelConfig[0];
-                  for (const level of levelConfig) {
-                    if (level.threshold <= pomos) {
-                      currentLevel = level;
-                    } else {
-                      break;
-                    }
-                  }
-
-                  const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
-                  const nextLevel = levelConfig[currentIndex + 1];
-
-                  if (!nextLevel) {
-                    return {
-                      currentLevel: currentLevel.level,
-                      pomosForCurrentLevel: currentLevel.threshold,
-                      pomosForNextLevel: currentLevel.threshold,
-                      pomosRemaining: 0,
-                      progress: 100,
-                      title: currentLevel.title,
-                    };
-                  }
-
-                  const pomosInCurrentLevel = pomos - currentLevel.threshold;
-                  const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-                  const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-                  return {
-                    currentLevel: currentLevel.level,
-                    pomosForCurrentLevel: currentLevel.threshold,
-                    pomosForNextLevel: nextLevel.threshold,
-                    pomosRemaining: nextLevel.threshold - pomos,
-                    progress: Math.min(100, Math.max(0, progress)),
-                    title: currentLevel.title,
-                  };
-                };
-
-                const levelInfo = getLevelInfoFromDb(stats.total.count);
+                // Level info is memoized at component level for performance
+                if (!levelInfo) return null;
 
                 return (
                   <motion.div
@@ -838,7 +876,7 @@ function HomeContent() {
             </motion.div>
 
             {/* Space bar hint */}
-            {showSpaceHint && !isRunning && !isPaused && (
+            {showSpaceHint && !isRunning && !isPaused && !isMobile && (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -868,6 +906,16 @@ function HomeContent() {
               </motion.div>
             )}
           </div>
+        </motion.div>
+
+        {/* Ambient Sound Controls */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+          className="w-full"
+        >
+          <AmbientSoundControls />
         </motion.div>
 
         {/* Pomodoro Feed */}

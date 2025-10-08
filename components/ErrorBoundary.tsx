@@ -40,11 +40,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console for debugging
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-
-    // You can also log to an error reporting service here
-    // e.g., Sentry, LogRocket, etc.
+    // Import dynamically to avoid bundling in client components
+    import("@/lib/error-reporting").then(({ reportError }) => {
+      reportError(error, {
+        extra: {
+          componentStack: errorInfo.componentStack,
+          errorBoundary: this.props.fallbackTitle || "ErrorBoundary",
+        },
+        tags: {
+          boundary: this.props.fallbackTitle || "unknown",
+        },
+      });
+    });
   }
 
   handleReset = () => {

@@ -284,7 +284,7 @@ export const updateChallengeProgress = internalMutation({
     userId: v.id("users"),
   },
   handler: async (ctx, { userId }) => {
-    // Get user for bestDailyStreak
+    // Get user with cached counts
     const user = await ctx.db.get(userId);
     if (!user) return;
 
@@ -294,53 +294,35 @@ export const updateChallengeProgress = internalMutation({
       .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
-    // Get user's pomodoros
-    const pomodoros = await ctx.db
-      .query("pomodoros")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("mode"), "focus"))
-      .collect();
-
     // Get current date info
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTimestamp = today.getTime();
 
     for (const challenge of challenges) {
       let progress = 0;
 
-      // Calculate progress based on challenge type
+      // Calculate progress using cached counts (O(1) instead of O(N))
       switch (challenge.type) {
         case "total":
-          progress = pomodoros.length;
+          progress = user.totalPomos ?? 0;
           break;
 
-        case "daily": {
-          const todayPomos = pomodoros.filter((p) => p.completedAt >= todayTimestamp);
-          progress = todayPomos.length;
+        case "daily":
+          progress = user.todayPomos ?? 0;
           break;
-        }
 
-        case "weekly": {
-          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          const weekPomos = pomodoros.filter((p) => p.completedAt >= weekAgo);
-          progress = weekPomos.length;
+        case "weekly":
+          progress = user.weekPomos ?? 0;
           break;
-        }
 
-        case "monthly": {
-          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
-          progress = monthPomos.length;
+        case "monthly":
+          progress = user.monthPomos ?? 0;
           break;
-        }
 
         case "recurring_monthly": {
           // Only count if it's the correct month
-          if (challenge.recurringMonth === now.getMonth() + 1) {
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
-            progress = monthPomos.length;
+          const currentMonth = now.getMonth() + 1;
+          if (challenge.recurringMonth === currentMonth) {
+            progress = user.monthPomos ?? 0;
           }
           break;
         }

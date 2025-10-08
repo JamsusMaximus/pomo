@@ -17,6 +17,7 @@ import type * as challenges from "../challenges.js";
 import type * as levels from "../levels.js";
 import type * as migrateChallenges from "../migrateChallenges.js";
 import type * as pomodoros from "../pomodoros.js";
+import type * as profile from "../profile.js";
 import type * as seed from "../seed.js";
 import type * as seedChallenges from "../seedChallenges.js";
 import type * as stats from "../stats.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   levels: typeof levels;
   migrateChallenges: typeof migrateChallenges;
   pomodoros: typeof pomodoros;
+  profile: typeof profile;
   seed: typeof seed;
   seedChallenges: typeof seedChallenges;
   stats: typeof stats;
