@@ -16,6 +16,36 @@
 import { query } from "./_generated/server";
 
 /**
+ * Get minimal profile data for instant loading (cached values only)
+ * Used by the top-right profile section for fast initial render
+ */
+export const getProfileStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    // Return only cached values - no expensive session queries
+    return {
+      total: {
+        count: user.totalPomos ?? 0,
+      },
+    };
+  },
+});
+
+/**
  * Get user statistics for pomodoro sessions
  */
 export const getStats = query({

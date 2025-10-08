@@ -72,6 +72,7 @@ function HomeContent() {
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
+  const profileStats = useQuery(api.stats.getProfileStats); // Fast cached query for profile
   const stats = useQuery(api.stats.getStats);
   const levelConfig = useQuery(api.levels.getLevelConfig);
 
@@ -79,10 +80,12 @@ function HomeContent() {
   const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
 
   // Memoize level info calculation to avoid expensive recalculation
+  // Use profileStats for instant profile section, fallback to stats for other uses
   const levelInfo = useMemo(() => {
-    if (!stats) return null;
+    const statsToUse = profileStats || stats;
+    if (!statsToUse) return null;
 
-    const pomos = stats.total.count;
+    const pomos = statsToUse.total.count;
 
     // Use lib fallback if levelConfig is still loading or empty
     if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
@@ -125,7 +128,7 @@ function HomeContent() {
       progress: Math.min(100, Math.max(0, progress)),
       title: currentLevel.title,
     };
-  }, [stats, levelConfig]);
+  }, [profileStats, stats, levelConfig]);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
@@ -653,28 +656,7 @@ function HomeContent() {
                 <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
               {(() => {
-                if (!stats) {
-                  return (
-                    <motion.div
-                      className="flex flex-col gap-1"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                      <span className="text-sm font-medium">Level 1</span>
-                      <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
-                          initial={{ width: 0 }}
-                          animate={{ width: 0 }}
-                          transition={{ duration: 0.8, delay: 0.4 }}
-                        />
-                      </div>
-                    </motion.div>
-                  );
-                }
-
-                // Level info is memoized at component level for performance
+                // Level info is memoized and uses fast profileStats query
                 if (!levelInfo) return null;
 
                 return (
