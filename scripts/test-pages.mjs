@@ -39,7 +39,7 @@ async function waitForServer(maxAttempts = 30, delayMs = 1000) {
         console.log(`✅ Server ready after ${i + 1} attempts\n`);
         return true;
       }
-    } catch (error) {
+    } catch {
       // Connection refused - server not ready yet
     }
 
