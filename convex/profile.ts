@@ -15,6 +15,29 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
+ * Get default level configuration
+ */
+function getDefaultLevelConfig() {
+  return [
+    { level: 1, title: "Beginner", threshold: 0 },
+    { level: 2, title: "Novice", threshold: 2 },
+    { level: 3, title: "Apprentice", threshold: 4 },
+    { level: 4, title: "Adept", threshold: 8 },
+    { level: 5, title: "Expert", threshold: 16 },
+    { level: 6, title: "Master", threshold: 31 },
+    { level: 7, title: "Grandmaster", threshold: 51 },
+    { level: 8, title: "Legend", threshold: 76 },
+    { level: 9, title: "Mythic", threshold: 106 },
+    { level: 10, title: "Immortal", threshold: 141 },
+    { level: 11, title: "Transcendent", threshold: 181 },
+    { level: 12, title: "Eternal", threshold: 226 },
+    { level: 13, title: "Divine", threshold: 276 },
+    { level: 14, title: "Omniscient", threshold: 331 },
+    { level: 15, title: "Ultimate", threshold: 391 },
+  ];
+}
+
+/**
  * Get all profile data in a single optimized query
  * This replaces 5 separate queries with 1, significantly improving load time
  */
@@ -247,9 +270,12 @@ export const getProfileData = query({
       })
       .filter((c) => c !== null);
 
-    // Get level config
-    const levelConfig = await ctx.db.query("levels").collect();
-    const sortedLevels = levelConfig.sort((a, b) => a.threshold - b.threshold);
+    // Get level config with fallback to defaults
+    const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
+    const sortedLevels =
+      levelConfigs.length > 0
+        ? levelConfigs.sort((a, b) => a.level - b.level)
+        : getDefaultLevelConfig();
 
     return {
       stats: {
