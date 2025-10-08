@@ -269,6 +269,25 @@ function ProfilePageContent() {
     );
   }
 
+  // Show loading state while queries are fetching
+  if (
+    stats === undefined ||
+    activity === undefined ||
+    focusGraph === undefined ||
+    userChallenges === undefined ||
+    levelConfig === undefined
+  ) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+          <h1 className="text-2xl font-bold mb-2">Loading your profile...</h1>
+          <p className="text-muted-foreground">Fetching your stats and achievements</p>
+        </div>
+      </main>
+    );
+  }
+
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
