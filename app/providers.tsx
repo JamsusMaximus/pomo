@@ -3,10 +3,12 @@
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
-
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { useMemo } from "react";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  // Create Convex client in component scope to prevent memory leaks
+  const convex = useMemo(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!), []);
+
   return (
     <ClerkProvider
       appearance={{

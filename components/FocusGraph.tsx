@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 interface FocusGraphProps {
   data: Array<{ date: string; score: number }>;
@@ -13,6 +13,29 @@ export function FocusGraph({ data }: FocusGraphProps) {
     score: number;
     date: string;
   } | null>(null);
+
+  // Lazy load using Intersection Observer
+  const [shouldRender, setShouldRender] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShouldRender(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const { linePath, areaPath, dataPoints } = useMemo(() => {
     if (!data || data.length === 0) {
@@ -63,8 +86,15 @@ export function FocusGraph({ data }: FocusGraphProps) {
     );
   }
 
+  // Render placeholder until visible
+  if (!shouldRender) {
+    return (
+      <div ref={containerRef} className="w-full h-[200px] bg-muted/20 rounded-lg animate-pulse" />
+    );
+  }
+
   return (
-    <div className="w-full relative">
+    <div ref={containerRef} className="w-full relative">
       <svg viewBox="0 0 800 200" className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((percent) => (
