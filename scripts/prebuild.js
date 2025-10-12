@@ -6,6 +6,7 @@
  * - Runs deployment on production builds (uses CONVEX_DEPLOY_KEY)
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { execSync } = require("child_process");
 
 const isVercelPreview = process.env.VERCEL && process.env.VERCEL_ENV !== "production";
@@ -27,7 +28,7 @@ if (hasDeployKey) {
   try {
     execSync("npx convex deploy --yes", { stdio: "inherit" });
     console.log("\n✅ Convex deployment complete");
-  } catch (error) {
+  } catch {
     console.error("\n❌ Convex deployment failed");
     process.exit(1);
   }
