@@ -24,7 +24,8 @@
     "tauri:build": "tauri build",
     "generate:changelog": "node scripts/generate-changelog.mjs",
     "verify-setup": "node scripts/verify-setup.js",
-    "postinstall": "node scripts/verify-setup.js || true"
+    "postinstall": "node scripts/verify-setup.js || true",
+    "monitor-pr": "node scripts/monitor-pr-build.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
