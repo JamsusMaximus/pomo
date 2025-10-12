@@ -22,7 +22,6 @@ import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTimer } from "@/hooks/useTimer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -39,6 +38,7 @@ import {
 } from "@/lib/storage/sessions";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
+import { TagInput } from "@/components/TagInput";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import Link from "next/link";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -69,6 +69,7 @@ function HomeContent() {
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "error" | "success">("idle");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [syncRetryCount, setSyncRetryCount] = useState(0);
+  const [showStartShimmer, setShowStartShimmer] = useState(true);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -268,8 +269,6 @@ function HomeContent() {
             });
         }
 
-        setCurrentTag(""); // Clear tag for next session
-
         // Refresh sessions display (cyclesCompleted auto-updates via useMemo)
         const updatedSessions = loadSessions();
         setSessions(updatedSessions);
@@ -352,7 +351,15 @@ function HomeContent() {
       setHasAnimatedProgress(true);
     }, 100);
 
-    return () => clearTimeout(timer);
+    // Stop shimmer after 5 full cycles (5 * 7 seconds)
+    const shimmerTimer = setTimeout(() => {
+      setShowStartShimmer(false);
+    }, 35000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(shimmerTimer);
+    };
   }, []);
 
   // Persist to localStorage when preferences change
@@ -655,16 +662,14 @@ function HomeContent() {
                 <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
                 <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
-              {(() => {
-                // Level info is memoized and uses fast profileStats query
-                if (!levelInfo) return null;
-
-                return (
+              {/* Reserve space to prevent layout shift */}
+              <div className="flex flex-col gap-1 w-20">
+                {levelInfo ? (
                   <motion.div
                     className="flex flex-col gap-1"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
                   >
                     <span className="text-sm font-medium">Level {levelInfo.currentLevel}</span>
                     <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
@@ -672,12 +677,17 @@ function HomeContent() {
                         className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
                         initial={{ width: 0 }}
                         animate={{ width: `${levelInfo.progress}%` }}
-                        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                       />
                     </div>
                   </motion.div>
-                );
-              })()}
+                ) : (
+                  <div className="flex flex-col gap-1 opacity-0">
+                    <span className="text-sm font-medium">Level 1</span>
+                    <div className="w-20 h-1 bg-muted/50 rounded-full" />
+                  </div>
+                )}
+              </div>
             </Link>
           </SignedIn>
         </motion.div>
@@ -833,13 +843,11 @@ function HomeContent() {
           {/* Tag Input - only show during focus mode */}
           {mode === "focus" && (
             <div className="w-full max-w-xs mb-6">
-              <Input
-                type="text"
-                placeholder="Tag (e.g., coding)"
+              <TagInput
                 value={currentTag}
-                onChange={(e) => setCurrentTag(e.target.value)}
-                className="h-11 text-sm text-center"
+                onChange={setCurrentTag}
                 disabled={isRunning}
+                placeholder="Tag (e.g., coding, writing, design)"
               />
             </div>
           )}
@@ -851,9 +859,28 @@ function HomeContent() {
               <Button
                 onClick={isRunning ? pause : start}
                 size="lg"
-                className="w-full py-6 text-lg font-semibold"
+                className="w-full py-6 text-lg font-semibold relative overflow-hidden"
               >
                 {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                {/* Shimmer effect - only on initial load when showing "Start" */}
+                {showStartShimmer && !isRunning && !isPaused && (
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.2) 55%, transparent 100%)",
+                      backgroundSize: "200% 100%",
+                    }}
+                    animate={{
+                      backgroundPosition: ["200% 0%", "-200% 0%"],
+                    }}
+                    transition={{
+                      duration: 7,
+                      ease: "linear",
+                      repeat: Infinity,
+                    }}
+                  />
+                )}
               </Button>
             </motion.div>
 
