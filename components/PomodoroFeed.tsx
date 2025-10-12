@@ -1,10 +1,16 @@
 "use client";
 
-import { motion } from "@/components/motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "@/components/motion";
 import type { PomodoroSession } from "@/types/pomodoro";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { TagInput } from "@/components/TagInput";
+import type { Id } from "@/convex/_generated/dataModel";
 
 interface PomodoroFeedProps {
-  sessions: PomodoroSession[];
+  sessions: PomodoroSession[]; // Fallback for non-signed in users
 }
 
 function formatTime(timestamp: number): string {
@@ -22,9 +28,45 @@ function formatDuration(seconds: number): string {
 }
 
 export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
+  const { isSignedIn } = useUser();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTag, setEditingTag] = useState<string>("");
+
+  // Fetch from Convex if signed in, otherwise use localStorage sessions
+  const convexSessions = useQuery(api.pomodoros.getMyPomodoros, { limit: 20 });
+  const updateSessionTag = useMutation(api.pomodoros.updateSessionTag);
+
+  // Use Convex sessions if available and user is signed in, otherwise fallback to localStorage
+  const displaySessions = isSignedIn && convexSessions ? convexSessions : sessions;
+
   // Filter to only focus sessions and sort by completion time (most recent first)
-  const focusSessions = sessions.filter((s) => s.mode === "focus");
+  const focusSessions = displaySessions.filter((s) => s.mode === "focus");
   const sortedSessions = [...focusSessions].sort((a, b) => b.completedAt - a.completedAt);
+
+  const handleStartEdit = (sessionId: string, currentTag?: string) => {
+    setEditingId(sessionId);
+    setEditingTag(currentTag || "");
+  };
+
+  const handleSaveTag = async (sessionId: string) => {
+    if (!isSignedIn) return; // Only allow editing for signed-in users with Convex sessions
+
+    try {
+      await updateSessionTag({
+        sessionId: sessionId as Id<"pomodoros">,
+        tag: editingTag || undefined,
+      });
+      setEditingId(null);
+      setEditingTag("");
+    } catch (error) {
+      console.error("Failed to update tag:", error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingTag("");
+  };
 
   if (focusSessions.length === 0) {
     return (
@@ -41,33 +83,129 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
       <div className="space-y-2">
         {sortedSessions.map((session, index) => {
           const startTime = session.completedAt - session.duration * 1000;
+          // Handle both Convex sessions (_id) and localStorage sessions (id)
+          const sessionId = "_id" in session ? session._id : session.id;
+          const isEditing = editingId === sessionId;
+          const canEdit = isSignedIn && convexSessions; // Only allow editing Convex sessions
 
           return (
             <motion.div
-              key={session.id}
+              key={sessionId}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
-              <div className="flex items-center gap-4 flex-1">
-                {/* Time Range */}
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">{formatTime(startTime)}</span>
-                  <span className="text-muted-foreground">→</span>
-                  <span className="font-medium">{formatTime(session.completedAt)}</span>
-                </div>
-
-                {/* Duration */}
-                <div className="text-sm text-muted-foreground">
-                  {formatDuration(session.duration)}
-                </div>
-
-                {/* Tag */}
-                {session.tag && (
-                  <div className="px-2 py-1 rounded-full bg-accent text-accent-foreground text-xs">
-                    {session.tag}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  {/* Time Range */}
+                  <div className="flex items-center gap-2 text-sm shrink-0">
+                    <span className="text-muted-foreground">{formatTime(startTime)}</span>
+                    <span className="text-muted-foreground">→</span>
+                    <span className="font-medium">{formatTime(session.completedAt)}</span>
                   </div>
+
+                  {/* Duration */}
+                  <div className="text-sm text-muted-foreground shrink-0">
+                    {formatDuration(session.duration)}
+                  </div>
+
+                  {/* Tag or Edit Input */}
+                  <div className="flex-1 min-w-0">
+                    <AnimatePresence mode="wait">
+                      {isEditing ? (
+                        <motion.div
+                          key="editing"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="flex items-center gap-2"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <TagInput
+                              value={editingTag}
+                              onChange={setEditingTag}
+                              placeholder="Add tag..."
+                            />
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => handleSaveTag(sessionId)}
+                              className="p-1.5 rounded-md bg-orange-500/20 hover:bg-orange-500/30 text-orange-600 transition-colors"
+                              title="Save"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="p-1.5 rounded-md hover:bg-muted-foreground/10 text-muted-foreground transition-colors"
+                              title="Cancel"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="display"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          {session.tag ? (
+                            <div className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 text-xs font-medium border border-orange-500/20">
+                              {session.tag}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">No tag</span>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Edit Button */}
+                {canEdit && !isEditing && (
+                  <button
+                    onClick={() => handleStartEdit(sessionId, session.tag)}
+                    className="shrink-0 p-1.5 rounded-md hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Edit tag"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
+                    </svg>
+                  </button>
                 )}
               </div>
             </motion.div>

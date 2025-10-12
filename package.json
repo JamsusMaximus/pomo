@@ -7,6 +7,7 @@
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:convex\" --names \"next,convex\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail --restart-tries 3",
     "dev:next": "next dev --turbopack",
     "dev:convex": "convex dev",
+    "prebuild": "node scripts/prebuild.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -23,7 +24,8 @@
     "tauri:build": "tauri build",
     "generate:changelog": "node scripts/generate-changelog.mjs",
     "verify-setup": "node scripts/verify-setup.js",
-    "postinstall": "node scripts/verify-setup.js || true"
+    "postinstall": "node scripts/verify-setup.js || true",
+    "monitor-pr": "node scripts/monitor-pr-build.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",

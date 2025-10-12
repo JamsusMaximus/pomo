@@ -138,3 +138,75 @@ export const getTodayCount = query({
     return pomodoros.length;
   },
 });
+
+/**
+ * Get tag suggestions sorted by usage frequency
+ * Returns array of tags with their usage counts
+ */
+export const getTagSuggestions = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) return [];
+
+    // Get all user's pomodoros with tags
+    const pomodoros = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id))
+      .filter((q) => q.neq(q.field("tag"), undefined))
+      .collect();
+
+    // Count tag occurrences
+    const tagCounts = new Map<string, number>();
+    for (const pomo of pomodoros) {
+      if (pomo.tag) {
+        tagCounts.set(pomo.tag, (tagCounts.get(pomo.tag) || 0) + 1);
+      }
+    }
+
+    // Convert to array and sort by count (descending)
+    return Array.from(tagCounts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
+  },
+});
+
+/**
+ * Update tag on an existing pomodoro session
+ */
+export const updateSessionTag = mutation({
+  args: {
+    sessionId: v.id("pomodoros"),
+    tag: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    // Verify the session belongs to the user
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) throw new Error("Session not found");
+    if (session.userId !== user._id) throw new Error("Unauthorized");
+
+    // Update the tag
+    await ctx.db.patch(args.sessionId, {
+      tag: args.tag || undefined,
+    });
+
+    return { success: true };
+  },
+});

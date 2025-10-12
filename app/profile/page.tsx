@@ -459,7 +459,10 @@ function ProfilePageContent() {
                       <motion.div
                         className="absolute -top-1 transform -translate-x-1/2"
                         initial={{ left: "0%", opacity: 0 }}
-                        animate={{ left: `${levelInfo.progress}%`, opacity: 1 }}
+                        animate={{
+                          left: `${Math.max(levelInfo.progress, 5)}%`,
+                          opacity: 1,
+                        }}
                         transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
                       >
                         <div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-background shadow-lg" />
