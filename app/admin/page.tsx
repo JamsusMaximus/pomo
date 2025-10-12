@@ -6,23 +6,27 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowLeft, User, Trash2, Database, RefreshCw } from "lucide-react";
+import { ArrowLeft, User, Trash2, Database, RefreshCw, Award, Power, PowerOff } from "lucide-react";
 import { useState } from "react";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export default function AdminPage() {
   const { user } = useUser();
   const { signOut, openSignIn } = useClerk();
   const stats = useQuery(api.stats.getStats);
+  const allChallenges = useQuery(api.challenges.getAllChallenges);
 
   const seedTestData = useMutation(api.seed.seedTestData);
   const seedMinimalData = useMutation(api.seed.seedMinimalData);
   const clearAllData = useMutation(api.seed.clearAllData);
   const syncProgress = useMutation(api.challenges.syncMyProgress);
+  const toggleChallengeActive = useMutation(api.challenges.toggleChallengeActive);
 
   const [isSeeding, setIsSeeding] = useState(false);
   const [isSeedingMinimal, setIsSeedingMinimal] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [togglingChallengeId, setTogglingChallengeId] = useState<Id<"challenges"> | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
@@ -83,6 +87,18 @@ export default function AdminPage() {
       alert(`❌ Failed: ${message}`);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleToggleChallenge = async (challengeId: Id<"challenges">) => {
+    setTogglingChallengeId(challengeId);
+    try {
+      await toggleChallengeActive({ challengeId });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`❌ Failed to toggle challenge: ${message}`);
+    } finally {
+      setTogglingChallengeId(null);
     }
   };
 
@@ -265,6 +281,75 @@ export default function AdminPage() {
                 </Button>
               </div>
             </div>
+          </Card>
+
+          {/* Challenge Management */}
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Challenge Management
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Manage global challenges visible to all users. Toggle active status to show/hide
+              challenges.
+            </p>
+            {allChallenges && allChallenges.length > 0 ? (
+              <div className="space-y-2">
+                {allChallenges.map((challenge) => (
+                  <div
+                    key={challenge._id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm">{challenge.name}</h3>
+                        <span
+                          className={`px-2 py-0.5 text-xs rounded-full ${
+                            challenge.active
+                              ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          {challenge.active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {challenge.description} • {challenge.type} • Target: {challenge.target}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleToggleChallenge(challenge._id)}
+                      disabled={togglingChallengeId === challenge._id}
+                      className="ml-4"
+                    >
+                      {togglingChallengeId === challenge._id ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : challenge.active ? (
+                        <>
+                          <PowerOff className="w-4 h-4 mr-2" />
+                          Disable
+                        </>
+                      ) : (
+                        <>
+                          <Power className="w-4 h-4 mr-2" />
+                          Enable
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 border border-dashed rounded-lg">
+                <Award className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No challenges found. They will be created automatically when users first visit
+                  their profile.
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* Quick Links */}

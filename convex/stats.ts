@@ -18,6 +18,9 @@ import { query } from "./_generated/server";
 /**
  * Get minimal profile data for instant loading (cached values only)
  * Used by the top-right profile section for fast initial render
+ * Falls back to counting sessions if cache is missing (for existing users)
+ *
+ * Returns enough data for level calculation to work correctly
  */
 export const getProfileStats = query({
   args: {},
@@ -36,11 +39,44 @@ export const getProfileStats = query({
       return null;
     }
 
-    // Return only cached values - no expensive session queries
+    // If cached value exists, use it (fast path)
+    if (user.totalPomos !== undefined && user.totalPomos > 0) {
+      return {
+        total: {
+          count: user.totalPomos,
+          minutes: 0, // Not tracked in cache, but needed for type consistency
+        },
+        week: { count: 0, minutes: 0 },
+        month: { count: 0, minutes: 0 },
+        year: { count: 0, minutes: 0 },
+        dailyStreak: 0,
+        weeklyStreak: 0,
+        bestDailyStreak: 0,
+        userCreatedAt: user.createdAt || Date.now(),
+      };
+    }
+
+    // Cache missing - count sessions for existing users (migration path)
+    // This will only run once per user until they complete their next session,
+    // which will populate the cache via pomodoros.saveSession
+    const sessions = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("mode"), "focus"))
+      .collect();
+
     return {
       total: {
-        count: user.totalPomos ?? 0,
+        count: sessions.length,
+        minutes: 0,
       },
+      week: { count: 0, minutes: 0 },
+      month: { count: 0, minutes: 0 },
+      year: { count: 0, minutes: 0 },
+      dailyStreak: 0,
+      weeklyStreak: 0,
+      bestDailyStreak: 0,
+      userCreatedAt: user.createdAt || Date.now(),
     };
   },
 });
@@ -404,7 +440,7 @@ export const getFocusGraph = query({
 
       focusData.push({
         date: dateKey,
-        score: Math.round(currentScore),
+        score: Math.round(currentScore * 10) / 10, // Round to 1 decimal place
       });
     }
 
