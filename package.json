@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:convex\" --names \"next,convex\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail --restart-tries 3",
     "dev:next": "next dev --turbopack",
     "dev:convex": "convex dev",
-    "prebuild": "npx convex deploy --yes",
+    "prebuild": "node scripts/prebuild.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
