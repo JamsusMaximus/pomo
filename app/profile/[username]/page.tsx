@@ -10,6 +10,7 @@ import Link from "next/link";
 import { FollowButton } from "@/components/FollowButton";
 import { use } from "react";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
+import { FocusGraph } from "@/components/FocusGraph";
 
 interface PublicProfilePageProps {
   params: Promise<{ username: string }>;
@@ -110,7 +111,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
               {profileData.bio && (
                 <p className="text-sm text-muted-foreground mb-3">{profileData.bio}</p>
               )}
-              <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-4 flex-wrap mb-3">
                 <div className="flex items-center gap-2 text-sm">
                   {getPrivacyIcon(profileData.privacy)}
                   <span className="text-muted-foreground">
@@ -128,6 +129,21 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                   </div>
                 </div>
               </div>
+              {profileData.hasAccess && profileData.levelInfo && (
+                <div className="flex items-center gap-3 flex-wrap text-sm">
+                  <div className="px-3 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <span className="font-medium">
+                      Level {profileData.levelInfo.currentLevel} · {profileData.levelInfo.title}
+                    </span>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <span className="font-bold text-foreground">
+                      {profileData.challengesCompleted ?? 0}
+                    </span>{" "}
+                    challenges completed
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -198,6 +214,60 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                 </p>
               </div>
             </motion.div>
+
+            {/* Focus Fitness */}
+            {profileData.hasAccess &&
+              "focusFitness" in profileData &&
+              profileData.focusFitness &&
+              profileData.focusFitness.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.15 }}
+                  className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-6"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h2 className="text-lg font-bold mb-2">Focus Fitness</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Focused days increase fitness. Days off cause it to drop.
+                      </p>
+                    </div>
+                    <div className="text-right ml-4">
+                      <p className="text-4xl sm:text-5xl font-black text-orange-600 dark:text-orange-400">
+                        {(() => {
+                          const filteredData = (() => {
+                            let lastMeaningfulIndex = profileData.focusFitness!.length - 1;
+                            for (let i = profileData.focusFitness!.length - 1; i >= 0; i--) {
+                              if (profileData.focusFitness![i].score >= 5) {
+                                lastMeaningfulIndex = i;
+                                break;
+                              }
+                            }
+                            return profileData.focusFitness!.slice(0, lastMeaningfulIndex + 1);
+                          })();
+                          return filteredData[filteredData.length - 1]?.score || 0;
+                        })()}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Current</p>
+                    </div>
+                  </div>
+                  <FocusGraph
+                    data={(() => {
+                      let lastMeaningfulIndex = profileData.focusFitness!.length - 1;
+                      for (let i = profileData.focusFitness!.length - 1; i >= 0; i--) {
+                        if (profileData.focusFitness![i].score >= 5) {
+                          lastMeaningfulIndex = i;
+                          break;
+                        }
+                      }
+                      const minDataPoints = Math.min(30, profileData.focusFitness!.length);
+                      const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
+                      return profileData.focusFitness!.slice(0, cutoffIndex);
+                    })()}
+                  />
+                </motion.div>
+              )}
 
             {/* Activity Heatmap */}
             {profileData.activity && profileData.activity.length > 0 && (

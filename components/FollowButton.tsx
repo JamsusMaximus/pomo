@@ -5,12 +5,15 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { UserPlus, UserMinus } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 
 interface FollowButtonProps {
   username: string;
 }
 
 export function FollowButton({ username }: FollowButtonProps) {
+  const { isSignedIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const isFollowing = useQuery(api.follows.isFollowing, { username });
   const followUser = useMutation(api.follows.followUser);
@@ -31,6 +34,18 @@ export function FollowButton({ username }: FollowButtonProps) {
       setIsLoading(false);
     }
   };
+
+  // If not signed in, show signup button
+  if (!isSignedIn) {
+    return (
+      <Link href="/sign-up">
+        <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
+          <UserPlus className="w-4 h-4 mr-2" />
+          Signup & Follow
+        </Button>
+      </Link>
+    );
+  }
 
   return (
     <Button

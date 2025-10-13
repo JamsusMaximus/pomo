@@ -124,12 +124,28 @@ export const getPublicProfile = query({
       .order("desc")
       .take(10);
 
+    // Get level info
+    const levelInfo = getLevelInfo(stats.total.count);
+
+    // Get challenges completed count
+    const userChallenges = await ctx.db
+      .query("userChallenges")
+      .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
+      .filter((q) => q.eq(q.field("completed"), true))
+      .collect();
+
+    // Get focus fitness data (last 90 days)
+    const focusFitness = await getFocusFitnessForUser(ctx, targetUser._id, 90);
+
     return {
       ...basicProfile,
       hasAccess: true,
       stats,
       activity,
       recentSessions: last10Sessions,
+      levelInfo,
+      challengesCompleted: userChallenges.length,
+      focusFitness,
     };
   },
 });
@@ -388,4 +404,111 @@ function calculateBestHistoricalStreak(sessions: Array<{ completedAt: number }>)
 
   maxStreak = Math.max(maxStreak, currentStreak);
   return maxStreak;
+}
+
+/**
+ * Get level info for a user based on total pomodoros
+ */
+function getLevelInfo(totalPomos: number): {
+  currentLevel: number;
+  title: string;
+  progress: number;
+  pomosForNextLevel: number;
+} {
+  const getTotalPomosForLevel = (level: number): number => {
+    if (level <= 1) return 0;
+    if (level <= 5) return Math.pow(2, level - 1);
+    let total = 16;
+    for (let i = 6; i <= level; i++) {
+      const gap = 10 + 5 * (i - 5);
+      total += gap;
+    }
+    return total;
+  };
+
+  const getLevelTitle = (level: number): string => {
+    const titles = [
+      "Beginner",
+      "Novice",
+      "Apprentice",
+      "Adept",
+      "Expert",
+      "Master",
+      "Grandmaster",
+      "Legend",
+      "Mythic",
+      "Immortal",
+    ];
+    if (level <= 0) return titles[0];
+    if (level > titles.length) return titles[titles.length - 1];
+    return titles[level - 1];
+  };
+
+  let currentLevel = 1;
+  while (currentLevel < 100 && getTotalPomosForLevel(currentLevel + 1) <= totalPomos) {
+    currentLevel++;
+  }
+
+  const pomosForCurrentLevel = getTotalPomosForLevel(currentLevel);
+  const pomosForNextLevel = getTotalPomosForLevel(currentLevel + 1);
+  const pomosInCurrentLevel = totalPomos - pomosForCurrentLevel;
+  const pomosNeededForNextLevel = pomosForNextLevel - pomosForCurrentLevel;
+  const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+  return {
+    currentLevel,
+    title: getLevelTitle(currentLevel),
+    progress: Math.min(100, Math.max(0, progress)),
+    pomosForNextLevel,
+  };
+}
+
+/**
+ * Get focus fitness data (EWMA score over time)
+ */
+async function getFocusFitnessForUser(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  days: number
+): Promise<Array<{ date: string; score: number }>> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const fitnessAgo = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  const sessions = await ctx.db
+    .query("pomodoros")
+    .withIndex("by_user_and_date", (q) => q.eq("userId", userId).gte("completedAt", fitnessAgo))
+    .filter((q) => q.eq(q.field("mode"), "focus"))
+    .collect();
+
+  // Group sessions by date
+  const pomosByDate: Record<string, number> = {};
+  sessions.forEach((session) => {
+    const date = new Date(session.completedAt);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    pomosByDate[dateKey] = (pomosByDate[dateKey] || 0) + 1;
+  });
+
+  // Calculate EWMA
+  const DECAY_FACTOR = 0.976;
+  const POMO_WEIGHT = 1;
+  const focusData: Array<{ date: string; score: number }> = [];
+  let currentScore = 0;
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+    currentScore = currentScore * DECAY_FACTOR;
+    const todayPomos = pomosByDate[dateKey] || 0;
+    currentScore += todayPomos * POMO_WEIGHT;
+
+    focusData.push({
+      date: dateKey,
+      score: Math.round(currentScore),
+    });
+  }
+
+  return focusData;
 }
