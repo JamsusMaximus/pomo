@@ -222,40 +222,38 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
               >
                 <h2 className="text-lg font-bold mb-4">Recent Sessions</h2>
                 <div className="space-y-2">
-                  {profileData.recentSessions.map((session) => {
-                    const date = new Date(session.completedAt);
-                    const isToday = date.toDateString() === new Date().toDateString();
-                    const timeAgo = isToday
-                      ? `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`
-                      : date.toLocaleDateString();
+                  {profileData.recentSessions
+                    .filter((session) => session.mode === "focus")
+                    .map((session) => {
+                      const date = new Date(session.completedAt);
+                      const isToday = date.toDateString() === new Date().toDateString();
+                      const timeAgo = isToday
+                        ? `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`
+                        : date.toLocaleDateString();
 
-                    return (
-                      <div
-                        key={session._id}
-                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              session.mode === "focus" ? "bg-orange-500" : "bg-green-500"
-                            }`}
-                          />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {session.mode === "focus" ? "Focus" : "Break"}
-                              {session.tag && (
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                  #{session.tag}
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                      return (
+                        <div
+                          key={session._id}
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-orange-500" />
+                            <div>
+                              <p className="text-sm font-medium">
+                                Focus Session
+                                {session.tag && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    #{session.tag}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                            </div>
                           </div>
+                          <p className="text-sm text-muted-foreground">{session.duration / 60}m</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{session.duration / 60}m</p>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </motion.div>
             )}
