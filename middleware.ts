@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/download", // Download page is public
   "/changelog", // Changelog is public
+  "/profile/(.*)", // Public profiles are accessible without auth
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
