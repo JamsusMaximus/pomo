@@ -30,6 +30,10 @@ interface UseTimerOptions {
   onModeChange?: (mode: Mode) => void;
   /** Callback fired when a full cycle (focus + break) completes */
   onCycleComplete?: () => void;
+  /** Whether flow mode is active */
+  isFlowMode?: boolean;
+  /** Callback fired when a pomo completes in flow mode */
+  onFlowPomoComplete?: () => void;
 }
 
 /**
@@ -52,6 +56,10 @@ interface UseTimerReturn {
   reset: () => void;
   /** Debug helper: Set timer to specific seconds (DEV only) */
   setDebugTime: (seconds: number) => void;
+  /** Total elapsed time in flow mode (seconds) */
+  flowElapsedTime: number;
+  /** Number of pomos completed in current flow */
+  flowCompletedPomos: number;
 }
 
 /**
@@ -83,10 +91,15 @@ export function useTimer({
   autoStartBreak = false,
   onModeChange,
   onCycleComplete,
+  isFlowMode = false,
+  onFlowPomoComplete,
 }: UseTimerOptions): UseTimerReturn {
   const [mode, setMode] = useState<Mode>("focus");
   const [remaining, setRemaining] = useState(focusDuration);
   const [isRunning, setIsRunning] = useState(false);
+  const [flowCompletedPomos, setFlowCompletedPomos] = useState(0);
+  const [flowStartTime, setFlowStartTime] = useState<number | null>(null);
+  const [flowElapsedTime, setFlowElapsedTime] = useState(0);
 
   const durationRef = useRef(focusDuration);
   const startedAtRef = useRef<number | null>(null);
@@ -94,6 +107,7 @@ export function useTimer({
   const modeRef = useRef<Mode>("focus");
   const focusDurationRef = useRef(focusDuration);
   const breakDurationRef = useRef(breakDuration);
+  const isFlowModeRef = useRef(isFlowMode);
 
   // Keep refs in sync
   useEffect(() => {
@@ -105,10 +119,45 @@ export function useTimer({
     breakDurationRef.current = breakDuration;
   }, [focusDuration, breakDuration]);
 
+  useEffect(() => {
+    isFlowModeRef.current = isFlowMode;
+  }, [isFlowMode]);
+
+  // Update flow elapsed time every second when in flow mode
+  useEffect(() => {
+    if (!isFlowMode || !isRunning || !flowStartTime) return;
+
+    const updateElapsed = () => {
+      const elapsed = Math.floor((Date.now() - flowStartTime) / 1000);
+      setFlowElapsedTime(elapsed);
+    };
+
+    updateElapsed(); // Immediate update
+    const interval = setInterval(updateElapsed, 1000);
+
+    return () => clearInterval(interval);
+  }, [isFlowMode, isRunning, flowStartTime]);
+
   // Define handleTimerComplete before it's used
   const handleTimerComplete = useCallback(() => {
     if (modeRef.current === "focus") {
-      // Focus finished → switch to break
+      // Flow mode: increment counter and auto-start next pomo
+      if (isFlowModeRef.current) {
+        setFlowCompletedPomos((prev) => prev + 1);
+        onFlowPomoComplete?.();
+
+        // Auto-start next pomo immediately
+        setTimeout(() => {
+          durationRef.current = focusDurationRef.current;
+          setRemaining(focusDurationRef.current);
+          startedAtRef.current = Date.now();
+          pausedAtRef.current = null;
+          setIsRunning(true);
+        }, 100);
+        return;
+      }
+
+      // Normal mode: switch to break
       const newMode: Mode = "break";
       setMode(newMode);
       durationRef.current = breakDurationRef.current;
@@ -138,7 +187,7 @@ export function useTimer({
       startedAtRef.current = null;
       pausedAtRef.current = null;
     }
-  }, [autoStartBreak, onModeChange, onCycleComplete]);
+  }, [autoStartBreak, onModeChange, onCycleComplete, onFlowPomoComplete]);
 
   // Reconcile timer when tab becomes visible again
   useEffect(() => {
@@ -197,9 +246,14 @@ export function useTimer({
       // Fresh start
       startedAtRef.current = now;
       setRemaining(durationRef.current);
+
+      // Initialize flow mode tracking if this is the first start
+      if (isFlowModeRef.current && !flowStartTime) {
+        setFlowStartTime(now);
+      }
     }
     setIsRunning(true);
-  }, [isRunning]);
+  }, [isRunning, flowStartTime]);
 
   const pause = useCallback(() => {
     if (!isRunning) return;
@@ -214,6 +268,11 @@ export function useTimer({
     setMode("focus");
     durationRef.current = focusDurationRef.current;
     setRemaining(focusDurationRef.current);
+
+    // Reset flow mode tracking
+    setFlowCompletedPomos(0);
+    setFlowStartTime(null);
+    setFlowElapsedTime(0);
   }, []);
 
   const setDebugTime = useCallback((seconds: number) => {
@@ -233,5 +292,7 @@ export function useTimer({
     pause,
     reset,
     setDebugTime,
+    flowElapsedTime,
+    flowCompletedPomos,
   };
 }

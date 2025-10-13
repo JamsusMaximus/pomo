@@ -76,4 +76,13 @@ export default defineSchema({
     title: v.string(),
     threshold: v.number(), // total pomos needed to reach this level
   }).index("by_level", ["level"]),
+
+  flowSessions: defineTable({
+    userId: v.id("users"),
+    startedAt: v.number(),
+    endedAt: v.optional(v.number()), // null if flow is still active
+    completedPomos: v.number(), // number of full 25min pomos completed in this flow
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "startedAt"]),
 });

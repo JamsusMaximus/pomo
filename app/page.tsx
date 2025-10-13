@@ -70,6 +70,10 @@ function HomeContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [syncRetryCount, setSyncRetryCount] = useState(0);
   const [showStartShimmer, setShowStartShimmer] = useState(true);
+  const [isFlowMode, setIsFlowMode] = useState(false);
+  const [flowSessionId, setFlowSessionId] = useState<string | null>(null);
+  const [showFlowCompleteToast, setShowFlowCompleteToast] = useState(false);
+  const [flowToastCount, setFlowToastCount] = useState(0);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -134,6 +138,9 @@ function HomeContent() {
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
   const saveSession = useMutation(api.pomodoros.saveSession);
+  const startFlowSession = useMutation(api.flowSessions.startFlowSession);
+  const incrementFlowPomo = useMutation(api.flowSessions.incrementFlowPomo);
+  const endFlowSession = useMutation(api.flowSessions.endFlowSession);
 
   // Track previous sign-in state to detect when user signs in
   const prevIsSignedIn = useRef(isSignedIn);
@@ -236,10 +243,65 @@ function HomeContent() {
     [notificationPermission]
   );
 
-  const { remaining, duration, mode, isRunning, start, pause, reset, setDebugTime } = useTimer({
+  const {
+    remaining,
+    duration,
+    mode,
+    isRunning,
+    start,
+    pause,
+    reset,
+    setDebugTime,
+    flowElapsedTime,
+    flowCompletedPomos,
+  } = useTimer({
     focusDuration,
     breakDuration,
-    autoStartBreak: true,
+    autoStartBreak: !isFlowMode, // Disable auto-break in flow mode
+    isFlowMode,
+    onFlowPomoComplete: () => {
+      // Save completed pomo immediately
+      const localSession = saveCompletedSession("focus", focusDuration, currentTag);
+
+      // Save to Convex if signed in
+      if (isSignedIn) {
+        saveSession({
+          mode: "focus",
+          duration: focusDuration,
+          tag: currentTag || undefined,
+          completedAt: Date.now(),
+        })
+          .then(() => {
+            markSessionsSynced([localSession.id]);
+            console.log("✅ Flow pomo synced to Convex");
+          })
+          .catch((err) => {
+            console.error("Failed to save flow pomo to Convex:", err);
+          });
+
+        // Increment flow session pomo count
+        if (flowSessionId) {
+          incrementFlowPomo({
+            flowId: flowSessionId as Parameters<typeof incrementFlowPomo>[0]["flowId"],
+          })
+            .then((count) => {
+              console.log(`✅ Flow pomo count updated: ${count}`);
+            })
+            .catch((err) => {
+              console.error("Failed to increment flow pomo:", err);
+            });
+        }
+      }
+
+      // Show completion toast
+      setFlowToastCount((prev) => prev + 1);
+      setShowFlowCompleteToast(true);
+      setTimeout(() => setShowFlowCompleteToast(false), 2000);
+
+      // Refresh sessions display
+      const updatedSessions = loadSessions();
+      setSessions(updatedSessions);
+    },
     onModeChange: (newMode) => {
       // When mode changes, save the completed session for the previous mode
       if (previousMode === "focus") {
@@ -553,9 +615,12 @@ function HomeContent() {
 
   // Update browser tab title with live countdown
   useEffect(() => {
-    const { mm, ss } = formatTime(remaining);
-
-    if (isRunning) {
+    if (isFlowMode && isRunning) {
+      // Flow mode: show continuous total time
+      const { mm, ss } = formatTime(flowElapsedTime);
+      document.title = `${mm}:${ss} 🔥 FLOW`;
+    } else if (isRunning) {
+      const { mm, ss } = formatTime(remaining);
       if (mode === "focus") {
         document.title = `${mm}:${ss} 💡 focused`;
       } else {
@@ -570,13 +635,55 @@ function HomeContent() {
     return () => {
       document.title = "Pomodoro";
     };
-  }, [remaining, mode, isRunning]);
+  }, [remaining, mode, isRunning, isFlowMode, flowElapsedTime]);
 
   const percent = (remaining / duration) * 100;
   const { mm, ss } = formatTime(remaining);
+  const flowTime = formatTime(flowElapsedTime);
 
   // Determine if timer is paused (has time remaining but not running)
   const isPaused = !isRunning && remaining < duration;
+
+  // Handle entering flow mode
+  const handleEnterFlowMode = async () => {
+    if (isRunning) return; // Don't allow entering flow mode while timer is running
+
+    setIsFlowMode(true);
+
+    // Start flow session in Convex if signed in
+    if (isSignedIn) {
+      try {
+        const flowId = await startFlowSession();
+        setFlowSessionId(flowId);
+        console.log("✅ Flow session started:", flowId);
+      } catch (err) {
+        console.error("Failed to start flow session:", err);
+      }
+    }
+
+    // Start the timer immediately
+    start();
+  };
+
+  // Handle stopping flow mode
+  const handleStopFlowMode = async () => {
+    setIsFlowMode(false);
+
+    // End flow session in Convex if signed in
+    if (isSignedIn && flowSessionId) {
+      try {
+        const result = await endFlowSession({
+          flowId: flowSessionId as Parameters<typeof endFlowSession>[0]["flowId"],
+        });
+        console.log(`✅ Flow session ended: ${result.completedPomos} pomos completed`);
+      } catch (err) {
+        console.error("Failed to end flow session:", err);
+      }
+    }
+
+    setFlowSessionId(null);
+    reset();
+  };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
@@ -631,6 +738,21 @@ function HomeContent() {
               </Button>
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* Flow Completion Toast */}
+      {showFlowCompleteToast && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-orange-500 text-white rounded-lg border border-orange-600 p-4 flex items-center gap-3"
+        >
+          <div>
+            <p className="font-bold text-lg">Pomo Complete!</p>
+            <p className="text-sm opacity-90">{flowToastCount} in this flow</p>
+          </div>
         </motion.div>
       )}
 
@@ -700,14 +822,28 @@ function HomeContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-          className="relative w-full bg-card rounded-2xl shadow-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
+          className="relative w-full bg-card rounded-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
         >
           {/* Header */}
           <div className="text-center space-y-2 mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Pomodoro</h1>
-            <p className="text-sm text-muted-foreground">
-              Pomos Today: <span className="font-semibold text-foreground">{cyclesCompleted}</span>
-            </p>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              {isFlowMode ? "Flow Mode" : "Pomodoro"}
+            </h1>
+            {isFlowMode ? (
+              <div className="flex flex-col gap-1">
+                <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                  {flowCompletedPomos} pomos completed
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Total time: {flowTime.mm}:{flowTime.ss}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Pomos Today:{" "}
+                <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+              </p>
+            )}
           </div>
 
           {/* Debug Button - DEV ONLY */}
@@ -769,6 +905,12 @@ function HomeContent() {
                   <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
                   <stop offset="100%" stopColor="#14b8a6" stopOpacity="0.7" />
                 </linearGradient>
+                {/* Flow mode gradient (intense orange/red) */}
+                <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f97316" stopOpacity="1" />
+                  <stop offset="50%" stopColor="#ef4444" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#dc2626" stopOpacity="1" />
+                </linearGradient>
               </defs>
 
               {/* Background circle - transparent/subtle */}
@@ -788,7 +930,13 @@ function HomeContent() {
                 cy="100"
                 r="85"
                 fill="none"
-                stroke={mode === "break" ? "url(#breakGradient)" : "url(#focusGradient)"}
+                stroke={
+                  isFlowMode
+                    ? "url(#flowGradient)"
+                    : mode === "break"
+                      ? "url(#breakGradient)"
+                      : "url(#focusGradient)"
+                }
                 strokeWidth="8"
                 strokeLinecap="round"
                 initial={{ strokeDasharray: 534.07, strokeDashoffset: 534.07 }}
@@ -854,65 +1002,114 @@ function HomeContent() {
 
           {/* Controls */}
           <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-            {/* Start/Pause/Resume button - transforms based on state */}
-            <motion.div className="w-full" whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
-              <Button
-                onClick={isRunning ? pause : start}
-                size="lg"
-                className="w-full py-6 text-lg font-semibold relative overflow-hidden"
-              >
-                {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
-                {/* Shimmer effect - only on initial load when showing "Start" */}
-                {showStartShimmer && !isRunning && !isPaused && (
-                  <motion.div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.2) 55%, transparent 100%)",
-                      backgroundSize: "200% 100%",
-                    }}
-                    animate={{
-                      backgroundPosition: ["200% 0%", "-200% 0%"],
-                    }}
-                    transition={{
-                      duration: 7,
-                      ease: "linear",
-                      repeat: Infinity,
-                    }}
-                  />
-                )}
-              </Button>
-            </motion.div>
-
-            {/* Space bar hint */}
-            {showSpaceHint && !isRunning && !isPaused && !isMobile && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-muted-foreground flex items-center gap-1.5"
-              >
-                <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
-                  Space
-                </kbd>
-                <span>to start</span>
-              </motion.div>
-            )}
-
-            {/* Reset button - fade in when timer is running or paused */}
-            {(isRunning || isPaused) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="w-full"
-              >
-                <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
-                  <Button variant="outline" onClick={reset} size="default" className="w-full">
-                    Reset
+            {!isFlowMode ? (
+              <>
+                {/* Normal mode: Start/Pause/Resume button */}
+                <motion.div
+                  className="w-full"
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                >
+                  <Button
+                    onClick={isRunning ? pause : start}
+                    size="lg"
+                    className="w-full py-6 text-lg font-semibold relative overflow-hidden"
+                  >
+                    {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                    {/* Shimmer effect - only on initial load when showing "Start" */}
+                    {showStartShimmer && !isRunning && !isPaused && (
+                      <motion.div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.2) 55%, transparent 100%)",
+                          backgroundSize: "200% 100%",
+                        }}
+                        animate={{
+                          backgroundPosition: ["200% 0%", "-200% 0%"],
+                        }}
+                        transition={{
+                          duration: 7,
+                          ease: "linear",
+                          repeat: Infinity,
+                        }}
+                      />
+                    )}
                   </Button>
                 </motion.div>
-              </motion.div>
+
+                {/* Space bar hint */}
+                {showSpaceHint && !isRunning && !isPaused && !isMobile && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs text-muted-foreground flex items-center gap-1.5"
+                  >
+                    <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
+                      Space
+                    </kbd>
+                    <span>to start</span>
+                  </motion.div>
+                )}
+
+                {/* Enter FLOW button - show when not running */}
+                {!isRunning && !isPaused && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full"
+                  >
+                    <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
+                      <Button
+                        variant="outline"
+                        onClick={handleEnterFlowMode}
+                        size="default"
+                        className="w-full border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                      >
+                        Enter Flow Mode
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {/* Reset button - fade in when timer is running or paused */}
+                {(isRunning || isPaused) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full"
+                  >
+                    <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
+                      <Button variant="outline" onClick={reset} size="default" className="w-full">
+                        Reset
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Flow mode: Stop button */}
+                <motion.div
+                  className="w-full"
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                >
+                  <Button
+                    onClick={handleStopFlowMode}
+                    size="lg"
+                    variant="destructive"
+                    className="w-full py-6 text-lg font-semibold"
+                  >
+                    Stop Flow
+                  </Button>
+                </motion.div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Timer continues automatically after each pomo
+                </p>
+              </>
             )}
           </div>
         </motion.div>
@@ -933,7 +1130,7 @@ function HomeContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            className="w-full bg-card rounded-2xl shadow-lg border border-border p-6"
+            className="w-full bg-card rounded-2xl border border-border p-6"
           >
             <PomodoroFeed sessions={sessions} />
           </motion.div>

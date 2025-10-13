@@ -111,6 +111,7 @@ function ProfilePageContent() {
   const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
+  const longestFlow = useQuery(api.flowSessions.getLongestFlowSession);
 
   // Debug: Log profile data
   useEffect(() => {
@@ -830,8 +831,8 @@ function ProfilePageContent() {
                         <ActivityHeatmap data={activity} />
                       </div>
 
-                      {/* Stats Row - 3 columns */}
-                      <div className="grid grid-cols-3 gap-3">
+                      {/* Stats Row - 4 columns */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {/* This Week */}
                         <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
@@ -868,6 +869,19 @@ function ProfilePageContent() {
                           </p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
                             {formatTime(stats.year.minutes)}
+                          </p>
+                        </div>
+
+                        {/* Longest Flow */}
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-xl border border-orange-500/30">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Longest Flow
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5 text-orange-600 dark:text-orange-400">
+                            {longestFlow?.completedPomos ?? 0}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            pomos in a row
                           </p>
                         </div>
                       </div>
