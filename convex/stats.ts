@@ -39,36 +39,21 @@ export const getProfileStats = query({
       return null;
     }
 
-    // If cached value exists, use it (fast path)
-    if (user.totalPomos !== undefined && user.totalPomos > 0) {
-      return {
-        total: {
-          count: user.totalPomos,
-          minutes: 0, // Not tracked in cache, but needed for type consistency
-        },
-        week: { count: 0, minutes: 0 },
-        month: { count: 0, minutes: 0 },
-        year: { count: 0, minutes: 0 },
-        dailyStreak: 0,
-        weeklyStreak: 0,
-        bestDailyStreak: 0,
-        userCreatedAt: user.createdAt || Date.now(),
-      };
-    }
-
-    // Cache missing - count sessions for existing users (migration path)
-    // This will only run once per user until they complete their next session,
-    // which will populate the cache via pomodoros.saveSession
+    // Always count actual sessions to ensure accuracy
+    // This query is indexed and very fast
+    // We can't update the cache here (queries are read-only), but we return the accurate count
     const sessions = await ctx.db
       .query("pomodoros")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .filter((q) => q.eq(q.field("mode"), "focus"))
       .collect();
 
+    const actualCount = sessions.length;
+
     return {
       total: {
-        count: sessions.length,
-        minutes: 0,
+        count: actualCount,
+        minutes: 0, // Not tracked in cache, but needed for type consistency
       },
       week: { count: 0, minutes: 0 },
       month: { count: 0, minutes: 0 },

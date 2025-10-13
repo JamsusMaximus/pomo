@@ -8,6 +8,11 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     createdAt: v.number(),
     bestDailyStreak: v.optional(v.number()), // Historical best daily streak
+    // Profile customization
+    bio: v.optional(v.string()), // Optional 160 char bio
+    privacy: v.optional(
+      v.union(v.literal("public"), v.literal("followers_only"), v.literal("private"))
+    ), // Default: followers_only
     // Cached pomodoro counts for performance (updated on each session)
     totalPomos: v.optional(v.number()), // All-time total focus sessions
     todayPomos: v.optional(v.number()), // Focus sessions today
@@ -16,7 +21,9 @@ export default defineSchema({
     weekStartDate: v.optional(v.string()), // "YYYY-MM-DD" of Monday
     monthPomos: v.optional(v.number()), // Focus sessions this month
     monthKey: v.optional(v.string()), // "YYYY-MM" to track month changes
-  }).index("by_clerk", ["clerkId"]),
+  })
+    .index("by_clerk", ["clerkId"])
+    .index("by_username", ["username"]),
 
   pomodoros: defineTable({
     userId: v.id("users"),
@@ -76,4 +83,22 @@ export default defineSchema({
     title: v.string(),
     threshold: v.number(), // total pomos needed to reach this level
   }).index("by_level", ["level"]),
+
+  flowSessions: defineTable({
+    userId: v.id("users"),
+    startedAt: v.number(),
+    endedAt: v.optional(v.number()), // null if flow is still active
+    completedPomos: v.number(), // number of full 25min pomos completed in this flow
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "startedAt"]),
+
+  follows: defineTable({
+    followerId: v.id("users"), // The user who is following
+    followingId: v.id("users"), // The user being followed
+    createdAt: v.number(),
+  })
+    .index("by_follower", ["followerId"])
+    .index("by_following", ["followingId"])
+    .index("by_follower_and_following", ["followerId", "followingId"]),
 });

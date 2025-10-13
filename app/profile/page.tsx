@@ -45,6 +45,8 @@ import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/sto
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ShareProfileButton } from "@/components/ShareProfileButton";
+import { PrivacySettings } from "@/components/PrivacySettings";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -111,6 +113,11 @@ function ProfilePageContent() {
   const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
+  const longestFlow = useQuery(api.flowSessions.getLongestFlowSession);
+  const currentUserData = useQuery(api.users.me);
+  const followCounts = useQuery(api.follows.getFollowCounts, {
+    username: user?.username || "",
+  });
 
   // Debug: Log profile data
   useEffect(() => {
@@ -281,6 +288,8 @@ function ProfilePageContent() {
                 Sync {localStats.unsynced} Local Sessions
               </Button>
             )}
+            {user?.username && <ShareProfileButton username={user.username} />}
+            {currentUserData && <PrivacySettings currentPrivacy={currentUserData.privacy} />}
             <Button variant="outline" size="sm" onClick={() => openUserProfile()}>
               <Settings className="w-4 h-4 mr-2" />
               Manage Account
@@ -405,12 +414,28 @@ function ProfilePageContent() {
                       <p className="text-xs sm:text-sm text-muted-foreground mb-2 truncate">
                         {user.primaryEmailAddress?.emailAddress}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <p className="text-xs sm:text-sm font-medium">
                             Level {levelInfo.currentLevel} · {levelInfo.title}
                           </p>
                         </div>
+                        {followCounts && (
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <div>
+                              <span className="font-bold text-foreground">
+                                {followCounts.followers}
+                              </span>{" "}
+                              followers
+                            </div>
+                            <div>
+                              <span className="font-bold text-foreground">
+                                {followCounts.following}
+                              </span>{" "}
+                              following
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -830,8 +855,8 @@ function ProfilePageContent() {
                         <ActivityHeatmap data={activity} />
                       </div>
 
-                      {/* Stats Row - 3 columns */}
-                      <div className="grid grid-cols-3 gap-3">
+                      {/* Stats Row - 4 columns */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {/* This Week */}
                         <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-muted/30 rounded-xl border border-border">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
@@ -868,6 +893,19 @@ function ProfilePageContent() {
                           </p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
                             {formatTime(stats.year.minutes)}
+                          </p>
+                        </div>
+
+                        {/* Longest Flow */}
+                        <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-xl border border-orange-500/30">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Longest Flow
+                          </p>
+                          <p className="text-2xl sm:text-3xl font-bold mb-0.5 text-orange-600 dark:text-orange-400">
+                            {longestFlow?.completedPomos ?? 0}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            pomos in a row
                           </p>
                         </div>
                       </div>

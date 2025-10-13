@@ -184,3 +184,62 @@ export const getUser = query({
     return await ctx.db.get(args.userId);
   },
 });
+
+/**
+ * Update user's bio
+ *
+ * @param args.bio - New bio text (max 160 characters)
+ */
+export const updateBio = mutation({
+  args: {
+    bio: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    // Limit bio to 160 characters
+    const trimmedBio = args.bio.trim().slice(0, 160);
+
+    await ctx.db.patch(user._id, {
+      bio: trimmedBio || undefined,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Update user's privacy setting
+ *
+ * @param args.privacy - Privacy level (public, followers_only, private)
+ */
+export const updatePrivacy = mutation({
+  args: {
+    privacy: v.union(v.literal("public"), v.literal("followers_only"), v.literal("private")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(user._id, {
+      privacy: args.privacy,
+    });
+
+    return { success: true };
+  },
+});
