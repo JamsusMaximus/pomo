@@ -129,21 +129,6 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                   </div>
                 </div>
               </div>
-              {profileData.hasAccess && profileData.levelInfo && (
-                <div className="flex items-center gap-3 flex-wrap text-sm">
-                  <div className="px-3 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                    <span className="font-medium">
-                      Level {profileData.levelInfo.currentLevel} · {profileData.levelInfo.title}
-                    </span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    <span className="font-bold text-foreground">
-                      {profileData.challengesCompleted ?? 0}
-                    </span>{" "}
-                    challenges completed
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
@@ -186,17 +171,54 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                 </p>
               </div>
 
-              <div className="bg-card rounded-xl shadow-lg border border-border p-4 text-center">
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                  {profileData.stats?.dailyStreak ?? 0}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Day Streak</p>
-                {profileData.stats?.bestDailyStreak !== undefined && (
-                  <p className="text-[10px] text-muted-foreground">
-                    Best: {profileData.stats.bestDailyStreak}
+              {profileData.levelInfo && (
+                <div className="bg-card rounded-xl shadow-lg border border-border p-4 text-center">
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    {profileData.levelInfo.currentLevel}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">Level</p>
+                  <p className="text-[10px] text-muted-foreground">{profileData.levelInfo.title}</p>
+                </div>
+              )}
+
+              {profileData.hasAccess &&
+                "focusFitness" in profileData &&
+                profileData.focusFitness &&
+                profileData.focusFitness.length > 0 && (
+                  <div className="bg-card rounded-xl shadow-lg border border-border p-4 text-center">
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                      {(() => {
+                        const filteredData = (() => {
+                          let lastMeaningfulIndex = profileData.focusFitness!.length - 1;
+                          for (let i = profileData.focusFitness!.length - 1; i >= 0; i--) {
+                            if (profileData.focusFitness![i].score >= 5) {
+                              lastMeaningfulIndex = i;
+                              break;
+                            }
+                          }
+                          return profileData.focusFitness!.slice(0, lastMeaningfulIndex + 1);
+                        })();
+                        return filteredData[filteredData.length - 1]?.score || 0;
+                      })()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Focus Fitness</p>
+                    <p className="text-[10px] text-muted-foreground">Current</p>
+                  </div>
                 )}
-              </div>
+
+              {profileData.stats?.dailyStreak && profileData.stats.dailyStreak > 0 && (
+                <div className="bg-card rounded-xl shadow-lg border border-border p-4 text-center">
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    {profileData.stats.dailyStreak}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
+                  {profileData.stats?.bestDailyStreak !== undefined && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Best: {profileData.stats.bestDailyStreak}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="bg-card rounded-xl shadow-lg border border-border p-4 text-center">
                 <p className="text-3xl font-bold">{profileData.stats?.week.count ?? 0}</p>
