@@ -1001,7 +1001,7 @@ function HomeContent() {
           )}
 
           {/* Controls */}
-          <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+          <div className="flex flex-col items-center gap-4 w-full max-w-xs">
             {!isFlowMode ? (
               <>
                 {/* Normal mode: Start/Pause/Resume button */}
@@ -1013,9 +1013,21 @@ function HomeContent() {
                   <Button
                     onClick={isRunning ? pause : start}
                     size="lg"
-                    className="w-full py-6 text-lg font-semibold relative overflow-hidden"
+                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5"
                   >
-                    {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                    <span>
+                      {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                    </span>
+                    {/* Space bar hint inside button */}
+                    {showSpaceHint && !isRunning && !isPaused && !isMobile && (
+                      <motion.kbd
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="px-1.5 py-0 text-[10px] text-muted-foreground/70 bg-transparent border border-muted-foreground/30 rounded font-mono font-normal"
+                      >
+                        Space
+                      </motion.kbd>
+                    )}
                     {/* Shimmer effect - only on initial load when showing "Start" */}
                     {showStartShimmer && !isRunning && !isPaused && (
                       <motion.div
@@ -1038,37 +1050,33 @@ function HomeContent() {
                   </Button>
                 </motion.div>
 
-                {/* Space bar hint */}
-                {showSpaceHint && !isRunning && !isPaused && !isMobile && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-xs text-muted-foreground flex items-center gap-1.5"
-                  >
-                    <kbd className="px-2 py-0.5 text-xs bg-muted border border-border rounded font-mono">
-                      Space
-                    </kbd>
-                    <span>to start</span>
-                  </motion.div>
-                )}
-
                 {/* Enter FLOW button - show when not running */}
                 {!isRunning && !isPaused && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full"
+                    className="w-full flex flex-col items-center gap-3"
                   >
-                    <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
-                      <Button
-                        variant="outline"
-                        onClick={handleEnterFlowMode}
-                        size="default"
-                        className="w-full border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                    <span className="text-xs text-muted-foreground">or</span>
+                    <div className="w-full flex flex-col items-center gap-2">
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.01 }}
+                        className="w-full"
                       >
-                        Enter Flow Mode
-                      </Button>
-                    </motion.div>
+                        <Button
+                          variant="outline"
+                          onClick={handleEnterFlowMode}
+                          size="lg"
+                          className="w-full py-3 border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                        >
+                          Enter Flow Mode
+                        </Button>
+                      </motion.div>
+                      <span className="text-xs text-muted-foreground text-center">
+                        Back to back pomos, no breaks
+                      </span>
+                    </div>
                   </motion.div>
                 )}
 

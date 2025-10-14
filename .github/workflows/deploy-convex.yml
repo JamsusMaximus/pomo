@@ -1,0 +1,45 @@
+name: Deploy Convex to Production
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # Only run on push to main OR when PR is merged to main
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Convex Production
+        run: npx convex deploy --yes
+        env:
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_PROD_DEPLOYMENT }}
+
+      - name: Deployment Summary
+        run: |
+          echo "### ✅ Convex Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed to production: \`${{ secrets.CONVEX_PROD_DEPLOYMENT }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "**PR:** #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          fi
