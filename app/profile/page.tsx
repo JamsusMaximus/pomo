@@ -763,6 +763,7 @@ function ProfilePageContent() {
                           <h2 className="text-lg font-bold">Focus Fitness</h2>
                           <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
                             <button
+                              type="button"
                               onClick={() => setFitnessPeriod(7)}
                               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                                 fitnessPeriod === 7
@@ -773,6 +774,7 @@ function ProfilePageContent() {
                               7 days
                             </button>
                             <button
+                              type="button"
                               onClick={() => setFitnessPeriod(90)}
                               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                                 fitnessPeriod === 90

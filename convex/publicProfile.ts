@@ -127,12 +127,28 @@ export const getPublicProfile = query({
     // Get level info
     const levelInfo = getLevelInfo(stats.total.count);
 
-    // Get challenges completed count
-    const userChallenges = await ctx.db
+    // Get completed challenges with full details
+    const completedChallenges = await ctx.db
       .query("userChallenges")
       .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
       .filter((q) => q.eq(q.field("completed"), true))
       .collect();
+
+    // Fetch challenge definitions for completed challenges
+    const completedChallengesWithDetails = await Promise.all(
+      completedChallenges.map(async (uc) => {
+        const challenge = await ctx.db.get(uc.challengeId);
+        return challenge
+          ? {
+              _id: uc._id,
+              name: challenge.name,
+              description: challenge.description,
+              badge: challenge.badge,
+              completedAt: uc.completedAt,
+            }
+          : null;
+      })
+    );
 
     // Get focus fitness data (last 90 days)
     const focusFitness = await getFocusFitnessForUser(ctx, targetUser._id, 90);
@@ -144,7 +160,8 @@ export const getPublicProfile = query({
       activity,
       recentSessions: last10Sessions,
       levelInfo,
-      challengesCompleted: userChallenges.length,
+      challengesCompleted: completedChallenges.length,
+      completedChallengesDetails: completedChallengesWithDetails.filter((c) => c !== null),
       focusFitness,
     };
   },
