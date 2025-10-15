@@ -26,6 +26,7 @@ import type * as profile from "../profile.js";
 import type * as publicProfile from "../publicProfile.js";
 import type * as seed from "../seed.js";
 import type * as seedChallenges from "../seedChallenges.js";
+import type * as stats_helpers from "../stats-helpers.js";
 import type * as stats from "../stats.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   publicProfile: typeof publicProfile;
   seed: typeof seed;
   seedChallenges: typeof seedChallenges;
+  "stats-helpers": typeof stats_helpers;
   stats: typeof stats;
   timers: typeof timers;
   users: typeof users;
