@@ -26,7 +26,6 @@ import { useTimer } from "@/hooks/useTimer";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
-import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import {
   saveCompletedSession,
   loadSessions,
@@ -75,70 +74,17 @@ function HomeContent() {
   const [showFlowCompleteToast, setShowFlowCompleteToast] = useState(false);
   const [flowToastCount, setFlowToastCount] = useState(0);
   const [showChallengeToast, setShowChallengeToast] = useState(false);
+  const challengeToastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
-  const profileStats = useQuery(api.stats.getProfileStats); // Fast cached query for profile
-  const stats = useQuery(api.stats.getStats);
-  const levelConfig = useQuery(api.levels.getLevelConfig);
   const nextChallenge = useQuery(api.challenges.getNextChallenge);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
   const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
-
-  // Memoize level info calculation to avoid expensive recalculation
-  // Use profileStats for instant profile section, fallback to stats for other uses
-  const levelInfo = useMemo(() => {
-    const statsToUse = profileStats || stats;
-    if (!statsToUse) return null;
-
-    const pomos = statsToUse.total.count;
-
-    // Use lib fallback if levelConfig is still loading or empty
-    if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
-      const info = getLevelInfo(pomos);
-      return { ...info, title: getLevelTitle(info.currentLevel) };
-    }
-
-    let currentLevel = levelConfig[0];
-    for (const level of levelConfig) {
-      if (level.threshold <= pomos) {
-        currentLevel = level;
-      } else {
-        break;
-      }
-    }
-
-    const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
-    const nextLevel = levelConfig[currentIndex + 1];
-
-    if (!nextLevel) {
-      return {
-        currentLevel: currentLevel.level,
-        pomosForCurrentLevel: currentLevel.threshold,
-        pomosForNextLevel: currentLevel.threshold,
-        pomosRemaining: 0,
-        progress: 100,
-        title: currentLevel.title,
-      };
-    }
-
-    const pomosInCurrentLevel = pomos - currentLevel.threshold;
-    const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-    const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-    return {
-      currentLevel: currentLevel.level,
-      pomosForCurrentLevel: currentLevel.threshold,
-      pomosForNextLevel: nextLevel.threshold,
-      pomosRemaining: nextLevel.threshold - pomos,
-      progress: Math.min(100, Math.max(0, progress)),
-      title: currentLevel.title,
-    };
-  }, [profileStats, stats, levelConfig]);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
@@ -159,6 +105,15 @@ function HomeContent() {
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
+      }
+    };
+  }, []);
+
+  // Cleanup challenge toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (challengeToastTimerRef.current) {
+        clearTimeout(challengeToastTimerRef.current);
       }
     };
   }, []);
@@ -337,9 +292,18 @@ function HomeContent() {
 
           // Show challenge toast if there's a next challenge
           if (nextChallenge) {
+            // Clear previous timeout if it exists
+            if (challengeToastTimerRef.current) {
+              clearTimeout(challengeToastTimerRef.current);
+            }
+
             setShowChallengeToast(true);
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => setShowChallengeToast(false), 5000);
+
+            // Auto-dismiss after 8 seconds
+            challengeToastTimerRef.current = setTimeout(() => {
+              setShowChallengeToast(false);
+              challengeToastTimerRef.current = null;
+            }, 8000);
           }
         }
 

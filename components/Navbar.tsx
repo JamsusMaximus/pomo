@@ -17,7 +17,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ isTimerRunning = false }: NavbarProps) {
-  const { user, isSignedIn } = useUser();
+  const { user } = useUser();
   const profileStats = useQuery(api.stats.getProfileStats);
   const stats = useQuery(api.stats.getStats);
   const levelConfig = useQuery(api.levels.getLevelConfig);

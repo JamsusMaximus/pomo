@@ -31,8 +31,12 @@ export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95, x: 20, y: 0 }}
       animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, scale: 0.95, x: 20, y: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1],
+        exit: { duration: 0.5, ease: "easeOut" },
+      }}
       className="fixed right-8 top-1/2 -translate-y-1/2 z-50 w-80 max-md:right-auto max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-20 max-md:translate-y-0"
     >
       <div

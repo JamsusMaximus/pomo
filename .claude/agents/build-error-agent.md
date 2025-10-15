@@ -37,10 +37,13 @@ Diagnose and fix build failures, dev server issues, and deployment problems. Thi
 
 ### 2. Common Fixes (Try in Order)
 
-#### For ENOENT / Build Manifest Errors
+#### For Internal Server Error / ENOENT / Build Manifest Errors
 
 ```bash
-# Clean and rebuild
+# RECOMMENDED: Use the clean script (handles cache + port cleanup)
+npm run dev:clean
+
+# Manual clean and rebuild
 rm -rf .next && npm run build
 
 # If that doesn't work, also clean node_modules cache
@@ -84,10 +87,11 @@ rm -rf .next && npm run dev
 
 ## Common Error Patterns
 
-### Pattern 1: Corrupted Build Cache
+### Pattern 1: Corrupted Build Cache / Internal Server Error
 
 **Symptoms**:
 
+- "Internal Server Error" in browser
 - `ENOENT: no such file or directory, open '.next/server/...'`
 - Random module not found errors
 - Build worked before, now broken
@@ -95,7 +99,11 @@ rm -rf .next && npm run dev
 **Solution**:
 
 ```bash
-rm -rf .next && npm run build
+# Use the automated clean script
+npm run dev:clean
+
+# Or manual clean
+rm -rf .next && npm run dev
 ```
 
 ### Pattern 2: Multiple Dev Servers
@@ -164,7 +172,21 @@ rm -rf .next && npm run dev
 
 ## Automated Recovery Commands
 
-### Quick Fix Script
+### Quick Fix Script (Built-in)
+
+The project now includes `npm run dev:clean` which automatically:
+
+- Kills any process on port 3000
+- Cleans the `.next` cache
+- Restarts the dev server
+
+**Use this first when you encounter dev server issues!**
+
+```bash
+npm run dev:clean
+```
+
+### Manual Quick Fix
 
 ```bash
 #!/bin/bash

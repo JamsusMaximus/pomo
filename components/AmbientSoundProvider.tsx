@@ -201,6 +201,7 @@ export function AmbientSoundProvider({ children }: { children: ReactNode }) {
     if (isEnabled && !isPlaying && audioRef.current) {
       play();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
   const value: AmbientSoundContextType = {
