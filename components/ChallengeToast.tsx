@@ -35,7 +35,6 @@ export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
       transition={{
         duration: 0.3,
         ease: [0.16, 1, 0.3, 1],
-        exit: { duration: 0.6, ease: "easeOut" },
       }}
       className="fixed right-8 top-1/2 -translate-y-1/2 z-50 w-80 max-md:right-auto max-md:left-1/2 max-md:-translate-x-1/2 max-md:top-20 max-md:translate-y-0"
     >
