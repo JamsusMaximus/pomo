@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
-import { Users } from "lucide-react";
+import { Users, BookOpen } from "lucide-react";
 
 interface NavbarProps {
   isTimerRunning?: boolean;
@@ -134,6 +134,15 @@ export function Navbar({ isTimerRunning = false }: NavbarProps) {
               <span>Friends</span>
             </Link>
           </SignedIn>
+
+          {/* Rules Menu */}
+          <Link
+            href="/rules"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted transition-colors text-sm font-medium"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Rules</span>
+          </Link>
         </div>
 
         {/* Right: Profile, Level, Dark Mode */}

@@ -6,15 +6,16 @@
  * - Save completed pomodoro sessions (focus and break)
  * - Retrieve user's session history with pagination
  * - Calculate today's session count
- * - Trigger challenge progress updates after focus sessions
+ * - Provide tag suggestions and tag editing
  *
- * Dependencies: Convex server runtime, challenges.ts (scheduler)
+ * Dependencies: Convex server runtime
  * Used by: app/page.tsx (timer), app/profile/page.tsx (session history)
+ *
+ * Note: Stats are computed on-read from this table by stats_helpers.ts
  */
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 
 /**
  * Save a completed pomodoro session
@@ -58,7 +59,7 @@ export const saveSession = mutation({
       return existingSession._id;
     }
 
-    // Insert new session
+    // Insert new session (that's it! No cache to update)
     const sessionId = await ctx.db.insert("pomodoros", {
       userId: user._id,
       mode: args.mode,
@@ -67,36 +68,8 @@ export const saveSession = mutation({
       completedAt: args.completedAt,
     });
 
-    // Update cached counts for performance (only for NEW focus sessions)
-    if (args.mode === "focus") {
-      const completedDate = new Date(args.completedAt);
-      const todayKey = `${completedDate.getFullYear()}-${String(completedDate.getMonth() + 1).padStart(2, "0")}-${String(completedDate.getDate()).padStart(2, "0")}`;
-      const monthKey = `${completedDate.getFullYear()}-${String(completedDate.getMonth() + 1).padStart(2, "0")}`;
-
-      // Calculate week start (Monday)
-      const dayOfWeek = completedDate.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const weekStart = new Date(completedDate);
-      weekStart.setDate(completedDate.getDate() + diff);
-      const weekStartKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, "0")}-${String(weekStart.getDate()).padStart(2, "0")}`;
-
-      // Update user cached counts
-      await ctx.db.patch(user._id, {
-        totalPomos: (user.totalPomos ?? 0) + 1,
-        todayPomos: user.todayDate === todayKey ? (user.todayPomos ?? 0) + 1 : 1,
-        todayDate: todayKey,
-        weekPomos: user.weekStartDate === weekStartKey ? (user.weekPomos ?? 0) + 1 : 1,
-        weekStartDate: weekStartKey,
-        monthPomos: user.monthKey === monthKey ? (user.monthPomos ?? 0) + 1 : 1,
-        monthKey: monthKey,
-      });
-
-      // Update challenge progress after each focus session
-      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-        userId: user._id,
-      });
-    }
-
+    // Stats are computed on-read, so we're done!
+    // Convex reactivity will automatically update all queries
     return sessionId;
   },
 });

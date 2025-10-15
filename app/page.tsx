@@ -41,6 +41,7 @@ import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
+import { useSearchParams } from "next/navigation";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -54,6 +55,9 @@ const calculatePomosToday = (sessions: PomodoroSession[]) => {
 };
 
 function HomeContent() {
+  const searchParams = useSearchParams();
+  const autostart = searchParams.get("autostart") === "true";
+
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -75,6 +79,7 @@ function HomeContent() {
   const [flowToastCount, setFlowToastCount] = useState(0);
   const [showChallengeToast, setShowChallengeToast] = useState(false);
   const challengeToastTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAutostartedRef = useRef(false);
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
@@ -593,6 +598,18 @@ function HomeContent() {
   useEffect(() => {
     setIsTimerRunning(isRunning);
   }, [isRunning, setIsTimerRunning]);
+
+  // Autostart timer if ?autostart=true parameter is present
+  useEffect(() => {
+    if (autostart && isHydrated && !hasAutostartedRef.current && !isRunning) {
+      hasAutostartedRef.current = true;
+      // Small delay to ensure UI is ready
+      setTimeout(() => {
+        start();
+        setShowSpaceHint(false);
+      }, 500);
+    }
+  }, [autostart, isHydrated, isRunning, start]);
 
   // Update browser tab title with live countdown
   useEffect(() => {
