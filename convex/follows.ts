@@ -349,16 +349,18 @@ export const getFriendsActivity = query({
         let levelTitle = "Beginner";
 
         if (levelConfigs.length > 0) {
-          let matchedLevel = levelConfigs[0];
-          for (const level of levelConfigs) {
-            if (level.threshold <= totalPomos) {
-              matchedLevel = level;
+          // Sort by threshold to ensure correct order
+          const sortedConfigs = [...levelConfigs].sort((a, b) => a.threshold - b.threshold);
+
+          // Find the highest level the user has reached
+          for (const level of sortedConfigs) {
+            if (totalPomos >= level.threshold) {
+              currentLevel = level.level;
+              levelTitle = level.title;
             } else {
               break;
             }
           }
-          currentLevel = matchedLevel.level;
-          levelTitle = matchedLevel.title;
         } else {
           // Fallback to default levels
           const defaultLevels = [
@@ -374,7 +376,7 @@ export const getFriendsActivity = query({
             { level: 10, title: "Immortal", threshold: 141 },
           ];
           for (const level of defaultLevels) {
-            if (level.threshold <= totalPomos) {
+            if (totalPomos >= level.threshold) {
               currentLevel = level.level;
               levelTitle = level.title;
             }

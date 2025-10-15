@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/", // Timer page is public
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/sso-callback", // OAuth callback for Clerk
   "/download", // Download page is public
   "/changelog", // Changelog is public
   "/profile/(.*)", // Public profiles are accessible without auth

@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as backfillChallenges from "../backfillChallenges.js";
 import type * as challenges from "../challenges.js";
 import type * as createTestFriend from "../createTestFriend.js";
 import type * as deleteTestFriend from "../deleteTestFriend.js";
@@ -38,6 +39,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  backfillChallenges: typeof backfillChallenges;
   challenges: typeof challenges;
   createTestFriend: typeof createTestFriend;
   deleteTestFriend: typeof deleteTestFriend;
