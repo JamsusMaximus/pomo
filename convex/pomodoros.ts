@@ -38,6 +38,27 @@ export const saveSession = mutation({
 
     if (!user) throw new Error("User not found - call ensureUser first");
 
+    // Check for duplicate session (within 1 second window to handle race conditions)
+    const existingSession = await ctx.db
+      .query("pomodoros")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("completedAt"), args.completedAt - 1000),
+          q.lte(q.field("completedAt"), args.completedAt + 1000),
+          q.eq(q.field("mode"), args.mode),
+          q.eq(q.field("duration"), args.duration)
+        )
+      )
+      .first();
+
+    // If duplicate found, return existing session ID instead of creating new one
+    if (existingSession) {
+      console.log("Duplicate session detected, skipping insert and count updates");
+      return existingSession._id;
+    }
+
+    // Insert new session
     const sessionId = await ctx.db.insert("pomodoros", {
       userId: user._id,
       mode: args.mode,
@@ -46,7 +67,7 @@ export const saveSession = mutation({
       completedAt: args.completedAt,
     });
 
-    // Update cached counts for performance (only for focus sessions)
+    // Update cached counts for performance (only for NEW focus sessions)
     if (args.mode === "focus") {
       const completedDate = new Date(args.completedAt);
       const todayKey = `${completedDate.getFullYear()}-${String(completedDate.getMonth() + 1).padStart(2, "0")}-${String(completedDate.getDate()).padStart(2, "0")}`;
