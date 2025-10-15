@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "@/components/motion";
+import { useState, useEffect } from "react";
 
 interface ActivityData {
   date: string;
@@ -13,9 +14,21 @@ interface ActivityHeatmapProps {
 }
 
 export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
-  // Generate all days for the past ~50 days (enough to show the seeded data nicely)
+  // Responsive: 6 months on mobile, 12 months on desktop
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const today = new Date();
-  const daysToShow = 56; // 8 weeks = nice grid
+  const daysToShow = isMobile ? 180 : 365; // 6 months on mobile, 12 months on desktop
   const startDateCalc = new Date(today);
   startDateCalc.setDate(today.getDate() - daysToShow);
 
@@ -90,8 +103,8 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   ];
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="inline-block min-w-full">
+    <div className="w-full">
+      <div className="w-full">
         {/* Month labels */}
         <div className="flex mb-2 ml-8">
           {weeks.map((week, weekIndex) => {
@@ -101,14 +114,20 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
               return (
                 <div
                   key={weekIndex}
-                  className="text-xs text-muted-foreground"
-                  style={{ width: "14px" }}
+                  className="text-xs text-muted-foreground flex-shrink-0"
+                  style={{ width: "calc((100% - 2rem) / 52)" }}
                 >
                   {monthLabels[firstDay.getMonth()]}
                 </div>
               );
             }
-            return <div key={weekIndex} style={{ width: "14px" }} />;
+            return (
+              <div
+                key={weekIndex}
+                className="flex-shrink-0"
+                style={{ width: "calc((100% - 2rem) / 52)" }}
+              />
+            );
           })}
         </div>
 
@@ -126,9 +145,9 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
           </div>
 
           {/* Heatmap grid */}
-          <div className="flex gap-1">
+          <div className="flex gap-[2px] flex-1">
             {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
+              <div key={weekIndex} className="flex flex-col gap-[2px] flex-1">
                 {week.map((day, dayIndex) => {
                   const intensity = getIntensity(day.data?.count);
                   const color = getColor(intensity);
@@ -147,7 +166,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2, delay: (weekIndex * 7 + dayIndex) * 0.001 }}
-                      className={`w-3 h-3 rounded-sm ${color} border border-border/50 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
+                      className={`aspect-square rounded-sm ${color} border border-border/50 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
                       title={tooltip}
                     />
                   );
