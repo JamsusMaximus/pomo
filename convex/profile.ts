@@ -204,9 +204,11 @@ export const getProfileData = query({
 
     const bestDailyStreak = user.bestDailyStreak || calculateBestStreak(allSessions);
 
-    // Calculate focus graph with EWMA
-    const DECAY_FACTOR = 0.976;
-    const POMO_WEIGHT = 1;
+    // Calculate focus graph with Strava-style decay
+    // Strava uses two values: Fitness (long-term) and Fatigue (short-term)
+    // We'll use a simplified version with exponential moving average
+    const DECAY_FACTOR = 0.95; // Faster decay - drops to ~60% after 7 days, ~36% after 14 days
+    const POMO_WEIGHT = 10; // Higher weight so scores are more visible
     const focusData: Array<{ date: string; score: number }> = [];
     let currentScore = 0;
 
@@ -215,7 +217,10 @@ export const getProfileData = query({
       date.setDate(date.getDate() - i);
       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+      // Apply decay every day (Strava-style: fitness decays even on rest days)
       currentScore = currentScore * DECAY_FACTOR;
+
+      // Add today's pomodoros (if any)
       const todayPomos = fitnessPomosByDate[dateKey] || 0;
       currentScore += todayPomos * POMO_WEIGHT;
 

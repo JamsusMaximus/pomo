@@ -506,9 +506,9 @@ async function getFocusFitnessForUser(
     pomosByDate[dateKey] = (pomosByDate[dateKey] || 0) + 1;
   });
 
-  // Calculate EWMA
-  const DECAY_FACTOR = 0.976;
-  const POMO_WEIGHT = 1;
+  // Calculate EWMA with Strava-style decay
+  const DECAY_FACTOR = 0.95; // Faster decay - drops to ~60% after 7 days, ~36% after 14 days
+  const POMO_WEIGHT = 10; // Higher weight so scores are more visible
   const focusData: Array<{ date: string; score: number }> = [];
   let currentScore = 0;
 
@@ -517,7 +517,10 @@ async function getFocusFitnessForUser(
     date.setDate(date.getDate() - i);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+    // Apply decay every day (Strava-style: fitness decays even on rest days)
     currentScore = currentScore * DECAY_FACTOR;
+
+    // Add today's pomodoros (if any)
     const todayPomos = pomosByDate[dateKey] || 0;
     currentScore += todayPomos * POMO_WEIGHT;
 
