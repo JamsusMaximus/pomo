@@ -37,9 +37,11 @@ import {
 import { PomodoroFeed } from "@/components/PomodoroFeed";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { TagInput } from "@/components/TagInput";
+import { ChallengeToast } from "@/components/ChallengeToast";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
+import { AnimatePresence } from "@/components/motion";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -72,6 +74,7 @@ function HomeContent() {
   const [flowSessionId, setFlowSessionId] = useState<string | null>(null);
   const [showFlowCompleteToast, setShowFlowCompleteToast] = useState(false);
   const [flowToastCount, setFlowToastCount] = useState(0);
+  const [showChallengeToast, setShowChallengeToast] = useState(false);
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
@@ -81,6 +84,7 @@ function HomeContent() {
   const profileStats = useQuery(api.stats.getProfileStats); // Fast cached query for profile
   const stats = useQuery(api.stats.getStats);
   const levelConfig = useQuery(api.levels.getLevelConfig);
+  const nextChallenge = useQuery(api.challenges.getNextChallenge);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
   const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
@@ -330,6 +334,13 @@ function HomeContent() {
               console.error("Failed to save session to Convex:", err);
               // Session remains unsynced and will be retried later
             });
+
+          // Show challenge toast if there's a next challenge
+          if (nextChallenge) {
+            setShowChallengeToast(true);
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => setShowChallengeToast(false), 5000);
+          }
         }
 
         // Refresh sessions display (cyclesCompleted auto-updates via useMemo)
@@ -761,6 +772,16 @@ function HomeContent() {
           </div>
         </motion.div>
       )}
+
+      {/* Challenge Progress Toast */}
+      <AnimatePresence>
+        {showChallengeToast && nextChallenge && (
+          <ChallengeToast
+            challenge={nextChallenge}
+            onDismiss={() => setShowChallengeToast(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Timer Card Container */}

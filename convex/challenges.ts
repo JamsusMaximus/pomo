@@ -707,3 +707,68 @@ export const toggleChallengeActive = mutation({
     });
   },
 });
+
+/**
+ * Get next challenge with highest completion percentage for toast notification
+ * Returns the incomplete challenge closest to completion
+ */
+export const getNextChallenge = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) return null;
+
+    // Get all active challenges
+    const allChallenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_active", (q) => q.eq("active", true))
+      .collect();
+
+    if (allChallenges.length === 0) return null;
+
+    // Get user's challenge records
+    const userChallenges = await ctx.db
+      .query("userChallenges")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
+
+    // Calculate percentage for each incomplete challenge
+    const incompleteChallenges = allChallenges
+      .map((challenge) => {
+        const userChallenge = userChallengeMap.get(challenge._id);
+        const progress = userChallenge?.progress || 0;
+        const completed = userChallenge?.completed || false;
+
+        // Skip completed challenges
+        if (completed) return null;
+
+        const percentage = (progress / challenge.target) * 100;
+
+        return {
+          name: challenge.name,
+          description: challenge.description,
+          badge: challenge.badge,
+          progress,
+          target: challenge.target,
+          percentage: Math.min(100, Math.round(percentage)),
+        };
+      })
+      .filter((c) => c !== null);
+
+    if (incompleteChallenges.length === 0) return null;
+
+    // Sort by highest percentage and return the top one
+    incompleteChallenges.sort((a, b) => b!.percentage - a!.percentage);
+
+    return incompleteChallenges[0];
+  },
+});
