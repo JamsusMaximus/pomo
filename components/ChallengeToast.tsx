@@ -1,6 +1,9 @@
 "use client";
 
 import { motion } from "@/components/motion";
+import * as LucideIcons from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Award } from "lucide-react";
 
 interface ChallengeToastProps {
   challenge: {
@@ -14,23 +17,16 @@ interface ChallengeToastProps {
   onDismiss: () => void;
 }
 
-// Map badge names to emoji
-const BADGE_EMOJI_MAP: Record<string, string> = {
-  Target: "🎯",
-  Sprout: "🌱",
-  Flame: "🔥",
-  Award: "🏆",
-  Star: "⭐",
-  Trophy: "🏅",
-  Swords: "⚔️",
-  Crown: "👑",
-  Sparkles: "✨",
-  Zap: "⚡",
-  Medal: "🥇",
+// Helper to render Lucide icon from string name
+const ChallengeIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
+  if (!Icon) {
+    return <Award className={className} />;
+  }
+  return <Icon className={className} />;
 };
 
 export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
-  const badgeEmoji = BADGE_EMOJI_MAP[challenge.badge] || challenge.badge;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, x: 20, y: 0 }}
@@ -73,9 +69,9 @@ export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
 
         {/* Content */}
         <div className="flex items-start gap-4 pr-6">
-          {/* Badge */}
+          {/* Badge Icon */}
           <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-orange-500/10 rounded-xl">
-            <span className="text-2xl">{badgeEmoji}</span>
+            <ChallengeIcon iconName={challenge.badge} className="w-6 h-6 text-orange-500" />
           </div>
 
           {/* Challenge info */}
