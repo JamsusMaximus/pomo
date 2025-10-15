@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { BookOpen } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -91,12 +92,12 @@ export default function RulesPage() {
           {/* Call to action */}
           <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-xl p-8 text-center border border-orange-500/20">
             <h2 className="text-2xl font-bold mb-4">Ready to lock in?</h2>
-            <a
+            <Link
               href="/?autostart=true"
               className="inline-flex items-center justify-center px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors"
             >
               Start Timer
-            </a>
+            </Link>
           </div>
         </div>
       </div>
