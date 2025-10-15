@@ -711,6 +711,7 @@ export const toggleChallengeActive = mutation({
 /**
  * Get next challenge with highest completion percentage for toast notification
  * Returns the incomplete challenge closest to completion
+ * Uses real-time calculation from cached user stats for immediate accuracy
  */
 export const getNextChallenge = query({
   args: {},
@@ -733,7 +734,7 @@ export const getNextChallenge = query({
 
     if (allChallenges.length === 0) return null;
 
-    // Get user's challenge records
+    // Get user's challenge records for completed status
     const userChallenges = await ctx.db
       .query("userChallenges")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -741,15 +742,43 @@ export const getNextChallenge = query({
 
     const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
 
-    // Calculate percentage for each incomplete challenge
+    const now = new Date();
+
+    // Calculate percentage for each incomplete challenge using real-time cached counts
     const incompleteChallenges = allChallenges
       .map((challenge) => {
         const userChallenge = userChallengeMap.get(challenge._id);
-        const progress = userChallenge?.progress || 0;
         const completed = userChallenge?.completed || false;
 
         // Skip completed challenges
         if (completed) return null;
+
+        // Calculate progress using cached counts (same logic as updateChallengeProgress)
+        let progress = 0;
+        switch (challenge.type) {
+          case "total":
+            progress = user.totalPomos ?? 0;
+            break;
+          case "daily":
+            progress = user.todayPomos ?? 0;
+            break;
+          case "weekly":
+            progress = user.weekPomos ?? 0;
+            break;
+          case "monthly":
+            progress = user.monthPomos ?? 0;
+            break;
+          case "recurring_monthly": {
+            const currentMonth = now.getMonth() + 1;
+            if (challenge.recurringMonth === currentMonth) {
+              progress = user.monthPomos ?? 0;
+            }
+            break;
+          }
+          case "streak":
+            progress = user.bestDailyStreak ?? 0;
+            break;
+        }
 
         const percentage = (progress / challenge.target) * 100;
 
