@@ -16,7 +16,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { motion } from "@/components/motion";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
@@ -1102,7 +1102,11 @@ export default function Home() {
       fallbackTitle="Timer Error"
       fallbackMessage="The pomodoro timer encountered an error. Your progress has been saved."
     >
-      <HomeContent />
+      <Suspense
+        fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}
+      >
+        <HomeContent />
+      </Suspense>
     </ErrorBoundary>
   );
 }
