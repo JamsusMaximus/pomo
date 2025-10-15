@@ -11,6 +11,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ClerkProvider
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
       appearance={{
         elements: {
           // Hide first name, last name, and username fields
