@@ -7,7 +7,7 @@ import { ArrowLeft, Download, Check } from "lucide-react";
 
 export default function DownloadPage() {
   return (
-    <main className="min-h-screen px-4 py-12">
+    <main className="min-h-screen px-4 pt-20 pb-12 sm:pt-24">
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <Link href="/">
