@@ -13,7 +13,6 @@ export const createTestFriend = internalMutation({
     const testUserId = await ctx.db.insert("users", {
       clerkId: `test_friend_${Date.now()}`,
       username: "testfriend",
-      email: "testfriend@example.com",
       avatarUrl: undefined,
       totalPomos: 101,
       todayPomos: 5,
