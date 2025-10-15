@@ -106,11 +106,12 @@ function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
-  // Fitness period state (7 or 90 days)
+  // Fitness period state (7 or 90 days) - only for UI filtering, not query parameter
   const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
+  const [hasSetDefaultPeriod, setHasSetDefaultPeriod] = useState(false);
 
-  // Single optimized query that fetches all profile data at once
-  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod });
+  // Single optimized query - always fetch 90 days, filter client-side
+  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod: 90 });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
   const longestFlow = useQuery(api.flowSessions.getLongestFlowSession);
@@ -143,15 +144,16 @@ function ProfilePageContent() {
   // Challenges expansion state
   const [showAllChallenges, setShowAllChallenges] = useState(false);
 
-  // Determine default fitness period based on user age
+  // Determine default fitness period based on user age (only once)
   useEffect(() => {
-    if (profileData?.stats.userCreatedAt) {
+    if (profileData?.stats.userCreatedAt && !hasSetDefaultPeriod) {
       const daysSinceCreation =
         (Date.now() - profileData.stats.userCreatedAt) / (1000 * 60 * 60 * 24);
       const defaultPeriod = daysSinceCreation <= 7 ? 7 : 90;
       setFitnessPeriod(defaultPeriod);
+      setHasSetDefaultPeriod(true);
     }
-  }, [profileData?.stats.userCreatedAt]);
+  }, [profileData?.stats.userCreatedAt, hasSetDefaultPeriod]);
 
   // Auto-sync challenges on page load
   useEffect(() => {
