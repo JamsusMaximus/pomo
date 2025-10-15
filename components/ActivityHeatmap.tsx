@@ -11,10 +11,11 @@ interface ActivityData {
 
 interface ActivityHeatmapProps {
   data: ActivityData[];
+  compact?: boolean; // If true, show only 3 months without labels
 }
 
-export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
-  // Responsive: 6 months on mobile, 12 months on desktop
+export function ActivityHeatmap({ data, compact = false }: ActivityHeatmapProps) {
+  // Responsive: 6 months on mobile, 12 months on desktop (unless compact mode)
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   }, []);
 
   const today = new Date();
-  const daysToShow = isMobile ? 180 : 365; // 6 months on mobile, 12 months on desktop
+  const daysToShow = compact ? 90 : isMobile ? 180 : 365; // 3 months for compact, 6 months on mobile, 12 months on desktop
   const startDateCalc = new Date(today);
   startDateCalc.setDate(today.getDate() - daysToShow);
 
@@ -102,11 +103,15 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     "Dec",
   ];
 
+  // Calculate dynamic width based on number of weeks
+  const weeksCount = weeks.length;
+  const weekWidth = `calc((100% - 2rem) / ${weeksCount})`;
+
   return (
     <div className="w-full">
       <div className="w-full">
         {/* Month labels */}
-        <div className="flex mb-2 ml-8">
+        <div className={`flex ${compact ? "mb-1" : "mb-2"} ml-8`}>
           {weeks.map((week, weekIndex) => {
             const firstDay = week[0].date;
             const isFirstWeekOfMonth = firstDay.getDate() <= 7;
@@ -114,40 +119,49 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
               return (
                 <div
                   key={weekIndex}
-                  className="text-xs text-muted-foreground flex-shrink-0"
-                  style={{ width: "calc((100% - 2rem) / 52)" }}
+                  className={`${compact ? "text-[10px]" : "text-xs"} text-muted-foreground flex-shrink-0`}
+                  style={{ width: weekWidth }}
                 >
                   {monthLabels[firstDay.getMonth()]}
                 </div>
               );
             }
-            return (
-              <div
-                key={weekIndex}
-                className="flex-shrink-0"
-                style={{ width: "calc((100% - 2rem) / 52)" }}
-              />
-            );
+            return <div key={weekIndex} className="flex-shrink-0" style={{ width: weekWidth }} />;
           })}
         </div>
 
         {/* Day labels + grid */}
-        <div className="flex gap-1">
+        <div className={`flex ${compact ? "gap-[1px]" : "gap-1"}`}>
           {/* Day of week labels */}
-          <div className="flex flex-col gap-1 pr-2">
-            <div className="h-3" />
-            <div className="text-xs text-muted-foreground h-3 flex items-center">Mon</div>
-            <div className="h-3" />
-            <div className="text-xs text-muted-foreground h-3 flex items-center">Wed</div>
-            <div className="h-3" />
-            <div className="text-xs text-muted-foreground h-3 flex items-center">Fri</div>
-            <div className="h-3" />
+          <div className={`flex flex-col ${compact ? "gap-[1px]" : "gap-1"} pr-2`}>
+            <div className={compact ? "h-2" : "h-3"} />
+            <div
+              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
+            >
+              Mon
+            </div>
+            <div className={compact ? "h-2" : "h-3"} />
+            <div
+              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
+            >
+              Wed
+            </div>
+            <div className={compact ? "h-2" : "h-3"} />
+            <div
+              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
+            >
+              Fri
+            </div>
+            <div className={compact ? "h-2" : "h-3"} />
           </div>
 
           {/* Heatmap grid */}
-          <div className="flex gap-[2px] flex-1">
+          <div className={`flex ${compact ? "gap-[1px]" : "gap-[2px]"} flex-1`}>
             {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-[2px] flex-1">
+              <div
+                key={weekIndex}
+                className={`flex flex-col ${compact ? "gap-[1px]" : "gap-[2px]"} flex-1`}
+              >
                 {week.map((day, dayIndex) => {
                   const intensity = getIntensity(day.data?.count);
                   const color = getColor(intensity);
@@ -166,7 +180,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2, delay: (weekIndex * 7 + dayIndex) * 0.001 }}
-                      className={`aspect-square rounded-sm ${color} border border-border/50 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
+                      className={`aspect-square ${compact ? "rounded-[1px]" : "rounded-sm"} ${color} border border-border/50 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
                       title={tooltip}
                     />
                   );
@@ -176,19 +190,21 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
-          <span>Less</span>
-          <div className="flex gap-1">
-            {[0, 1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className={`w-3 h-3 rounded-sm ${getColor(level)} border border-border/50`}
-              />
-            ))}
+        {/* Legend - hidden in compact mode */}
+        {!compact && (
+          <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+            <span>Less</span>
+            <div className="flex gap-1">
+              {[0, 1, 2, 3, 4].map((level) => (
+                <div
+                  key={level}
+                  className={`w-3 h-3 rounded-sm ${getColor(level)} border border-border/50`}
+                />
+              ))}
+            </div>
+            <span>More</span>
           </div>
-          <span>More</span>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -106,6 +106,7 @@ function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
+
   // Fitness period state (7 or 90 days) - only for UI filtering, not query parameter
   const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
   const [hasSetDefaultPeriod, setHasSetDefaultPeriod] = useState(false);
@@ -271,7 +272,7 @@ function ProfilePageContent() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-8 sm:py-12">
+    <main className="min-h-screen px-4 pt-6 md:pt-24 pb-20 md:pb-12">
       <div className="max-w-4xl mx-auto">
         {/* Top navigation */}
         <div className="flex items-center justify-between mb-6">

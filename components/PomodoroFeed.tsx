@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { TagInput } from "@/components/TagInput";
+import { TagSuggestions } from "@/components/TagSuggestions";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface PomodoroFeedProps {
@@ -31,6 +32,7 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
   const { isSignedIn } = useUser();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string>("");
+  const [showSuggestionsFor, setShowSuggestionsFor] = useState<string | null>(null);
 
   // Fetch from Convex if signed in, otherwise use localStorage sessions
   const convexSessions = useQuery(api.pomodoros.getMyPomodoros, { limit: 20 });
@@ -48,6 +50,26 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
     setEditingTag(currentTag || "");
   };
 
+  const handleShowSuggestions = (sessionId: string) => {
+    setShowSuggestionsFor(sessionId);
+  };
+
+  const handleSelectTag = async (sessionId: string, tag: string) => {
+    if (!isSignedIn) return;
+
+    try {
+      await updateSessionTag({
+        sessionId: sessionId as Id<"pomodoros">,
+        tag: tag,
+      });
+      setShowSuggestionsFor(null);
+      setEditingId(null);
+      setEditingTag("");
+    } catch (error) {
+      console.error("Failed to update tag:", error);
+    }
+  };
+
   const handleSaveTag = async (sessionId: string) => {
     if (!isSignedIn) return; // Only allow editing for signed-in users with Convex sessions
 
@@ -58,6 +80,7 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
       });
       setEditingId(null);
       setEditingTag("");
+      setShowSuggestionsFor(null);
     } catch (error) {
       console.error("Failed to update tag:", error);
     }
@@ -66,9 +89,15 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingTag("");
+    setShowSuggestionsFor(null);
   };
 
   if (focusSessions.length === 0) {
+    // Don't show anything for logged-out users with no sessions
+    if (!isSignedIn) {
+      return null;
+    }
+
     return (
       <div className="text-center py-8 text-muted-foreground">
         <p className="text-sm">No pomodoros completed yet.</p>
@@ -111,7 +140,7 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
                   </div>
 
                   {/* Tag or Edit Input */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 relative">
                     <AnimatePresence mode="wait">
                       {isEditing ? (
                         <motion.div
@@ -181,12 +210,27 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
                             <div className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 text-xs font-medium border border-orange-500/20">
                               {session.tag}
                             </div>
+                          ) : canEdit ? (
+                            <button
+                              onClick={() => handleShowSuggestions(sessionId)}
+                              className="px-3 py-1 rounded-full text-xs text-muted-foreground hover:text-orange-600 hover:bg-orange-500/10 border border-dashed border-muted-foreground/30 hover:border-orange-500/30 transition-all"
+                            >
+                              + Add tag
+                            </button>
                           ) : (
                             <span className="text-xs text-muted-foreground italic">No tag</span>
                           )}
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    {/* Tag Suggestions Dropdown */}
+                    {showSuggestionsFor === sessionId && (
+                      <TagSuggestions
+                        show={true}
+                        onSelect={(tag) => handleSelectTag(sessionId, tag)}
+                        onClose={() => setShowSuggestionsFor(null)}
+                      />
+                    )}
                   </div>
                 </div>
 

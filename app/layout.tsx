@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AmbientSoundProvider } from "@/components/AmbientSoundProvider";
+import { NavbarWrapper } from "@/components/NavbarWrapper";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider defaultTheme="light" storageKey="pomo-theme">
           <AmbientSoundProvider>
-            <Providers>{children}</Providers>
+            <Providers>
+              <NavbarWrapper>{children}</NavbarWrapper>
+            </Providers>
           </AmbientSoundProvider>
         </ThemeProvider>
       </body>

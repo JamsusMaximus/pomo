@@ -18,13 +18,11 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion } from "@/components/motion";
-import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTimer } from "@/hooks/useTimer";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
@@ -40,8 +38,8 @@ import { PomodoroFeed } from "@/components/PomodoroFeed";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { TagInput } from "@/components/TagInput";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
-import Link from "next/link";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useTimerContext } from "@/components/NavbarWrapper";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -74,6 +72,9 @@ function HomeContent() {
   const [flowSessionId, setFlowSessionId] = useState<string | null>(null);
   const [showFlowCompleteToast, setShowFlowCompleteToast] = useState(false);
   const [flowToastCount, setFlowToastCount] = useState(0);
+
+  // Timer context for navbar
+  const { setIsTimerRunning } = useTimerContext();
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -613,6 +614,11 @@ function HomeContent() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [isRunning, start, pause]);
 
+  // Update navbar when timer running state changes
+  useEffect(() => {
+    setIsTimerRunning(isRunning);
+  }, [isRunning, setIsTimerRunning]);
+
   // Update browser tab title with live countdown
   useEffect(() => {
     if (isFlowMode && isRunning) {
@@ -686,7 +692,7 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-24">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-24 pb-24 md:pb-24">
       {/* Sync Status Toast */}
       {syncStatus !== "idle" && (
         <motion.div
@@ -755,66 +761,6 @@ function HomeContent() {
           </div>
         </motion.div>
       )}
-
-      {/* Top Controls - Positioned to avoid overlap */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 h-10">
-        <motion.div
-          className="flex items-center gap-2 sm:gap-3"
-          animate={{
-            opacity: isRunning ? 0.3 : 1,
-          }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-          style={{
-            pointerEvents: isRunning ? "none" : "auto",
-          }}
-        >
-          <SignedOut>
-            <SignUpButton mode="modal">
-              <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
-                Signup / Signin
-              </Button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <Avatar className="w-8 h-8 cursor-pointer">
-                <AvatarImage src={user?.imageUrl} alt={user?.username || "User"} />
-                <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-              </Avatar>
-              {/* Reserve space to prevent layout shift */}
-              <div className="flex flex-col gap-1 w-20">
-                {levelInfo ? (
-                  <motion.div
-                    className="flex flex-col gap-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <span className="text-sm font-medium">Level {levelInfo.currentLevel}</span>
-                    <div className="w-20 h-1 bg-muted/50 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-orange-400/60 to-orange-500/60"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${levelInfo.progress}%` }}
-                        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                      />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="flex flex-col gap-1 opacity-0">
-                    <span className="text-sm font-medium">Level 1</span>
-                    <div className="w-20 h-1 bg-muted/50 rounded-full" />
-                  </div>
-                )}
-              </div>
-            </Link>
-          </SignedIn>
-        </motion.div>
-        <ThemeToggle />
-      </div>
 
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Timer Card Container */}
