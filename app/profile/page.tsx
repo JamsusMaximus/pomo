@@ -106,12 +106,12 @@ function ProfilePageContent() {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
-  // Fitness period state (7 or 90 days)
+  // Fitness period state (7 or 90 days) - only for UI filtering, not query parameter
   const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
   const [hasSetDefaultPeriod, setHasSetDefaultPeriod] = useState(false);
 
-  // Single optimized query that fetches all profile data at once
-  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod });
+  // Single optimized query - always fetch 90 days, filter client-side
+  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod: 90 });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
   const longestFlow = useQuery(api.flowSessions.getLongestFlowSession);
