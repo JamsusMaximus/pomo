@@ -4,6 +4,8 @@
 
 Diagnose and fix data synchronization issues between frontend and Convex backend. This agent specializes in tracing data flow, identifying missing sync logic, and creating backfill scripts for existing data.
 
+**⚠️ CRITICAL: Read [AGENT_PROTOCOLS.md](../AGENT_PROTOCOLS.md). Always clean cache and restart dev server before testing sync issues.**
+
 ## When to Use
 
 - User data not appearing or updating correctly
@@ -25,7 +27,24 @@ Diagnose and fix data synchronization issues between frontend and Convex backend
 
 ## Workflow
 
-### 1. Investigation Phase
+### 0. Automatic Pre-Flight (ALWAYS DO THIS FIRST)
+
+**Before investigating sync issues, clean environment:**
+
+```bash
+# Kill processes
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+# Clean cache (stale cache can cause sync issues)
+rm -rf .next
+
+# Restart with clean state
+npm run dev:clean
+```
+
+**Many "sync issues" are actually stale cache issues. Fix this first.**
+
+### 1. Investigation Phase (After Clean Restart)
 
 - Read the schema to understand data relationships
 - Find all queries/mutations related to the sync issue
