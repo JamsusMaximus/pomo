@@ -14,6 +14,8 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as challenges from "../challenges.js";
+import type * as createTestFriend from "../createTestFriend.js";
+import type * as deleteTestFriend from "../deleteTestFriend.js";
 import type * as flowSessions from "../flowSessions.js";
 import type * as follows from "../follows.js";
 import type * as levels from "../levels.js";
@@ -37,6 +39,8 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   challenges: typeof challenges;
+  createTestFriend: typeof createTestFriend;
+  deleteTestFriend: typeof deleteTestFriend;
   flowSessions: typeof flowSessions;
   follows: typeof follows;
   levels: typeof levels;

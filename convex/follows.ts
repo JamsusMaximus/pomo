@@ -247,3 +247,163 @@ export const getFollowing = query({
       }));
   },
 });
+
+/**
+ * Get enriched activity data for all users that the current user follows
+ * Returns friend cards with stats and recent sessions
+ */
+export const getFriendsActivity = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!currentUser) return [];
+
+    // Get all users current user is following
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", currentUser._id))
+      .collect();
+
+    if (follows.length === 0) return [];
+
+    // Fetch enriched data for each friend in parallel
+    const friendsData = await Promise.all(
+      follows.map(async (follow) => {
+        const friend = await ctx.db.get(follow.followingId);
+        if (!friend) return null;
+
+        // Get all friend's focus sessions for streak calculation
+        const allSessions = await ctx.db
+          .query("pomodoros")
+          .withIndex("by_user", (q) => q.eq("userId", friend._id))
+          .filter((q) => q.eq(q.field("mode"), "focus"))
+          .collect();
+
+        // Calculate current daily streak
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const sortedSessions = [...allSessions].sort((a, b) => b.completedAt - a.completedAt);
+
+        let dailyStreak = 0;
+        const currentDate = new Date(today);
+        let checkingDate = true;
+
+        while (checkingDate) {
+          currentDate.setHours(0, 0, 0, 0);
+          const dateStart = currentDate.getTime();
+          const dateEnd = dateStart + 24 * 60 * 60 * 1000;
+
+          const hasSession = sortedSessions.some(
+            (s) => s.completedAt >= dateStart && s.completedAt < dateEnd
+          );
+
+          if (hasSession) {
+            dailyStreak++;
+            currentDate.setDate(currentDate.getDate() - 1);
+          } else if (currentDate.getTime() === today.getTime()) {
+            currentDate.setDate(currentDate.getDate() - 1);
+          } else {
+            checkingDate = false;
+          }
+        }
+
+        // Get 3 most recent focus sessions
+        const recentSessions = sortedSessions.slice(0, 3).map((session) => ({
+          tag: session.tag,
+          duration: session.duration,
+          completedAt: session.completedAt,
+        }));
+
+        // Get latest completed challenge
+        const latestChallenge = await ctx.db
+          .query("userChallenges")
+          .withIndex("by_user_completed", (q) => q.eq("userId", friend._id).eq("completed", true))
+          .order("desc")
+          .first();
+
+        let latestChallengeData = null;
+        if (latestChallenge) {
+          const challenge = await ctx.db.get(latestChallenge.challengeId);
+          if (challenge) {
+            latestChallengeData = {
+              name: challenge.name,
+              description: challenge.description,
+              badge: challenge.badge,
+              completedAt: latestChallenge.completedAt,
+            };
+          }
+        }
+
+        // Calculate level (using same logic as profile page)
+        const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
+        const totalPomos = friend.totalPomos ?? 0;
+
+        let currentLevel = 1;
+        let levelTitle = "Beginner";
+
+        if (levelConfigs.length > 0) {
+          let matchedLevel = levelConfigs[0];
+          for (const level of levelConfigs) {
+            if (level.threshold <= totalPomos) {
+              matchedLevel = level;
+            } else {
+              break;
+            }
+          }
+          currentLevel = matchedLevel.level;
+          levelTitle = matchedLevel.title;
+        } else {
+          // Fallback to default levels
+          const defaultLevels = [
+            { level: 1, title: "Beginner", threshold: 0 },
+            { level: 2, title: "Novice", threshold: 2 },
+            { level: 3, title: "Apprentice", threshold: 4 },
+            { level: 4, title: "Adept", threshold: 8 },
+            { level: 5, title: "Expert", threshold: 16 },
+            { level: 6, title: "Master", threshold: 31 },
+            { level: 7, title: "Grandmaster", threshold: 51 },
+            { level: 8, title: "Legend", threshold: 76 },
+            { level: 9, title: "Mythic", threshold: 106 },
+            { level: 10, title: "Immortal", threshold: 141 },
+          ];
+          for (const level of defaultLevels) {
+            if (level.threshold <= totalPomos) {
+              currentLevel = level.level;
+              levelTitle = level.title;
+            }
+          }
+        }
+
+        return {
+          _id: friend._id,
+          username: friend.username,
+          avatarUrl: friend.avatarUrl,
+          totalPomos: totalPomos,
+          todayPomos: friend.todayPomos ?? 0,
+          currentStreak: dailyStreak,
+          level: currentLevel,
+          levelTitle: levelTitle,
+          recentSessions: recentSessions,
+          latestChallenge: latestChallengeData,
+        };
+      })
+    );
+
+    // Filter out nulls and sort by most active today (pomos today desc, then total desc)
+    return friendsData
+      .filter((f) => f !== null)
+      .sort((a, b) => {
+        if (b!.todayPomos !== a!.todayPomos) {
+          return b!.todayPomos - a!.todayPomos;
+        }
+        return b!.totalPomos - a!.totalPomos;
+      });
+  },
+});
