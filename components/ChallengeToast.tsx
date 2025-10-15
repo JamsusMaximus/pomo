@@ -14,7 +14,23 @@ interface ChallengeToastProps {
   onDismiss: () => void;
 }
 
+// Map badge names to emoji
+const BADGE_EMOJI_MAP: Record<string, string> = {
+  Target: "🎯",
+  Sprout: "🌱",
+  Flame: "🔥",
+  Award: "🏆",
+  Star: "⭐",
+  Trophy: "🏅",
+  Swords: "⚔️",
+  Crown: "👑",
+  Sparkles: "✨",
+  Zap: "⚡",
+  Medal: "🥇",
+};
+
 export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
+  const badgeEmoji = BADGE_EMOJI_MAP[challenge.badge] || challenge.badge;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, x: 20, y: 0 }}
@@ -59,7 +75,7 @@ export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
         <div className="flex items-start gap-4 pr-6">
           {/* Badge */}
           <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-orange-500/10 rounded-xl">
-            <span className="text-2xl">{challenge.badge}</span>
+            <span className="text-2xl">{badgeEmoji}</span>
           </div>
 
           {/* Challenge info */}
@@ -74,7 +90,7 @@ export function ChallengeToast({ challenge, onDismiss }: ChallengeToastProps) {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${challenge.percentage}%` }}
-                  transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                  transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
                   className="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-600"
                 />
               </div>
