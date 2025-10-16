@@ -47,13 +47,15 @@ export function useFavicon(isRunning: boolean) {
       return canvas.toDataURL("image/png");
     };
 
-    // Get or create favicon link element
-    let favicon = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-    if (!favicon) {
-      favicon = document.createElement("link");
-      favicon.rel = "icon";
-      document.head.appendChild(favicon);
-    }
+    // Remove all existing favicon links to avoid conflicts
+    const existingIcons = document.querySelectorAll("link[rel*='icon']");
+    existingIcons.forEach((icon) => icon.remove());
+
+    // Create new favicon link element
+    const favicon = document.createElement("link");
+    favicon.rel = "icon";
+    favicon.type = "image/png";
+    document.head.appendChild(favicon);
 
     // Set favicon based on timer state
     const iconData = generateFavicon(isRunning ? "🔒" : "🔓");
@@ -64,7 +66,7 @@ export function useFavicon(isRunning: boolean) {
     // Cleanup: reset to open padlock when component unmounts
     return () => {
       const resetIcon = generateFavicon("🔓");
-      if (resetIcon && favicon) {
+      if (resetIcon) {
         favicon.href = resetIcon;
       }
     };

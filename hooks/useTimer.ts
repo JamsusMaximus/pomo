@@ -1,5 +1,5 @@
 /**
- * @fileoverview Custom React hook for Pomodoro timer functionality with persistence
+ * @fileoverview Custom React hook for Pomodoro timer functionality with state backup
  * @module hooks/useTimer
  *
  * Key responsibilities:
@@ -8,7 +8,8 @@
  * - Provide start, pause, reset, and skip controls
  * - Auto-start break mode when focus completes (configurable)
  * - Support debug mode for testing (set custom duration)
- * - Persist timer state to survive page reloads (e.g., during Vercel deployments)
+ * - Save timer state to localStorage (emergency backup, NOT auto-restored)
+ * - Warn user before refresh/close when timer is active
  *
  * Dependencies: React hooks, lib/storage/timerState.ts
  * Used by: app/page.tsx (main timer UI)
@@ -70,16 +71,19 @@ interface UseTimerReturn {
 }
 
 /**
- * Drift-resistant Pomodoro timer hook with localStorage persistence
+ * Drift-resistant Pomodoro timer hook with localStorage backup
  *
  * Features:
  * - Uses Date.now() for elapsed time calculation (prevents drift)
  * - Visibility change reconciliation (handles tab switching)
  * - Auto-mode switching (focus → break → focus)
  * - Pause/resume support
- * - Survives page reloads (saves state to localStorage)
- * - Automatically restores running/paused timer on mount
+ * - Saves state to localStorage (emergency backup only, not auto-restored)
+ * - Shows "beforeunload" warning when user tries to refresh/close with active timer
  * - Clears saved state when timer completes or is reset
+ *
+ * Note: User must manually start timer again after page refresh.
+ * Saved state is for emergency recovery only.
  *
  * Performance: O(1) updates every second, no expensive calculations
  *
@@ -134,7 +138,7 @@ export function useTimer({
     isFlowModeRef.current = isFlowMode;
   }, [isFlowMode]);
 
-  // PERSISTENCE: Restore timer state on mount (survives page reloads during deployment)
+  // PERSISTENCE: Check for saved state but DON'T auto-restore (user must manually resume)
   useEffect(() => {
     if (hasRestoredRef.current) return;
     hasRestoredRef.current = true;
@@ -142,49 +146,25 @@ export function useTimer({
     const savedState = loadTimerState();
     if (!savedState) return;
 
-    console.log("🔄 Restoring timer state from localStorage");
-
-    // Calculate how much time is remaining
+    // Calculate how much time was remaining
     const remainingTime = calculateRemainingTime(savedState);
 
-    // If timer expired while page was closed, don't restore
+    // If timer expired while page was closed, clear it
     if (remainingTime === 0) {
-      console.log("⏱️  Timer expired, clearing saved state");
+      console.log("⏱️  Saved timer expired, clearing state");
       clearTimerState();
       return;
     }
 
-    // Restore timer state
-    setMode(savedState.mode);
-    setRemaining(remainingTime);
-    durationRef.current = savedState.duration;
-    modeRef.current = savedState.mode;
+    // Log that we found a saved timer, but don't restore it automatically
+    console.log(
+      "💾 Found saved timer state:",
+      remainingTime,
+      "seconds remaining. Clear localStorage if you don't want to see this."
+    );
 
-    // Restore flow mode state if applicable
-    if (savedState.isFlowMode) {
-      setFlowCompletedPomos(savedState.flowCompletedPomos);
-      setFlowStartTime(savedState.flowStartTime);
-      if (savedState.flowStartTime) {
-        const flowElapsed = Math.floor((Date.now() - savedState.flowStartTime) / 1000);
-        setFlowElapsedTime(flowElapsed);
-      }
-    }
-
-    // Restore timing refs
-    if (savedState.pausedAt) {
-      // Timer was paused - adjust pausedAt to current time
-      startedAtRef.current = savedState.startedAt;
-      pausedAtRef.current = Date.now();
-      setIsRunning(false);
-      console.log("⏸️  Restored paused timer with", remainingTime, "seconds remaining");
-    } else if (savedState.isRunning) {
-      // Timer was running - adjust startedAt to account for elapsed time
-      const elapsed = savedState.duration - remainingTime;
-      startedAtRef.current = Date.now() - elapsed * 1000;
-      pausedAtRef.current = null;
-      setIsRunning(true);
-      console.log("▶️  Restored running timer with", remainingTime, "seconds remaining");
-    }
+    // User must manually start the timer again if they want to continue
+    // The saved state remains in localStorage for emergency recovery only
   }, []); // Run once on mount
 
   // PERSISTENCE: Save timer state whenever it changes
