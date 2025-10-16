@@ -42,6 +42,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
+import { Play, Pause } from "lucide-react";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -1031,9 +1032,12 @@ function HomeContent() {
                     size="lg"
                     className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
                   >
-                    <span>
-                      {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                      <span>
+                        {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                      </span>
+                    </div>
                     {/* Space bar hint inside button */}
                     {showSpaceHint && !isRunning && !isPaused && !isMobile && (
                       <motion.kbd
