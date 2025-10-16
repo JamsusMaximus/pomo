@@ -17,7 +17,7 @@ import { v } from "convex/values";
 import type { QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { calculateStreaks } from "./streak-helpers";
-import { getStartOfDay, MS_PER_DAY } from "./time-helpers";
+import { getStartOfDay } from "./time-helpers";
 
 /**
  * Follow a user
