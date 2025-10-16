@@ -1,6 +1,6 @@
 /**
  * @fileoverview Streak calculation utilities for daily and weekly streaks
- * @module convex/streak-helpers
+ * @module convex/streakHelpers
  *
  * Key responsibilities:
  * - Calculate current daily streaks from session history
@@ -8,11 +8,11 @@
  * - Calculate best historical streak (all-time longest)
  * - Single source of truth for streak logic
  *
- * Dependencies: date-helpers.ts
+ * Dependencies: dateHelpers.ts
  * Used by: stats.ts, profile.ts, publicProfile.ts, stats_helpers.ts, follows.ts
  */
 
-import { formatDateKey, parseDateKey } from "./date-helpers";
+import { formatDateKey, parseDateKey } from "./dateHelpers";
 
 /**
  * Session type for streak calculations

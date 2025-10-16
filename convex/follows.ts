@@ -8,7 +8,7 @@
  * - Check if current user follows another user
  * - Get follower/following counts
  *
- * Dependencies: Convex server runtime, streak-helpers.ts, time-helpers.ts
+ * Dependencies: Convex server runtime, streakHelpers.ts, timeHelpers.ts
  * Used by: app/profile/[username]/page.tsx, components/FollowButton.tsx
  */
 
@@ -16,8 +16,8 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { calculateStreaks } from "./streak-helpers";
-import { getStartOfDay } from "./time-helpers";
+import { calculateStreaks } from "./streakHelpers";
+import { getStartOfDay } from "./timeHelpers";
 
 /**
  * Follow a user

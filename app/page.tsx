@@ -621,6 +621,20 @@ function HomeContent() {
     setIsTimerRunning(isRunning);
   }, [isRunning, setIsTimerRunning]);
 
+  // Warn before closing tab if timer is running
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isRunning && !isFlowMode) {
+        e.preventDefault();
+        e.returnValue = ""; // Required for Chrome
+        return ""; // Required for some older browsers
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isRunning, isFlowMode]);
+
   // Autostart timer if ?autostart=true parameter is present
   useEffect(() => {
     if (autostart && isHydrated && !hasAutostartedRef.current && !isRunning) {

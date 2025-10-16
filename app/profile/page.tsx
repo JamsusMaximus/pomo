@@ -42,7 +42,7 @@ import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { loadSessions, getUnsyncedSessions, markSessionsSynced } from "@/lib/storage/sessions";
-import { getLevelInfo, getLevelTitle } from "@/lib/levels";
+import { getLevelInfoFromConfig } from "@/lib/levels";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ShareProfileButton } from "@/components/ShareProfileButton";
@@ -373,55 +373,17 @@ function ProfilePageContent() {
         {/* Main Content - Two Column Layout */}
         {stats &&
           (() => {
-            // Use database level config if available, otherwise fallback to lib
-            const getLevelInfoFromDb = (pomos: number) => {
-              if (!levelConfig || levelConfig.length === 0) {
-                const info = getLevelInfo(pomos);
-                return {
-                  ...info,
-                  title: getLevelTitle(info.currentLevel),
-                };
-              }
-
-              let currentLevel = levelConfig[0];
-              for (const level of levelConfig) {
-                if (level.threshold <= pomos) {
-                  currentLevel = level;
-                } else {
-                  break;
-                }
-              }
-
-              const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
-              const nextLevel = levelConfig[currentIndex + 1];
-
-              if (!nextLevel) {
-                // Max level reached
-                return {
-                  currentLevel: currentLevel.level,
-                  pomosForCurrentLevel: currentLevel.threshold,
-                  pomosForNextLevel: currentLevel.threshold,
-                  pomosRemaining: 0,
-                  progress: 100,
-                  title: currentLevel.title,
-                };
-              }
-
-              const pomosInCurrentLevel = pomos - currentLevel.threshold;
-              const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-              const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-              return {
-                currentLevel: currentLevel.level,
-                pomosForCurrentLevel: currentLevel.threshold,
-                pomosForNextLevel: nextLevel.threshold,
-                pomosRemaining: nextLevel.threshold - pomos,
-                progress: Math.min(100, Math.max(0, progress)),
-                title: currentLevel.title,
-              };
-            };
-
-            const levelInfo = getLevelInfoFromDb(stats.total.count);
+            // OPTIMIZATION: Memoized level calculation using shared utility
+            const levelInfo = getLevelInfoFromConfig(
+              stats.total.count,
+              levelConfig && levelConfig.length > 0
+                ? levelConfig.map((l) => ({
+                    level: l.level,
+                    title: l.title,
+                    threshold: l.threshold,
+                  }))
+                : undefined
+            );
             const currentPomos = stats.total.count;
             const rangeStart = levelInfo.pomosForCurrentLevel;
             const rangeEnd = levelInfo.pomosForNextLevel;
@@ -948,200 +910,204 @@ function ProfilePageContent() {
                   </motion.div>
                 )}
 
-                {/* Challenges Section */}
-                {userChallenges && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.25 }}
-                    className="space-y-6"
-                  >
-                    {/* Active Challenges */}
-                    {userChallenges.active.length > 0 && (
-                      <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h2 className="text-lg font-bold">Active Challenges</h2>
-                            <p className="text-sm text-muted-foreground">
-                              {userChallenges.active.length} challenge
-                              {userChallenges.active.length !== 1 ? "s" : ""} in progress
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              setIsSyncingChallenges(true);
-                              await syncProgress();
-                              setIsSyncingChallenges(false);
-                            }}
-                            disabled={isSyncingChallenges}
-                          >
-                            <RefreshCw
-                              className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`}
-                            />
-                            Sync Progress
-                          </Button>
-                        </div>
-                        <div className="space-y-3 relative">
-                          {userChallenges.active
-                            .sort((a: UserChallenge, b: UserChallenge) => {
-                              // Sort by progress percentage (highest first)
-                              const aPercent = (a.progress / a.target) * 100;
-                              const bPercent = (b.progress / b.target) * 100;
-                              return bPercent - aPercent;
-                            })
-                            .slice(0, showAllChallenges ? undefined : 4)
-                            .map((challenge: UserChallenge, index: number) => {
-                              const percentage = Math.round(
-                                (challenge.progress / challenge.target) * 100
-                              );
-                              const isBlurred = !showAllChallenges && index === 3;
-                              return (
-                                <motion.div
-                                  key={challenge._id}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: true, margin: "-50px" }}
-                                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                                  className={`flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors relative ${
-                                    isBlurred ? "blur-[3px]" : ""
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
-                                    <ChallengeIcon
-                                      iconName={challenge.badge}
-                                      className="w-6 h-6 text-orange-500"
-                                    />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                      <h3 className="font-bold">{challenge.name}</h3>
-                                      <span className="text-sm font-bold text-orange-500">
-                                        {percentage}%
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">
-                                      {challenge.description}
-                                    </p>
-                                    <div className="mt-2">
-                                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                                        <span>
-                                          {challenge.progress} / {challenge.target}{" "}
-                                          {challenge.type === "streak" ? "days" : "pomodoros"}
-                                        </span>
-                                        <span>
-                                          {challenge.target - challenge.progress} remaining
-                                        </span>
-                                      </div>
-                                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                        <motion.div
-                                          className="h-full"
-                                          style={{
-                                            background:
-                                              "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
-                                          }}
-                                          initial={{ width: 0 }}
-                                          whileInView={{ width: `${Math.min(percentage, 100)}%` }}
-                                          viewport={{ once: true, margin: "-50px" }}
-                                          transition={{
-                                            duration: 1,
-                                            delay: index * 0.05 + 0.2,
-                                            ease: "easeOut",
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
-
-                          {/* See all challenges button - centered over 4th challenge */}
-                          {!showAllChallenges && userChallenges.active.length > 3 && (
-                            <div className="absolute bottom-0 left-0 right-0 h-[110px] flex items-center justify-center pointer-events-none">
-                              <Button
-                                variant="outline"
-                                className="border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 bg-card/95 backdrop-blur-sm pointer-events-auto shadow-lg"
-                                onClick={() => setShowAllChallenges(true)}
-                              >
-                                See all {userChallenges.active.length} challenges
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Completed Challenges */}
-                    {userChallenges.completed.length > 0 && (
-                      <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-                        <div className="mb-4">
-                          <h2 className="text-lg font-bold">Completed Challenges</h2>
-                          <p className="text-sm text-muted-foreground">
-                            {userChallenges.completed.length} badge
-                            {userChallenges.completed.length !== 1 ? "s" : ""} earned
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {userChallenges.completed.map(
-                            (challenge: UserChallenge, index: number) => (
-                              <motion.div
-                                key={challenge._id}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true, margin: "-50px" }}
-                                transition={{
-                                  duration: 0.4,
-                                  delay: index * 0.03,
-                                  ease: "easeOut",
-                                }}
-                                className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
-                              >
-                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
-                                  <ChallengeIcon
-                                    iconName={challenge.badge}
-                                    className="w-8 h-8 text-orange-500"
-                                  />
-                                </div>
-                                <h3 className="font-bold text-center text-sm">{challenge.name}</h3>
-                                <p className="text-xs text-muted-foreground text-center">
-                                  {challenge.description}
-                                </p>
-                                {challenge.completedAt && (
-                                  <p className="text-xs text-orange-500">
-                                    {new Date(challenge.completedAt).toLocaleDateString()}
-                                  </p>
-                                )}
-                              </motion.div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Empty State */}
-                    {userChallenges.active.length === 0 &&
-                      userChallenges.completed.length === 0 && (
-                        <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
-                          <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Complete your first pomodoro to start earning badges!
-                          </p>
-                        </div>
-                      )}
-                  </motion.div>
-                )}
-
-                {/* Recent Sessions */}
+                {/* Challenges & Recent Sessions Section */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                  className="bg-card rounded-2xl shadow-lg border border-border px-6 pt-6 pb-4"
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                  className="space-y-6"
                 >
-                  <PomodoroFeed sessions={loadSessions()} initialLimit={5} showMoreButton={true} />
+                  {/* Challenges */}
+                  {userChallenges && (
+                    <>
+                      {/* Active Challenges */}
+                      {userChallenges.active.length > 0 && (
+                        <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h2 className="text-lg font-bold">Active Challenges</h2>
+                              <p className="text-sm text-muted-foreground">
+                                {userChallenges.active.length} challenge
+                                {userChallenges.active.length !== 1 ? "s" : ""} in progress
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                setIsSyncingChallenges(true);
+                                await syncProgress();
+                                setIsSyncingChallenges(false);
+                              }}
+                              disabled={isSyncingChallenges}
+                            >
+                              <RefreshCw
+                                className={`w-4 h-4 mr-2 ${isSyncingChallenges ? "animate-spin" : ""}`}
+                              />
+                              Sync Progress
+                            </Button>
+                          </div>
+                          <div className="space-y-3 relative">
+                            {userChallenges.active
+                              .sort((a: UserChallenge, b: UserChallenge) => {
+                                // Sort by progress percentage (highest first)
+                                const aPercent = (a.progress / a.target) * 100;
+                                const bPercent = (b.progress / b.target) * 100;
+                                return bPercent - aPercent;
+                              })
+                              .slice(0, showAllChallenges ? undefined : 4)
+                              .map((challenge: UserChallenge, index: number) => {
+                                const percentage = Math.round(
+                                  (challenge.progress / challenge.target) * 100
+                                );
+                                const isBlurred = !showAllChallenges && index === 3;
+                                return (
+                                  <motion.div
+                                    key={challenge._id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                                    className={`flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border hover:border-orange-500/30 transition-colors relative ${
+                                      isBlurred ? "blur-[3px]" : ""
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10">
+                                      <ChallengeIcon
+                                        iconName={challenge.badge}
+                                        className="w-6 h-6 text-orange-500"
+                                      />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="font-bold">{challenge.name}</h3>
+                                        <span className="text-sm font-bold text-orange-500">
+                                          {percentage}%
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {challenge.description}
+                                      </p>
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                                          <span>
+                                            {challenge.progress} / {challenge.target}{" "}
+                                            {challenge.type === "streak" ? "days" : "pomodoros"}
+                                          </span>
+                                          <span>
+                                            {challenge.target - challenge.progress} remaining
+                                          </span>
+                                        </div>
+                                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                          <motion.div
+                                            className="h-full"
+                                            style={{
+                                              background:
+                                                "linear-gradient(90deg, #fb923c 0%, rgba(249, 115, 22, 0.8) 100%)",
+                                            }}
+                                            initial={{ width: 0 }}
+                                            whileInView={{ width: `${Math.min(percentage, 100)}%` }}
+                                            viewport={{ once: true, margin: "-50px" }}
+                                            transition={{
+                                              duration: 1,
+                                              delay: index * 0.05 + 0.2,
+                                              ease: "easeOut",
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                );
+                              })}
+
+                            {/* See all challenges button - centered over 4th challenge */}
+                            {!showAllChallenges && userChallenges.active.length > 3 && (
+                              <div className="absolute bottom-0 left-0 right-0 h-[110px] flex items-center justify-center pointer-events-none">
+                                <Button
+                                  variant="outline"
+                                  className="border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 bg-card/95 backdrop-blur-sm pointer-events-auto shadow-lg"
+                                  onClick={() => setShowAllChallenges(true)}
+                                >
+                                  See all {userChallenges.active.length} challenges
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Completed Challenges */}
+                      {userChallenges.completed.length > 0 && (
+                        <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+                          <div className="mb-4">
+                            <h2 className="text-lg font-bold">Completed Challenges</h2>
+                            <p className="text-sm text-muted-foreground">
+                              {userChallenges.completed.length} badge
+                              {userChallenges.completed.length !== 1 ? "s" : ""} earned
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {userChallenges.completed.map(
+                              (challenge: UserChallenge, index: number) => (
+                                <motion.div
+                                  key={challenge._id}
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  whileInView={{ opacity: 1, scale: 1 }}
+                                  viewport={{ once: true, margin: "-50px" }}
+                                  transition={{
+                                    duration: 0.4,
+                                    delay: index * 0.03,
+                                    ease: "easeOut",
+                                  }}
+                                  className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 hover:border-orange-500/40 transition-colors"
+                                >
+                                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-500/20">
+                                    <ChallengeIcon
+                                      iconName={challenge.badge}
+                                      className="w-8 h-8 text-orange-500"
+                                    />
+                                  </div>
+                                  <h3 className="font-bold text-center text-sm">
+                                    {challenge.name}
+                                  </h3>
+                                  <p className="text-xs text-muted-foreground text-center">
+                                    {challenge.description}
+                                  </p>
+                                  {challenge.completedAt && (
+                                    <p className="text-xs text-orange-500">
+                                      {new Date(challenge.completedAt).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </motion.div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Empty State */}
+                      {userChallenges.active.length === 0 &&
+                        userChallenges.completed.length === 0 && (
+                          <div className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center">
+                            <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                            <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Complete your first pomodoro to start earning badges!
+                            </p>
+                          </div>
+                        )}
+                    </>
+                  )}
+
+                  {/* Recent Sessions */}
+                  <div className="bg-card rounded-2xl shadow-lg border border-border px-6 pt-6 pb-4">
+                    <PomodoroFeed
+                      sessions={loadSessions()}
+                      initialLimit={5}
+                      showMoreButton={true}
+                    />
+                  </div>
                 </motion.div>
               </>
             );

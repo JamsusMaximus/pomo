@@ -1,69 +1,16 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Lock, Dot } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getLevelInfo, getLevelTitle } from "@/lib/levels";
+import { useUserLevel } from "@/hooks/useUserLevel";
 
 export function MobileBottomNav() {
   const { user, isSignedIn } = useUser();
   const pathname = usePathname();
-  const profileStats = useQuery(api.stats.getProfileStats);
-  const stats = useQuery(api.stats.getStats);
-  const levelConfig = useQuery(api.levels.getLevelConfig);
-
-  // Calculate level info
-  const levelInfo = (() => {
-    const statsToUse = profileStats || stats;
-    if (!statsToUse) return null;
-
-    const pomos = statsToUse.total.count;
-
-    if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
-      const info = getLevelInfo(pomos);
-      return { ...info, title: getLevelTitle(info.currentLevel) };
-    }
-
-    let currentLevel = levelConfig[0];
-    for (const level of levelConfig) {
-      if (level.threshold <= pomos) {
-        currentLevel = level;
-      } else {
-        break;
-      }
-    }
-
-    const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
-    const nextLevel = levelConfig[currentIndex + 1];
-
-    if (!nextLevel) {
-      return {
-        currentLevel: currentLevel.level,
-        pomosForCurrentLevel: currentLevel.threshold,
-        pomosForNextLevel: currentLevel.threshold,
-        pomosRemaining: 0,
-        progress: 100,
-        title: currentLevel.title,
-      };
-    }
-
-    const pomosInCurrentLevel = pomos - currentLevel.threshold;
-    const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-    const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-    return {
-      currentLevel: currentLevel.level,
-      pomosForCurrentLevel: currentLevel.threshold,
-      pomosForNextLevel: nextLevel.threshold,
-      pomosRemaining: nextLevel.threshold - pomos,
-      progress: Math.min(100, Math.max(0, progress)),
-      title: currentLevel.title,
-    };
-  })();
+  const { levelInfo } = useUserLevel();
 
   if (!isSignedIn) {
     return null;
