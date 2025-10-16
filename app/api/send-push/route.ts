@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
-// Configure VAPID details
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
-
-webpush.setVapidDetails("mailto:jddmcaulay@gmail.com", vapidPublicKey, vapidPrivateKey);
-
 export async function POST(request: NextRequest) {
   try {
+    // Configure VAPID details at runtime
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      return NextResponse.json({ error: "VAPID keys not configured" }, { status: 500 });
+    }
+
+    webpush.setVapidDetails("mailto:jddmcaulay@gmail.com", vapidPublicKey, vapidPrivateKey);
+
     // Verify request has auth token
     const authHeader = request.headers.get("authorization");
     const expectedToken = process.env.PUSH_API_SECRET || "dev-secret-token";
