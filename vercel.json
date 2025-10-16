@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npx turbo run build",
   "installCommand": "npm ci",
   "devCommand": "npm run dev"
 }

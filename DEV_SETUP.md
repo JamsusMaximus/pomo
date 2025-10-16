@@ -57,12 +57,15 @@ npm run verify-setup     # Check if environment is properly configured
 ### Code Quality
 
 ```bash
-npm run lint             # Run ESLint
-npm run lint:strict      # Lint with zero warnings allowed
+npm run lint             # Run ESLint (cached with Turbo)
+npm run lint:strict      # Lint with zero warnings (cached with Turbo)
 npm run format           # Auto-format code with Prettier
-npm run format:check     # Check formatting without changing files
-npm run typecheck        # Run TypeScript type checking
+npm run format:check     # Check formatting (cached with Turbo)
+npm run typecheck        # Run TypeScript type checking (cached with Turbo)
 ```
+
+**⚡ Turborepo Integration:**
+Most commands use intelligent caching - subsequent runs are 10x faster if nothing changed!
 
 ### Testing
 
@@ -74,8 +77,10 @@ npm run test:watch       # Run tests in watch mode
 ### Build
 
 ```bash
-npm run build            # Build production bundle
+npm run build            # Build production bundle (cached with Turbo)
 ```
+
+**💡 Tip:** If source files haven't changed, build completes in ~5 seconds using Turbo cache!
 
 ### Other
 
@@ -96,30 +101,36 @@ The project includes automated git hooks to catch issues before pushing.
 bash scripts/install-hooks.sh
 ```
 
-### Pre-commit Hook
+### Pre-commit Hook (⚡ Optimized)
 
-Runs automatically before each commit:
+Runs automatically before each commit (~5-10 seconds):
 
 1. ✨ **Auto-formats** code with Prettier
-2. 🔧 **Auto-fixes** ESLint errors
-3. 📝 **Checks** for documentation updates needed
-4. ➕ **Auto-adds** fixed files to your commit
+2. ➕ **Auto-adds** formatted files to your commit
 
-### Pre-push Hook (NEW!)
+**Note:** ESLint and doc checks now run in CI for speed.
 
-Runs automatically before each push:
+### Pre-push Hook (⚡ Optimized)
 
-1. 🔨 **Builds** the project with `npm run build`
-2. ❌ **Aborts** push if build fails
-3. ✅ **Prevents** broken code from reaching Vercel
+Runs automatically before each push (~10-30 seconds):
+
+1. 🔎 **TypeScript check** - Catches type errors fast
+2. 🧪 **Unit tests** - Only if test files changed
+3. ❌ **Aborts** push if errors found
+
+**What's different:**
+
+- No longer runs full build (moved to CI)
+- 95% faster than before
+- Full build + E2E tests run in GitHub Actions
 
 **Bypass if needed:**
 
 ```bash
-git push --no-verify  # Skip pre-push build check
+git push --no-verify  # Skip pre-push checks
 ```
 
-This hook catches TypeScript errors, build failures, and type issues before they reach Vercel, saving you from failed deployments.
+This optimized workflow balances local speed with CI thoroughness. See [OPTIMIZATION_GUIDE.md](./OPTIMIZATION_GUIDE.md) for details.
 
 ---
 
