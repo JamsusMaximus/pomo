@@ -22,3 +22,8 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
+# Generated reports and test artifacts
+mobile-review-results/
+playwright-report/
+test-results/
+
