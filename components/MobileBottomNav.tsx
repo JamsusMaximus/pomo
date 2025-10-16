@@ -4,7 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, BookOpen, Dot } from "lucide-react";
+import { Users, Lock, Dot } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
@@ -91,7 +91,7 @@ export function MobileBottomNav() {
 
         {/* Rules */}
         <Link href="/rules" className="flex flex-col items-center justify-center gap-1.5 flex-1">
-          <BookOpen
+          <Lock
             className={`w-5 h-5 ${isRulesActive ? "text-orange-500" : "text-muted-foreground"}`}
           />
           <span

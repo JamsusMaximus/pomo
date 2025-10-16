@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { Lock } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Rules | Lock.in",
-  description: "How the Pomodoro technique works and why it's effective",
+  description: "The rules are simple - lock in and focus",
 };
 
 export default function RulesPage() {
@@ -14,75 +14,48 @@ export default function RulesPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-orange-500/10 rounded-xl">
-            <BookOpen className="w-6 h-6 text-orange-500" />
+            <Lock className="w-6 h-6 text-orange-500" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Rules</h1>
-            <p className="text-muted-foreground">How the Pomodoro Technique works</p>
-          </div>
+          <h1 className="text-3xl font-bold">The Rules are very simple</h1>
         </div>
 
         {/* Content */}
         <div className="space-y-8">
-          {/* How it works */}
+          {/* The Rules */}
           <section className="bg-card rounded-xl p-6 border border-border">
-            <h2 className="text-xl font-semibold mb-4">How It Works</h2>
-            <ol className="space-y-4">
-              <li className="flex gap-3">
+            <ol className="space-y-6">
+              <li className="flex gap-4">
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center font-semibold">
                   1
                 </span>
-                <div>
-                  <p className="font-medium">Choose a task</p>
-                  <p className="text-sm text-muted-foreground">
-                    Pick something you want to work on - it could be studying, coding, writing, or
-                    any focused work.
+                <div className="space-y-2">
+                  <p className="font-bold text-base">Close all chats.</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    No WhatsApp. No Slack. No disturbances when locked in.
                   </p>
                 </div>
               </li>
-              <li className="flex gap-3">
+              <li className="flex gap-4">
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center font-semibold">
                   2
                 </span>
-                <div>
-                  <p className="font-medium">Set the timer</p>
-                  <p className="text-sm text-muted-foreground">
-                    Start a 25-minute focus session (or use custom durations like 15, 30, or 45
-                    minutes).
+                <div className="space-y-2">
+                  <p className="font-bold text-base">Do not touch your phone.</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Put it upside down or in a different room. If you&apos;re using Lock.in on your
+                    mobile, put it somewhere visible and don&apos;t touch it.
                   </p>
                 </div>
               </li>
-              <li className="flex gap-3">
+              <li className="flex gap-4">
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center font-semibold">
                   3
                 </span>
-                <div>
-                  <p className="font-medium">Work without interruption</p>
-                  <p className="text-sm text-muted-foreground">
-                    Focus completely on your task. No checking phone, no browsing, no distractions.
-                  </p>
-                </div>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center font-semibold">
-                  4
-                </span>
-                <div>
-                  <p className="font-medium">Take a break</p>
-                  <p className="text-sm text-muted-foreground">
-                    When the timer rings, take a 5-minute break. Stretch, grab water, rest your
-                    eyes.
-                  </p>
-                </div>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center font-semibold">
-                  5
-                </span>
-                <div>
-                  <p className="font-medium">Repeat and rest</p>
-                  <p className="text-sm text-muted-foreground">
-                    After 4 pomodoros, take a longer 15-30 minute break to fully recharge.
+                <div className="space-y-2">
+                  <p className="font-bold text-base">Singular Focus.</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    While the timer is ticking, you are focused on one thing only. Honour the Lock
+                    In.
                   </p>
                 </div>
               </li>
