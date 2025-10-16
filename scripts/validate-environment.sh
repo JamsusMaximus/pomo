@@ -6,17 +6,21 @@ set -e
 
 echo "🔍 Validating development environment..."
 
-# Check for processes on ports
-if lsof -ti:3000 > /dev/null 2>&1; then
-  echo "⚠️  Found process on port 3000, killing..."
-  lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-  sleep 1
-fi
+# Only kill processes on ports if we're starting dev server (not during build)
+# Check if SKIP_PORT_CLEANUP env var is set (used by prebuild)
+if [ -z "$SKIP_PORT_CLEANUP" ]; then
+  # Check for processes on ports
+  if lsof -ti:3000 > /dev/null 2>&1; then
+    echo "⚠️  Found process on port 3000, killing..."
+    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
 
-if lsof -ti:3001 > /dev/null 2>&1; then
-  echo "⚠️  Found process on port 3001, killing..."
-  lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-  sleep 1
+  if lsof -ti:3001 > /dev/null 2>&1; then
+    echo "⚠️  Found process on port 3001, killing..."
+    lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
 fi
 
 # Check for .next directory
