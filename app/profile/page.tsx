@@ -275,31 +275,48 @@ function ProfilePageContent() {
     <main className="min-h-screen px-4 pt-6 md:pt-24 pb-20 md:pb-12">
       <div className="max-w-4xl mx-auto">
         {/* Top navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Debug: Local storage info */}
             {localStats.unsynced > 0 && (
-              <Button variant="outline" size="sm" onClick={handleManualSync} disabled={isSyncing}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                className="min-h-[44px]"
+              >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
-                Sync {localStats.unsynced} Local Sessions
+                <span className="hidden sm:inline">Sync {localStats.unsynced} Local Sessions</span>
+                <span className="sm:hidden">Sync ({localStats.unsynced})</span>
               </Button>
             )}
             {user?.username && <ShareProfileButton username={user.username} />}
             {currentUserData && <PrivacySettings currentPrivacy={currentUserData.privacy} />}
-            <Button variant="outline" size="sm" onClick={() => openUserProfile()}>
-              <Settings className="w-4 h-4 mr-2" />
-              Manage Account
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openUserProfile()}
+              className="min-h-[44px]"
+            >
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Manage Account</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => signOut(() => router.push("/"))}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => signOut(() => router.push("/"))}
+              className="min-h-[44px]"
+            >
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>

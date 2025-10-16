@@ -39,7 +39,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
           <h1 className="text-2xl font-bold mb-2">User not found</h1>
           <p className="text-muted-foreground mb-4">The user @{username} doesn&apos;t exist.</p>
           <Link href="/">
-            <Button variant="outline">
+            <Button variant="outline" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>
@@ -66,7 +66,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
         {/* Top navigation */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>

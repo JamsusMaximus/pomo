@@ -11,7 +11,7 @@ export default function DownloadPage() {
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-8">
+          <Button variant="ghost" size="sm" className="mb-8 min-h-[44px]">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Timer
           </Button>

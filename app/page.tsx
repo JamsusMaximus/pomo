@@ -18,7 +18,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { motion } from "@/components/motion";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignUpButton } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -1016,7 +1016,7 @@ function HomeContent() {
                           variant="outline"
                           onClick={handleEnterFlowMode}
                           size="lg"
-                          className="w-full py-3 border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                          className="w-full py-3 min-h-[44px] border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
                         >
                           Enter Flow Mode
                         </Button>
@@ -1080,12 +1080,34 @@ function HomeContent() {
           <AmbientSoundControls />
         </motion.div>
 
+        {/* Sign In CTA - Only show when signed out */}
+        {!isSignedIn && isHydrated && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
+            className="w-full"
+          >
+            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl border border-orange-500/20 p-6 text-center">
+              <h3 className="text-lg font-semibold mb-2">Track Your Progress</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Sign in to save your pomodoros, earn badges, and compete with friends
+              </p>
+              <SignUpButton mode="modal">
+                <Button size="lg" className="w-full sm:w-auto min-h-[44px]">
+                  Sign In / Sign Up
+                </Button>
+              </SignUpButton>
+            </div>
+          </motion.div>
+        )}
+
         {/* Pomodoro Feed */}
         {isHydrated && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
+            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
             className="w-full bg-card rounded-2xl border border-border p-6"
           >
             <PomodoroFeed sessions={sessions} />
