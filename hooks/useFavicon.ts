@@ -3,8 +3,8 @@
  * @module hooks/useFavicon
  *
  * Key responsibilities:
- * - Generate SVG-based favicons
- * - Update favicon when timer starts/stops (filled circle = running, outline = stopped)
+ * - Generate SVG padlock favicons (not emojis, actual icon graphics)
+ * - Update favicon when timer starts/stops (locked = running, unlocked = stopped)
  * - Restore default favicon on unmount
  *
  * Dependencies: React hooks
@@ -26,14 +26,24 @@ import { useEffect } from "react";
  */
 export function useFavicon(isRunning: boolean) {
   useEffect(() => {
-    // Generate SVG-based favicon
-    const generateFavicon = (color: string, isFilled: boolean) => {
-      const svg = `
-        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" fill="none" stroke="${color}" stroke-width="3"/>
-          ${isFilled ? `<circle cx="16" cy="16" r="8" fill="${color}"/>` : ""}
-        </svg>
-      `;
+    // Generate SVG padlock favicon
+    const generateFavicon = (isLocked: boolean) => {
+      const color = isLocked ? "#f97316" : "#6b7280"; // Orange when locked, gray when unlocked
+
+      const svg = isLocked
+        ? // Locked padlock
+          `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="14" width="14" height="12" rx="2" fill="${color}"/>
+            <path d="M 12 14 L 12 10 C 12 7.8 13.8 6 16 6 C 18.2 6 20 7.8 20 10 L 20 14" stroke="${color}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="16" cy="20" r="2" fill="white"/>
+          </svg>`
+        : // Unlocked padlock (shackle open)
+          `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="14" width="14" height="12" rx="2" fill="${color}"/>
+            <path d="M 12 14 L 12 10 C 12 7.8 13.8 6 16 6 C 18.2 6 20 7.8 20 10 L 20 12" stroke="${color}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="16" cy="20" r="2" fill="white"/>
+          </svg>`;
+
       return `data:image/svg+xml,${encodeURIComponent(svg)}`;
     };
 
@@ -47,14 +57,13 @@ export function useFavicon(isRunning: boolean) {
     favicon.type = "image/svg+xml";
     document.head.appendChild(favicon);
 
-    // Set favicon based on timer state
-    // Orange filled circle when running, gray outline when stopped
-    const iconData = generateFavicon(isRunning ? "#f97316" : "#6b7280", isRunning);
+    // Set favicon: locked when running, unlocked when stopped
+    const iconData = generateFavicon(isRunning);
     favicon.href = iconData;
 
-    // Cleanup: reset to gray outline when component unmounts
+    // Cleanup: reset to unlocked when component unmounts
     return () => {
-      const resetIcon = generateFavicon("#6b7280", false);
+      const resetIcon = generateFavicon(false);
       if (favicon) {
         favicon.href = resetIcon;
       }
