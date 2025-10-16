@@ -134,7 +134,7 @@ export const getTodayCount = query({
 });
 
 /**
- * Get tag suggestions sorted by usage frequency
+ * Get tag suggestions sorted by most recently used first, then by usage frequency
  * Returns array of tags with their usage counts
  */
 export const getTagSuggestions = query({
@@ -150,25 +150,54 @@ export const getTagSuggestions = query({
 
     if (!user) return [];
 
-    // Get all user's pomodoros with tags
+    // Get all user's pomodoros with tags (ordered by most recent first)
     const pomodoros = await ctx.db
       .query("pomodoros")
       .withIndex("by_user_and_date", (q) => q.eq("userId", user._id))
+      .order("desc")
       .filter((q) => q.neq(q.field("tag"), undefined))
       .collect();
 
-    // Count tag occurrences
-    const tagCounts = new Map<string, number>();
+    // Track tag info: count and most recent timestamp
+    const tagInfo = new Map<string, { count: number; lastUsed: number }>();
     for (const pomo of pomodoros) {
       if (pomo.tag) {
-        tagCounts.set(pomo.tag, (tagCounts.get(pomo.tag) || 0) + 1);
+        const existing = tagInfo.get(pomo.tag);
+        if (existing) {
+          existing.count++;
+          existing.lastUsed = Math.max(existing.lastUsed, pomo.completedAt);
+        } else {
+          tagInfo.set(pomo.tag, { count: 1, lastUsed: pomo.completedAt });
+        }
       }
     }
 
-    // Convert to array and sort by count (descending)
-    return Array.from(tagCounts.entries())
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count);
+    // Convert to array
+    const tags = Array.from(tagInfo.entries()).map(([tag, info]) => ({
+      tag,
+      count: info.count,
+      lastUsed: info.lastUsed,
+    }));
+
+    // Sort: most recent first, then by count descending
+    tags.sort((a, b) => {
+      // Get the most recent tag's timestamp
+      const mostRecentTimestamp = Math.max(...tags.map((t) => t.lastUsed));
+
+      // If 'a' is the most recent tag, it goes first
+      if (a.lastUsed === mostRecentTimestamp && b.lastUsed !== mostRecentTimestamp) {
+        return -1;
+      }
+      // If 'b' is the most recent tag, it goes first
+      if (b.lastUsed === mostRecentTimestamp && a.lastUsed !== mostRecentTimestamp) {
+        return 1;
+      }
+
+      // For all other tags, sort by count descending
+      return b.count - a.count;
+    });
+
+    return tags;
   },
 });
 

@@ -34,6 +34,7 @@ import {
   markSessionsSynced,
 } from "@/lib/storage/sessions";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
+import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
 import { TagInput } from "@/components/TagInput";
 import { ChallengeToast } from "@/components/ChallengeToast";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
@@ -79,9 +80,14 @@ function HomeContent() {
   const [showChallengeToast, setShowChallengeToast] = useState(false);
   const challengeToastTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasAutostartedRef = useRef(false);
+  const hasFadedForCompletionRef = useRef(false);
+  const savedVolumesRef = useRef<Record<string, number>>({});
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
+
+  // Ambient sound context for fading before notifications
+  const { fadeAllToVolume, restoreVolumes, volumes } = useAmbientSoundContext();
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
@@ -224,6 +230,23 @@ function HomeContent() {
     autoStartBreak: !isFlowMode, // Disable auto-break in flow mode
     isFlowMode,
     onFlowPomoComplete: () => {
+      // Save current volumes for restoration
+      savedVolumesRef.current = { ...volumes };
+
+      // Fade down to 30% quickly (500ms)
+      fadeAllToVolume(0.3, 500);
+
+      // Play notification sound after brief delay
+      setTimeout(() => {
+        playCompletionSound();
+        showNotification("Pomo Complete! 🔥", "Keep flowing!");
+
+        // Restore volumes after sound plays
+        setTimeout(() => {
+          restoreVolumes(savedVolumesRef.current as Parameters<typeof restoreVolumes>[0], 500);
+        }, 600);
+      }, 600);
+
       // Save completed pomo immediately
       const localSession = saveCompletedSession("focus", focusDuration, currentTag);
 
@@ -610,6 +633,27 @@ function HomeContent() {
     }
   }, [autostart, isHydrated, isRunning, start]);
 
+  // Fade ambient sounds before timer completes (normal mode only)
+  useEffect(() => {
+    if (
+      isRunning &&
+      !isFlowMode &&
+      mode === "focus" &&
+      remaining === 3 &&
+      !hasFadedForCompletionRef.current
+    ) {
+      console.log("Fading ambient sounds for completion (3s remaining)");
+      hasFadedForCompletionRef.current = true;
+      // Fade all sounds to 0% over 2 seconds and update state
+      fadeAllToVolume(0, 2000, true);
+    }
+
+    // Reset fade flag when timer resets or starts a new session
+    if (!isRunning || remaining === duration) {
+      hasFadedForCompletionRef.current = false;
+    }
+  }, [isRunning, isFlowMode, mode, remaining, duration, fadeAllToVolume]);
+
   // Update browser tab title with live countdown
   useEffect(() => {
     if (isFlowMode && isRunning) {
@@ -796,6 +840,16 @@ function HomeContent() {
           {/* Debug Button - DEV ONLY */}
           {process.env.NODE_ENV === "development" && (
             <div className="absolute top-2 left-2 flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDebugTime(4);
+                }}
+                className="text-xs opacity-50 hover:opacity-100"
+              >
+                Debug: 4s
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

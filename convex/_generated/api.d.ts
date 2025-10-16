@@ -16,6 +16,7 @@ import type {
 import type * as backfillChallenges from "../backfillChallenges.js";
 import type * as challenges from "../challenges.js";
 import type * as createTestFriend from "../createTestFriend.js";
+import type * as date_helpers from "../date-helpers.js";
 import type * as deleteTestFriend from "../deleteTestFriend.js";
 import type * as flowSessions from "../flowSessions.js";
 import type * as follows from "../follows.js";
@@ -28,6 +29,8 @@ import type * as seed from "../seed.js";
 import type * as seedChallenges from "../seedChallenges.js";
 import type * as stats from "../stats.js";
 import type * as stats_helpers from "../stats_helpers.js";
+import type * as streak_helpers from "../streak-helpers.js";
+import type * as time_helpers from "../time-helpers.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
 
@@ -43,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   backfillChallenges: typeof backfillChallenges;
   challenges: typeof challenges;
   createTestFriend: typeof createTestFriend;
+  "date-helpers": typeof date_helpers;
   deleteTestFriend: typeof deleteTestFriend;
   flowSessions: typeof flowSessions;
   follows: typeof follows;
@@ -55,6 +59,8 @@ declare const fullApi: ApiFromModules<{
   seedChallenges: typeof seedChallenges;
   stats: typeof stats;
   stats_helpers: typeof stats_helpers;
+  "streak-helpers": typeof streak_helpers;
+  "time-helpers": typeof time_helpers;
   timers: typeof timers;
   users: typeof users;
 }>;

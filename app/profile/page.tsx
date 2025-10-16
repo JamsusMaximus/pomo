@@ -47,6 +47,7 @@ import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ShareProfileButton } from "@/components/ShareProfileButton";
 import { PrivacySettings } from "@/components/PrivacySettings";
+import { PomodoroFeed } from "@/components/PomodoroFeed";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -443,12 +444,9 @@ function ProfilePageContent() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <h1 className="text-xl sm:text-3xl font-bold mb-1 truncate">
+                      <h1 className="text-xl sm:text-3xl font-bold mb-3 truncate">
                         {user.username || "User"}
                       </h1>
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-2 truncate">
-                        {user.primaryEmailAddress?.emailAddress}
-                      </p>
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="px-2 py-1 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <p className="text-xs sm:text-sm font-medium">
@@ -1135,6 +1133,16 @@ function ProfilePageContent() {
                       )}
                   </motion.div>
                 )}
+
+                {/* Recent Sessions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                  className="bg-card rounded-2xl shadow-lg border border-border p-6"
+                >
+                  <PomodoroFeed sessions={loadSessions()} initialLimit={10} showMoreButton={true} />
+                </motion.div>
               </>
             );
           })()}

@@ -9,14 +9,14 @@ export const metadata: Metadata = {
 
 export default function RulesPage() {
   return (
-    <div className="min-h-screen pb-24 md:pb-8 pt-20 md:pt-24 px-4">
+    <div className="min-h-screen pb-24 md:pb-8 pt-6 md:pt-24 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-orange-500/10 rounded-xl">
             <Lock className="w-6 h-6 text-orange-500" />
           </div>
-          <h1 className="text-3xl font-bold">The Rules are very simple</h1>
+          <h1 className="text-3xl font-bold">The Rules are simple</h1>
         </div>
 
         {/* Content */}

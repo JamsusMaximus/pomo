@@ -155,7 +155,7 @@ export function FriendCard({ friend, index }: FriendCardProps) {
                       key={idx}
                       className="flex items-center gap-2 text-xs text-muted-foreground"
                     >
-                      <span className="px-2 py-0.5 rounded-full bg-muted/50 w-28 break-words whitespace-normal">
+                      <span className="px-2 py-0.5 rounded-full bg-muted/50 w-30 break-words whitespace-normal">
                         {session.tag || "Untitled"}
                       </span>
                       <span>·</span>

@@ -27,6 +27,8 @@ interface AmbientSoundContextType {
   isPlaying: Record<AmbientSoundId, boolean>;
   setVolume: (soundId: AmbientSoundId, volume: number) => void;
   toggleSound: (soundId: AmbientSoundId) => void;
+  fadeAllToVolume: (targetVolume: number, duration: number, updateState?: boolean) => void;
+  restoreVolumes: (savedVolumes: Record<AmbientSoundId, number>, duration: number) => void;
 }
 
 const AmbientSoundContext = createContext<AmbientSoundContextType | null>(null);
@@ -227,11 +229,84 @@ export function AmbientSoundProvider({ children }: { children: ReactNode }) {
     [volumes]
   );
 
+  // Fade all currently playing sounds to a target volume
+  const fadeAllToVolume = useCallback(
+    (targetVolume: number, duration: number, updateState = false) => {
+      Object.keys(AMBIENT_SOUNDS).forEach((soundId) => {
+        const audio = audioRefs.current[soundId];
+        if (!audio || !isPlaying[soundId as AmbientSoundId]) return;
+
+        const startVolume = audio.volume;
+        const startTime = performance.now();
+
+        const animateFade = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutCubic(progress);
+          const newVolume = startVolume + (targetVolume - startVolume) * easedProgress;
+
+          audio.volume = Math.max(0, Math.min(1, newVolume));
+
+          if (progress >= 1) {
+            // Animation complete
+            if (updateState) {
+              // Update React state to match audio volume
+              setVolumes((prev) => ({ ...prev, [soundId]: targetVolume }));
+              localStorage.setItem(`${VOLUME_STORAGE_PREFIX}${soundId}`, targetVolume.toString());
+
+              // If target is 0, stop playback and update isPlaying
+              if (targetVolume === 0) {
+                audio.pause();
+                setIsPlaying((prev) => ({ ...prev, [soundId]: false }));
+              }
+            }
+          } else {
+            requestAnimationFrame(animateFade);
+          }
+        };
+
+        requestAnimationFrame(animateFade);
+      });
+    },
+    [isPlaying]
+  );
+
+  // Restore all sounds to their saved volumes
+  const restoreVolumes = useCallback(
+    (savedVolumes: Record<AmbientSoundId, number>, duration: number) => {
+      Object.entries(savedVolumes).forEach(([soundId, targetVolume]) => {
+        const audio = audioRefs.current[soundId];
+        if (!audio || !isPlaying[soundId as AmbientSoundId]) return;
+
+        const startVolume = audio.volume;
+        const startTime = performance.now();
+
+        const animateFade = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutCubic(progress);
+          const newVolume = startVolume + (targetVolume - startVolume) * easedProgress;
+
+          audio.volume = Math.max(0, Math.min(1, newVolume));
+
+          if (progress < 1) {
+            requestAnimationFrame(animateFade);
+          }
+        };
+
+        requestAnimationFrame(animateFade);
+      });
+    },
+    [isPlaying]
+  );
+
   const value: AmbientSoundContextType = {
     volumes,
     isPlaying,
     setVolume,
     toggleSound,
+    fadeAllToVolume,
+    restoreVolumes,
   };
 
   return <AmbientSoundContext.Provider value={value}>{children}</AmbientSoundContext.Provider>;

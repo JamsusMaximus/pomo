@@ -75,7 +75,10 @@ export function MobileBottomNav() {
   const isProfileActive = pathname === "/profile";
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border safe-area-inset-bottom">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border safe-area-inset-bottom"
+      style={{ position: "fixed" }}
+    >
       <div className="flex items-center justify-around h-20 px-2">
         {/* Friends */}
         <Link href="/friends" className="flex flex-col items-center justify-center gap-1.5 flex-1">
@@ -173,7 +176,7 @@ export function MobileBottomNav() {
           <span
             className={`text-[10px] font-medium ${isProfileActive ? "text-orange-500" : "text-muted-foreground"}`}
           >
-            You
+            {levelInfo ? `Level ${levelInfo.currentLevel}` : "Level 1"}
           </span>
         </Link>
       </div>

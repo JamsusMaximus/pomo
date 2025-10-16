@@ -8,7 +8,7 @@
     "dev:clean": "bash scripts/clean-dev.sh && npm run dev",
     "dev:next": "next dev --turbopack",
     "dev:convex": "convex dev",
-    "prebuild": "SKIP_PORT_CLEANUP=1 bash scripts/validate-environment.sh && node scripts/prebuild.js",
+    "prebuild": "SKIP_PORT_CLEANUP=1 bash scripts/validate-environment.sh && npm run typecheck && node scripts/prebuild.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

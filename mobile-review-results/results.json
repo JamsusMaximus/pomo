@@ -1,0 +1,892 @@
+[
+  {
+    "pageName": "Home (Signed Out)",
+    "path": "/",
+    "requiresAuth": false,
+    "viewports": [
+      {
+        "viewport": {
+          "name": "iPhone SE",
+          "width": 375,
+          "height": 667
+        },
+        "screenshot": "home__signed_out__iphone_se.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "3 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Debug: 2s",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "🔔 Enable",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "Test 🔔",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "iPhone 14 Pro",
+          "width": 393,
+          "height": 852
+        },
+        "screenshot": "home__signed_out__iphone_14_pro.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "3 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Debug: 2s",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "🔔 Enable",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "Test 🔔",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "Samsung Galaxy S21",
+          "width": 360,
+          "height": 800
+        },
+        "screenshot": "home__signed_out__samsung_galaxy_s21.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "3 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Debug: 2s",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "🔔 Enable",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                },
+                {
+                  "text": "Test 🔔",
+                  "width": 85,
+                  "height": 32,
+                  "selector": ".inline-flex"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "pageName": "Rules",
+    "path": "/rules",
+    "requiresAuth": false,
+    "viewports": [
+      {
+        "viewport": {
+          "name": "iPhone SE",
+          "width": 375,
+          "height": 667
+        },
+        "screenshot": "rules_iphone_se.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 257,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "iPhone 14 Pro",
+          "width": 393,
+          "height": 852
+        },
+        "screenshot": "rules_iphone_14_pro.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 275,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "Samsung Galaxy S21",
+          "width": 360,
+          "height": 800
+        },
+        "screenshot": "rules_samsung_galaxy_s21.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 242,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "pageName": "Friends",
+    "path": "/friends",
+    "requiresAuth": true,
+    "viewports": [
+      {
+        "viewport": {
+          "name": "iPhone SE",
+          "width": 375,
+          "height": 667
+        },
+        "screenshot": "friends_iphone_se.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 257,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "iPhone 14 Pro",
+          "width": 393,
+          "height": 852
+        },
+        "screenshot": "friends_iphone_14_pro.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 275,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "Samsung Galaxy S21",
+          "width": 360,
+          "height": 800
+        },
+        "screenshot": "friends_samsung_galaxy_s21.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 242,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "pageName": "Profile",
+    "path": "/profile",
+    "requiresAuth": true,
+    "viewports": [
+      {
+        "viewport": {
+          "name": "iPhone SE",
+          "width": 375,
+          "height": 667
+        },
+        "screenshot": "profile_iphone_se.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 257,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 257,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "iPhone 14 Pro",
+          "width": 393,
+          "height": 852
+        },
+        "screenshot": "profile_iphone_14_pro.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 275,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 275,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "Samsung Galaxy S21",
+          "width": 360,
+          "height": 800
+        },
+        "screenshot": "profile_samsung_galaxy_s21.png",
+        "analysis": {
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "button-size",
+              "message": "6 button(s) smaller than recommended 44x44px touch target",
+              "buttons": [
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 242,
+                  "height": 32,
+                  "selector": ".cl-socialButtonsIconButton"
+                },
+                {
+                  "text": "Unlabeled button",
+                  "width": 16,
+                  "height": 6,
+                  "selector": "button"
+                },
+                {
+                  "text": "Show password",
+                  "width": 40,
+                  "height": 24,
+                  "selector": ".cl-formFieldInputShowPasswordButton"
+                },
+                {
+                  "text": "Continue",
+                  "width": 242,
+                  "height": 30,
+                  "selector": ".cl-formButtonPrimary"
+                }
+              ],
+              "recommendation": "Increase padding or min-height/min-width to meet iOS/Android touch target guidelines"
+            },
+            {
+              "severity": "high",
+              "type": "navigation-missing",
+              "message": "No navigation elements found on this page",
+              "recommendation": "Add mobile navigation or back button for better UX"
+            }
+          ],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": false,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": false
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "pageName": "Changelog",
+    "path": "/changelog",
+    "requiresAuth": false,
+    "viewports": [
+      {
+        "viewport": {
+          "name": "iPhone SE",
+          "width": 375,
+          "height": 667
+        },
+        "screenshot": "changelog_iphone_se.png",
+        "analysis": {
+          "issues": [],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": true
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "iPhone 14 Pro",
+          "width": 393,
+          "height": 852
+        },
+        "screenshot": "changelog_iphone_14_pro.png",
+        "analysis": {
+          "issues": [],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": true
+            }
+          ]
+        }
+      },
+      {
+        "viewport": {
+          "name": "Samsung Galaxy S21",
+          "width": 360,
+          "height": 800
+        },
+        "screenshot": "changelog_samsung_galaxy_s21.png",
+        "analysis": {
+          "issues": [],
+          "info": [
+            {
+              "type": "navigation-info",
+              "hasNavbar": true,
+              "navbarVisible": false,
+              "hasMobileNav": false,
+              "mobileNavVisible": false,
+              "hasBackButton": true
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
