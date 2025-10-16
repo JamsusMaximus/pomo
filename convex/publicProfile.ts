@@ -15,7 +15,36 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { QueryCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Id, Doc } from "./_generated/dataModel";
+import { calculateUserStats, type UserStats } from "./stats_helpers";
+
+/**
+ * Calculate progress for a specific challenge based on user stats
+ * Same logic as in challenges.ts and profile.ts - single source of truth
+ */
+function calculateChallengeProgress(challenge: Doc<"challenges">, stats: UserStats): number {
+  const now = new Date();
+
+  switch (challenge.type) {
+    case "total":
+      return stats.total;
+    case "daily":
+      return stats.today;
+    case "weekly":
+      return stats.week;
+    case "monthly":
+      return stats.month;
+    case "recurring_monthly": {
+      const currentMonth = now.getMonth() + 1;
+      return challenge.recurringMonth === currentMonth ? stats.month : 0;
+    }
+    case "streak":
+      // Use best historical streak for challenges (doesn't reset)
+      return stats.bestStreak;
+    default:
+      return 0;
+  }
+}
 
 /**
  * Get public profile data with privacy filtering
@@ -108,8 +137,19 @@ export const getPublicProfile = query({
       };
     }
 
-    // Full access - get all stats using helper function
-    const stats = await calculateUserStats(ctx, targetUser._id);
+    // Full access - get all stats using shared helper function
+    const userStats = await calculateUserStats(ctx, targetUser._id);
+
+    // Convert to expected format for backwards compatibility
+    const stats = {
+      total: { count: userStats.total, minutes: 0 }, // minutes not tracked in stats_helpers
+      week: { count: userStats.week, minutes: 0 },
+      month: { count: userStats.month, minutes: 0 },
+      year: { count: 0, minutes: 0 }, // Not in stats_helpers, calculate separately
+      dailyStreak: userStats.currentStreak,
+      weeklyStreak: 0, // Not currently used
+      bestDailyStreak: userStats.bestStreak,
+    };
 
     // Get activity for heatmap (past year)
     const activity = await getActivityForUser(ctx, targetUser._id);
@@ -122,30 +162,40 @@ export const getPublicProfile = query({
       .take(10);
 
     // Get level info
-    const levelInfo = getLevelInfo(stats.total.count);
+    const levelInfo = getLevelInfo(userStats.total);
 
-    // Get completed challenges with full details
-    const completedChallenges = await ctx.db
-      .query("userChallenges")
-      .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
-      .filter((q) => q.eq(q.field("completed"), true))
+    // Get all active challenges
+    const allChallenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
-    // Fetch challenge definitions for completed challenges
-    const completedChallengesWithDetails = await Promise.all(
-      completedChallenges.map(async (uc) => {
-        const challenge = await ctx.db.get(uc.challengeId);
-        return challenge
-          ? {
-              _id: uc._id,
-              name: challenge.name,
-              description: challenge.description,
-              badge: challenge.badge,
-              completedAt: uc.completedAt,
-            }
-          : null;
-      })
-    );
+    // Get user's completion records
+    const userChallenges = await ctx.db
+      .query("userChallenges")
+      .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
+      .collect();
+
+    const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
+
+    // Compute completed challenges from stats (same as profile.ts)
+    const completedChallengesWithDetails = [];
+    for (const challenge of allChallenges) {
+      const progress = calculateChallengeProgress(challenge, userStats);
+      const isCompleted = progress >= challenge.target;
+      const userChallenge = userChallengeMap.get(challenge._id);
+
+      // Only include if completed (based on computed progress)
+      if (isCompleted) {
+        completedChallengesWithDetails.push({
+          _id: challenge._id,
+          name: challenge.name,
+          description: challenge.description,
+          badge: challenge.badge,
+          completedAt: userChallenge?.completedAt ?? Date.now(),
+        });
+      }
+    }
 
     // Get focus fitness data (last 90 days)
     const focusFitness = await getFocusFitnessForUser(ctx, targetUser._id, 90);
@@ -157,98 +207,12 @@ export const getPublicProfile = query({
       activity,
       recentSessions: last10Sessions,
       levelInfo,
-      challengesCompleted: completedChallenges.length,
-      completedChallengesDetails: completedChallengesWithDetails.filter((c) => c !== null),
+      challengesCompleted: completedChallengesWithDetails.length,
+      completedChallengesDetails: completedChallengesWithDetails,
       focusFitness,
     };
   },
 });
-
-/**
- * Calculate user stats (reusable helper for both own profile and public profiles)
- */
-async function calculateUserStats(ctx: QueryCtx, userId: Id<"users">) {
-  const user = await ctx.db.get(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  // Get all focus sessions
-  const sessions = await ctx.db
-    .query("pomodoros")
-    .withIndex("by_user", (q) => q.eq("userId", userId))
-    .filter((q) => q.eq(q.field("mode"), "focus"))
-    .collect();
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Calculate start of week (Monday)
-  const startOfWeek = new Date(today);
-  const dayOfWeek = today.getDay();
-  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  startOfWeek.setDate(today.getDate() + diff);
-  const weekTimestamp = startOfWeek.getTime();
-
-  // Calculate start of month
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthTimestamp = startOfMonth.getTime();
-
-  // Calculate start of year
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const yearTimestamp = startOfYear.getTime();
-
-  // Single-pass aggregation
-  const stats = sessions.reduce(
-    (acc, session) => {
-      const minutes = session.duration / 60;
-
-      acc.total.count++;
-      acc.total.minutes += minutes;
-
-      if (session.completedAt >= yearTimestamp) {
-        acc.year.count++;
-        acc.year.minutes += minutes;
-      }
-
-      if (session.completedAt >= monthTimestamp) {
-        acc.month.count++;
-        acc.month.minutes += minutes;
-      }
-
-      if (session.completedAt >= weekTimestamp) {
-        acc.week.count++;
-        acc.week.minutes += minutes;
-      }
-
-      return acc;
-    },
-    {
-      total: { count: 0, minutes: 0 },
-      year: { count: 0, minutes: 0 },
-      month: { count: 0, minutes: 0 },
-      week: { count: 0, minutes: 0 },
-    }
-  );
-
-  // Calculate streaks
-  const streaks = calculateStreaks(sessions);
-
-  // Calculate best historical streak
-  const historicalBest = calculateBestHistoricalStreak(sessions);
-  const currentBest = user.bestDailyStreak ?? 0;
-  const actualBest = Math.max(historicalBest, currentBest, streaks.daily);
-
-  return {
-    total: { count: stats.total.count, minutes: Math.round(stats.total.minutes) },
-    week: { count: stats.week.count, minutes: Math.round(stats.week.minutes) },
-    month: { count: stats.month.count, minutes: Math.round(stats.month.minutes) },
-    year: { count: stats.year.count, minutes: Math.round(stats.year.minutes) },
-    dailyStreak: streaks.daily,
-    weeklyStreak: streaks.weekly,
-    bestDailyStreak: actualBest,
-  };
-}
 
 /**
  * Get activity data for heatmap (past year)
@@ -279,119 +243,6 @@ async function getActivityForUser(ctx: QueryCtx, userId: Id<"users">) {
     count: data.count,
     minutes: Math.round(data.minutes),
   }));
-}
-
-/**
- * Calculate daily and weekly streaks
- */
-function calculateStreaks(sessions: Array<{ completedAt: number }>): {
-  daily: number;
-  weekly: number;
-} {
-  if (sessions.length === 0) {
-    return { daily: 0, weekly: 0 };
-  }
-
-  // Group sessions by date
-  const sessionsByDate: Record<string, number> = {};
-  sessions.forEach((session) => {
-    const date = new Date(session.completedAt);
-    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
-  });
-
-  // Calculate daily streak
-  let dailyStreak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-  const checkDate = new Date(today);
-  if (!sessionsByDate[todayKey]) {
-    checkDate.setDate(checkDate.getDate() - 1);
-  }
-
-  while (true) {
-    const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
-    if (sessionsByDate[checkKey]) {
-      dailyStreak++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-
-  // Calculate weekly streak
-  const sessionsByWeek: Record<string, number> = {};
-  sessions.forEach((session) => {
-    const date = new Date(session.completedAt);
-    const startOfWeek = new Date(date);
-    const dayOfWeek = date.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startOfWeek.setDate(date.getDate() + diff);
-    startOfWeek.setHours(0, 0, 0, 0);
-    const weekKey = startOfWeek.toISOString().split("T")[0];
-    sessionsByWeek[weekKey] = (sessionsByWeek[weekKey] || 0) + 1;
-  });
-
-  let weeklyStreak = 0;
-  const currentWeekStart = new Date();
-  const currentDayOfWeek = currentWeekStart.getDay();
-  const currentDiff = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-  currentWeekStart.setDate(currentWeekStart.getDate() + currentDiff);
-  currentWeekStart.setHours(0, 0, 0, 0);
-
-  const checkWeek = new Date(currentWeekStart);
-
-  while (true) {
-    const weekKey = checkWeek.toISOString().split("T")[0];
-    if (sessionsByWeek[weekKey] && sessionsByWeek[weekKey] >= 5) {
-      weeklyStreak++;
-      checkWeek.setDate(checkWeek.getDate() - 7);
-    } else {
-      break;
-    }
-  }
-
-  return { daily: dailyStreak, weekly: weeklyStreak };
-}
-
-/**
- * Calculate best historical streak
- */
-function calculateBestHistoricalStreak(sessions: Array<{ completedAt: number }>): number {
-  if (sessions.length === 0) return 0;
-
-  const sessionsByDate: Record<string, number> = {};
-  sessions.forEach((session) => {
-    const date = new Date(session.completedAt);
-    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
-  });
-
-  const sortedDates = Object.keys(sessionsByDate).sort();
-  if (sortedDates.length === 0) return 0;
-
-  let maxStreak = 0;
-  let currentStreak = 1;
-
-  for (let i = 1; i < sortedDates.length; i++) {
-    const prevDate = new Date(sortedDates[i - 1]);
-    const currDate = new Date(sortedDates[i]);
-
-    const diffTime = currDate.getTime() - prevDate.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      currentStreak = 1;
-    }
-  }
-
-  maxStreak = Math.max(maxStreak, currentStreak);
-  return maxStreak;
 }
 
 /**

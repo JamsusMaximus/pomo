@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PWA Icons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #ea580c;
+        }
+        .instructions {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 Lock.in PWA Icon Generator</h1>
+    <p>Download these icons and place them in the <code>/public</code> folder.</p>
+
+    <div>
+        <h3>192x192 Icon</h3>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <br>
+        <button onclick="downloadIcon(192)">Download icon-192.png</button>
+    </div>
+
+    <div>
+        <h3>512x512 Icon</h3>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <br>
+        <button onclick="downloadIcon(512)">Download icon-512.png</button>
+    </div>
+
+    <div>
+        <button onclick="downloadBoth()" style="background: #10b981; font-size: 16px; padding: 15px 30px;">
+            📥 Download Both Icons
+        </button>
+    </div>
+
+    <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Click "Download Both Icons" (or download individually)</li>
+            <li>Move the downloaded files to <code>/Users/james/code/pomo/public/</code></li>
+            <li>Refresh your localhost page</li>
+            <li>The install icon should now appear in Chrome's address bar!</li>
+        </ol>
+    </div>
+
+    <script>
+        function drawIcon(size) {
+            const canvas = document.getElementById('canvas' + size);
+            const ctx = canvas.getContext('2d');
+
+            // Orange background
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(0, 0, size, size);
+
+            // White circle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw lock icon
+            ctx.fillStyle = '#f97316';
+            const lockWidth = size * 0.24;
+            const lockHeight = size * 0.18;
+            const lockX = (size - lockWidth) / 2;
+            const lockY = size / 2 - lockHeight / 4;
+
+            // Lock body (rounded rectangle)
+            ctx.beginPath();
+            ctx.roundRect(lockX, lockY, lockWidth, lockHeight, size * 0.02);
+            ctx.fill();
+
+            // Lock shackle
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = size * 0.025;
+            ctx.beginPath();
+            ctx.arc(size / 2, lockY, size * 0.1, Math.PI, 0, false);
+            ctx.stroke();
+
+            // "Lock.in" text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.08}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Lock.in', size / 2, size * 0.85);
+        }
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById('canvas' + size);
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadBoth() {
+            downloadIcon(192);
+            setTimeout(() => downloadIcon(512), 100);
+        }
+
+        // Draw icons on load
+        drawIcon(192);
+        drawIcon(512);
+    </script>
+</body>
+</html>
