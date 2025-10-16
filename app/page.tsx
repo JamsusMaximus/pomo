@@ -42,7 +42,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
-import { useFavicon } from "@/hooks/useFavicon";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -366,9 +365,6 @@ function HomeContent() {
       setPreviousMode(newMode);
     },
   });
-
-  // Dynamic favicon based on timer state
-  useFavicon(isRunning);
 
   // Request notification permission on mount
   useEffect(() => {
