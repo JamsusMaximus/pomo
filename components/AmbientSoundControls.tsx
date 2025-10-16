@@ -1,16 +1,16 @@
 /**
- * @fileoverview Ambient sound controls with play/pause and volume slider
+ * @fileoverview Ambient sound controls with 4 simultaneous sounds and vertical sliders
  */
 
 "use client";
 
 import { useEffect, useState } from "react";
 import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Volume2, VolumeX, Play, Pause, CloudRain } from "lucide-react";
+import { CloudRain, CloudLightning, Waves, AudioWaveform } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { AMBIENT_SOUNDS, AmbientSoundId } from "@/lib/ambientSounds";
 
 interface AmbientSoundControlsProps {
   className?: string;
@@ -19,74 +19,70 @@ interface AmbientSoundControlsProps {
 // Map icon names to Lucide icon components
 const iconMap: Record<string, LucideIcon> = {
   CloudRain,
-  // Add more icons here as new sounds are added
+  CloudLightning,
+  Waves,
+  AudioWaveform,
 };
 
 export function AmbientSoundControls({ className }: AmbientSoundControlsProps) {
   const [mounted, setMounted] = useState(false);
-  const { isPlaying, volume, activeSound, toggle, changeVolume, availableSounds } =
-    useAmbientSoundContext();
+  const { volumes, toggleSound, setVolume } = useAmbientSoundContext();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const currentSound = availableSounds.find((s) => s.id === activeSound);
-  const IconComponent = currentSound?.icon ? iconMap[currentSound.icon] : null;
+  const soundIds = Object.keys(AMBIENT_SOUNDS) as AmbientSoundId[];
 
   return (
-    <div className={cn("flex items-center gap-3 rounded-lg border bg-card p-4", className)}>
-      {/* Play/Pause Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={toggle}
-        className="shrink-0 min-w-[44px] min-h-[44px]"
-        aria-label={isPlaying ? "Pause ambient sound" : "Play ambient sound"}
-      >
-        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-      </Button>
+    <div className={cn("rounded-lg border bg-card p-4", "grid grid-cols-4 gap-4", className)}>
+      {soundIds.map((soundId) => {
+        const sound = AMBIENT_SOUNDS[soundId];
+        const IconComponent = iconMap[sound.icon];
+        const volume = volumes[soundId];
+        const isActive = volume > 0;
 
-      {/* Sound Info */}
-      <div className="flex items-center gap-2 min-w-0">
-        {IconComponent && (
-          <IconComponent className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-        )}
-        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-          {currentSound?.name}
-        </span>
-      </div>
+        return (
+          <div key={soundId} className="flex flex-col items-center gap-2.5">
+            {/* Icon Button */}
+            <button
+              onClick={() => toggleSound(soundId)}
+              className={cn(
+                "flex items-center justify-center transition-all duration-300",
+                "hover:scale-110 active:scale-95",
+                "focus-visible:outline-none focus:outline-none",
+                "cursor-pointer"
+              )}
+              aria-label={`Toggle ${sound.name}`}
+            >
+              <IconComponent
+                className={cn(
+                  "w-8 h-8 transition-colors",
+                  isActive ? "text-orange-500" : "text-gray-400"
+                )}
+              />
+            </button>
 
-      {/* Volume Slider */}
-      <div className="flex items-center gap-2 flex-1 min-w-[120px]">
-        <button
-          onClick={() => changeVolume(0)}
-          className="shrink-0 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-center min-w-[44px] min-h-[44px] -m-3"
-          aria-label="Mute"
-        >
-          <VolumeX className="h-4 w-4 text-muted-foreground" />
-        </button>
-        <Slider
-          value={[volume * 100]}
-          onValueChange={(value) => changeVolume(value[0] / 100)}
-          max={100}
-          step={1}
-          className="flex-1"
-          aria-label="Ambient sound volume"
-        />
-        <button
-          onClick={() => changeVolume(1)}
-          className="shrink-0 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-center min-w-[44px] min-h-[44px] -m-3"
-          aria-label="Maximum volume"
-        >
-          <Volume2 className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </div>
+            {/* Sound Name */}
+            <span className="text-xs text-center text-muted-foreground font-medium whitespace-nowrap">
+              {sound.name}
+            </span>
 
-      {/* Volume Percentage */}
-      <span className="text-xs text-muted-foreground tabular-nums w-8 text-right shrink-0">
-        {mounted ? `${Math.round(volume * 100)}%` : "50%"}
-      </span>
+            {/* Vertical Slider */}
+            <div className="h-24 flex items-center justify-center py-2">
+              <Slider
+                value={[mounted ? volume * 100 : 0]}
+                onValueChange={(value) => setVolume(soundId, value[0] / 100)}
+                max={100}
+                step={1}
+                orientation="vertical"
+                className="h-full"
+                aria-label={`${sound.name} volume`}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export interface AmbientSound {
   id: AmbientSoundId;
   name: string;
   file: string;
-  icon?: string; // Lucide icon name (e.g., "CloudRain")
+  icon: string; // Lucide icon name
 }
 
 export const AMBIENT_SOUNDS = {
@@ -18,16 +18,25 @@ export const AMBIENT_SOUNDS = {
     file: "/audio/ambient/rain.mp3",
     icon: "CloudRain",
   },
-  // Future sounds can be added here:
-  // ocean: {
-  //   id: "ocean" as const,
-  //   name: "Ocean Waves",
-  //   file: "/audio/ambient/ocean.mp3",
-  //   icon: "🌊",
-  // },
+  thunder: {
+    id: "thunder" as const,
+    name: "Thunder",
+    file: "/audio/ambient/thunder.mp3",
+    icon: "CloudLightning",
+  },
+  ocean: {
+    id: "ocean" as const,
+    name: "Ocean Waves",
+    file: "/audio/ambient/waves.mp3",
+    icon: "Waves",
+  },
+  whitenoise: {
+    id: "whitenoise" as const,
+    name: "White Noise",
+    file: "/audio/ambient/whitenoise.mp3",
+    icon: "AudioWaveform",
+  },
 } as const;
 
-export const DEFAULT_VOLUME = 0.5;
-export const AMBIENT_VOLUME_KEY = "pomo_ambient_volume";
-export const AMBIENT_SOUND_KEY = "pomo_ambient_sound";
-export const AMBIENT_ENABLED_KEY = "pomo_ambient_enabled";
+// Storage keys for individual sound volumes
+export const VOLUME_STORAGE_PREFIX = "pomo_ambient_volume_";

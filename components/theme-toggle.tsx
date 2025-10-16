@@ -30,7 +30,7 @@ export function ThemeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="rounded-full h-10 w-10"
+        className="rounded-full h-10 w-10 flex items-center justify-center"
         aria-label="Toggle theme"
       >
         <Sun className="h-7 w-7" />
@@ -39,12 +39,16 @@ export function ThemeToggle() {
   }
 
   return (
-    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="flex items-center"
+    >
       <Button
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        className="rounded-full h-10 w-10"
+        className="rounded-full h-10 w-10 flex items-center justify-center"
         aria-label="Toggle theme"
       >
         <motion.div

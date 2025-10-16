@@ -33,7 +33,6 @@ import {
   getUnsyncedSessions,
   markSessionsSynced,
 } from "@/lib/storage/sessions";
-import { PomodoroFeed } from "@/components/PomodoroFeed";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { TagInput } from "@/components/TagInput";
 import { ChallengeToast } from "@/components/ChallengeToast";
@@ -626,12 +625,12 @@ function HomeContent() {
       }
     } else {
       // Reset to default title when not running
-      document.title = "Pomodoro";
+      document.title = "Lock.in";
     }
 
     // Cleanup: reset title when component unmounts
     return () => {
-      document.title = "Pomodoro";
+      document.title = "Lock.in";
     };
   }, [remaining, mode, isRunning, isFlowMode, flowElapsedTime]);
 
@@ -961,7 +960,7 @@ function HomeContent() {
                   <Button
                     onClick={isRunning ? pause : start}
                     size="lg"
-                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5"
+                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
                   >
                     <span>
                       {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
@@ -979,10 +978,8 @@ function HomeContent() {
                     {/* Shimmer effect - only on initial load when showing "Start" */}
                     {showStartShimmer && !isRunning && !isPaused && (
                       <motion.div
-                        className="absolute inset-0 pointer-events-none"
+                        className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent"
                         style={{
-                          background:
-                            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.2) 55%, transparent 100%)",
                           backgroundSize: "200% 100%",
                         }}
                         animate={{
@@ -1016,7 +1013,7 @@ function HomeContent() {
                           variant="outline"
                           onClick={handleEnterFlowMode}
                           size="lg"
-                          className="w-full py-3 min-h-[44px] border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                          className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground"
                         >
                           Enter Flow Mode
                         </Button>
@@ -1099,18 +1096,6 @@ function HomeContent() {
                 </Button>
               </SignUpButton>
             </div>
-          </motion.div>
-        )}
-
-        {/* Pomodoro Feed */}
-        {isHydrated && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-            className="w-full bg-card rounded-2xl border border-border p-6"
-          >
-            <PomodoroFeed sessions={sessions} />
           </motion.div>
         )}
       </div>

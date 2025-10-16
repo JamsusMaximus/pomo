@@ -266,6 +266,9 @@ async function getEnrichedUserData(ctx: any, friend: any) {
   // Calculate today's pomos based on calendar day (not 24h rolling window)
   const todayPomos = allSessions.filter((s: any) => s.completedAt >= todayStart).length;
 
+  // Calculate total pomos from actual sessions (not cached value)
+  const totalPomos = allSessions.length;
+
   // Calculate current daily streak
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -323,7 +326,6 @@ async function getEnrichedUserData(ctx: any, friend: any) {
 
   // Calculate level (using same logic as profile page)
   const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
-  const totalPomos = friend.totalPomos ?? 0;
 
   let currentLevel = 1;
   let levelTitle = "Beginner";

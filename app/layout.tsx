@@ -6,7 +6,7 @@ import { NavbarWrapper } from "@/components/NavbarWrapper";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Pomodoro Timer",
+  title: "Lock.in",
   description: "A minimal Pomodoro timer app",
 };
 
