@@ -9,9 +9,26 @@ set -e
 echo "🔨 Running pre-push checks..."
 echo ""
 
+# Function to run command with timeout (works on macOS and Linux)
+run_with_timeout() {
+  local timeout=$1
+  shift
+
+  if command -v timeout &> /dev/null; then
+    # Linux/GNU timeout
+    timeout "$timeout" "$@"
+  elif command -v gtimeout &> /dev/null; then
+    # macOS with GNU coreutils installed
+    gtimeout "$timeout" "$@"
+  else
+    # Fallback: no timeout (macOS without GNU coreutils)
+    "$@"
+  fi
+}
+
 # 1. Run quick route validation (catches 404s and redirect issues)
 echo "🔍 Testing routes..."
-if timeout 120 npm run test:pages; then
+if run_with_timeout 120 npm run test:pages; then
   echo "✅ All routes accessible"
   echo ""
 else
@@ -31,7 +48,7 @@ fi
 
 # 2. Run the build
 echo "🔨 Building project..."
-if timeout 900 npm run build; then
+if run_with_timeout 900 npm run build; then
   echo ""
   echo "✅ Build passed! Proceeding with push..."
   exit 0
