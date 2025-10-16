@@ -28,6 +28,7 @@ export default defineSchema({
   pomodoros: defineTable({
     userId: v.id("users"),
     tag: v.optional(v.string()),
+    tagPrivate: v.optional(v.boolean()), // Hide tag from others (pomo itself still visible)
     duration: v.number(), // seconds
     mode: v.union(v.literal("focus"), v.literal("break")),
     completedAt: v.number(),
@@ -101,4 +102,103 @@ export default defineSchema({
     .index("by_follower", ["followerId"])
     .index("by_following", ["followingId"])
     .index("by_follower_and_following", ["followerId", "followingId"]),
+
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(), // Push service endpoint URL
+    keys: v.object({
+      p256dh: v.string(), // Client public key for encryption
+      auth: v.string(), // Authentication secret
+    }),
+    userAgent: v.optional(v.string()), // Browser/device info
+    createdAt: v.number(),
+    lastUsed: v.optional(v.number()), // Track when subscription was last successfully used
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
+  notificationRules: defineTable({
+    name: v.string(), // Rule name (e.g., "24h Inactivity Reminder")
+    description: v.string(), // What this rule does
+    enabled: v.boolean(),
+    trigger: v.union(
+      v.literal("inactivity"), // User hasn't completed pomo in X hours
+      v.literal("streak_risk"), // Streak about to expire
+      v.literal("challenge_available"), // New challenge unlocked
+      v.literal("friend_activity"), // Friend completed pomo
+      v.literal("daily_goal"), // Remind about daily goal
+      v.literal("manual") // Manually triggered from admin
+    ),
+    // Trigger-specific config
+    config: v.object({
+      inactivityHours: v.optional(v.number()), // For inactivity trigger
+      hoursBeforeExpiry: v.optional(v.number()), // For streak_risk trigger
+      targetAudience: v.optional(
+        v.union(
+          v.literal("all"), // All users
+          v.literal("active"), // Users with activity in last 7 days
+          v.literal("inactive"), // Users inactive for 7+ days
+          v.literal("streak_holders") // Users with active streaks
+        )
+      ),
+    }),
+    // Notification content
+    notification: v.object({
+      title: v.string(),
+      body: v.string(),
+      icon: v.optional(v.string()),
+      badge: v.optional(v.string()),
+      tag: v.optional(v.string()),
+      requireInteraction: v.optional(v.boolean()),
+      actions: v.optional(
+        v.array(
+          v.object({
+            action: v.string(), // Action ID
+            title: v.string(), // Button text
+          })
+        )
+      ),
+      data: v.optional(
+        v.object({
+          url: v.optional(v.string()), // Where to navigate on click
+        })
+      ),
+    }),
+    // Scheduling
+    schedule: v.optional(
+      v.object({
+        type: v.union(
+          v.literal("immediate"), // Send right away when triggered
+          v.literal("daily"), // Send once per day at specific time
+          v.literal("interval") // Send every X hours
+        ),
+        hourUTC: v.optional(v.number()), // For daily schedule
+        minuteUTC: v.optional(v.number()), // For daily schedule
+        intervalHours: v.optional(v.number()), // For interval schedule
+      })
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    createdBy: v.id("users"), // Admin who created the rule
+  })
+    .index("by_enabled", ["enabled"])
+    .index("by_trigger", ["trigger"]),
+
+  notificationLogs: defineTable({
+    ruleId: v.optional(v.id("notificationRules")), // null if manual send
+    userId: v.id("users"),
+    status: v.union(
+      v.literal("sent"), // Successfully sent to push service
+      v.literal("delivered"), // User clicked/interacted
+      v.literal("failed"), // Failed to send
+      v.literal("expired") // Subscription expired
+    ),
+    errorMessage: v.optional(v.string()),
+    sentAt: v.number(),
+    deliveredAt: v.optional(v.number()),
+  })
+    .index("by_rule", ["ruleId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_sent_at", ["sentAt"]),
 });

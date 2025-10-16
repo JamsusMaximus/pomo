@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Debug - Lock.in</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .check {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        button {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #ea580c;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 PWA Installation Debugger</h1>
+    <div id="results"></div>
+    <div id="actions"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        const actions = document.getElementById('actions');
+
+        function addCheck(label, passed, details = '') {
+            const div = document.createElement('div');
+            div.className = `check ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `${passed ? '✅' : '❌'} ${label}${details ? '<br><small>' + details + '</small>' : ''}`;
+            results.appendChild(div);
+            return passed;
+        }
+
+        function addInfo(label, details) {
+            const div = document.createElement('div');
+            div.className = 'check info';
+            div.innerHTML = `ℹ️ ${label}${details ? '<br><small>' + details + '</small>' : ''}`;
+            results.appendChild(div);
+        }
+
+        async function checkPWA() {
+            results.innerHTML = '<h2>Checking PWA Requirements...</h2>';
+
+            // 1. HTTPS or localhost
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+            addCheck('Secure context (HTTPS or localhost)', isSecure, `Protocol: ${location.protocol}, Hostname: ${location.hostname}`);
+
+            // 2. Service Worker
+            const swSupported = 'serviceWorker' in navigator;
+            addCheck('Service Worker API supported', swSupported);
+
+            if (swSupported) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    const swRegistered = !!registration;
+                    addCheck('Service Worker registered', swRegistered, registration ? `Scope: ${registration.scope}` : '');
+
+                    if (registration) {
+                        const swActive = registration.active !== null;
+                        addCheck('Service Worker active', swActive, swActive ? `State: ${registration.active.state}` : '');
+                    }
+                } catch (e) {
+                    addCheck('Service Worker check', false, e.message);
+                }
+            }
+
+            // 3. Manifest
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                addCheck('Manifest <link> tag exists', !!manifestLink, manifestLink ? `href: ${manifestLink.href}` : '');
+
+                if (manifestLink) {
+                    const response = await fetch(manifestLink.href);
+                    const manifest = await response.json();
+
+                    addCheck('Manifest file loads', response.ok);
+                    addCheck('Manifest has name', !!manifest.name, manifest.name);
+                    addCheck('Manifest has start_url', !!manifest.start_url, manifest.start_url);
+                    addCheck('Manifest has display mode', !!manifest.display, manifest.display);
+                    addCheck('Manifest has icons', manifest.icons && manifest.icons.length > 0,
+                        manifest.icons ? `${manifest.icons.length} icons` : '');
+
+                    if (manifest.icons) {
+                        for (const icon of manifest.icons) {
+                            try {
+                                const iconResponse = await fetch(icon.src);
+                                addCheck(`Icon ${icon.sizes} accessible`, iconResponse.ok, icon.src);
+                            } catch (e) {
+                                addCheck(`Icon ${icon.sizes} accessible`, false, `${icon.src} - ${e.message}`);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                addCheck('Manifest check', false, e.message);
+            }
+
+            // 4. beforeinstallprompt event
+            addInfo('beforeinstallprompt event',
+                'This event may not fire on localhost. If it doesn\'t fire within 5 seconds, Chrome has decided the site is not installable.');
+
+            let promptFired = false;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                promptFired = true;
+                addCheck('beforeinstallprompt event fired!', true, 'Chrome thinks this site is installable!');
+
+                // Add install button
+                const btn = document.createElement('button');
+                btn.textContent = '📥 Install App Now';
+                btn.onclick = async () => {
+                    e.prompt();
+                    const { outcome } = await e.userChoice;
+                    alert(`Install ${outcome}`);
+                };
+                actions.innerHTML = '<h2>Actions:</h2>';
+                actions.appendChild(btn);
+            });
+
+            setTimeout(() => {
+                if (!promptFired) {
+                    addCheck('beforeinstallprompt event fired', false,
+                        'Chrome won\'t show install button on localhost. This is normal. The PWA should work fine on production!');
+
+                    addInfo('How to install anyway',
+                        '1. Open Chrome DevTools (F12)<br>' +
+                        '2. Go to Application tab<br>' +
+                        '3. Click Manifest in sidebar<br>' +
+                        '4. Click "Add to home screen" button at the top');
+                }
+            }, 5000);
+
+            // 5. Display mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isAppInstalled = isStandalone || window.navigator.standalone;
+            addInfo('Currently running as PWA', isAppInstalled ? 'Yes! Already installed!' : 'No - running in browser');
+
+            // Summary
+            addInfo('Summary',
+                'If all checks pass but you don\'t see an install button, that\'s NORMAL on localhost. ' +
+                'Use Chrome DevTools → Application → Manifest → "Add to home screen" to install manually for testing.');
+        }
+
+        // Run checks
+        checkPWA();
+
+        // Add manual install button
+        const manualInstallBtn = document.createElement('button');
+        manualInstallBtn.textContent = '📖 How to Install Manually';
+        manualInstallBtn.onclick = () => {
+            alert(
+                'To install manually:\n\n' +
+                '1. Press F12 to open DevTools\n' +
+                '2. Go to "Application" tab\n' +
+                '3. Click "Manifest" in the left sidebar\n' +
+                '4. Click "Add to home screen" button at the top\n' +
+                '5. The app will install and open in its own window!'
+            );
+        };
+        actions.appendChild(manualInstallBtn);
+    </script>
+</body>
+</html>
