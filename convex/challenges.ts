@@ -14,7 +14,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { calculateUserStats, type UserStats } from "./stats_helpers";
 import type { Doc } from "./_generated/dataModel";
 

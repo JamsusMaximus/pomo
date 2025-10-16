@@ -1139,9 +1139,9 @@ function ProfilePageContent() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.3 }}
-                  className="bg-card rounded-2xl shadow-lg border border-border p-6"
+                  className="bg-card rounded-2xl shadow-lg border border-border px-6 pt-6 pb-4"
                 >
-                  <PomodoroFeed sessions={loadSessions()} initialLimit={10} showMoreButton={true} />
+                  <PomodoroFeed sessions={loadSessions()} initialLimit={5} showMoreButton={true} />
                 </motion.div>
               </>
             );
