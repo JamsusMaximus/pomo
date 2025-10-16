@@ -42,6 +42,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
+import { useFavicon } from "@/hooks/useFavicon";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -88,6 +89,9 @@ function HomeContent() {
 
   // Ambient sound context for fading before notifications
   const { fadeAllToVolume, restoreVolumes, volumes } = useAmbientSoundContext();
+
+  // Dynamic favicon based on timer state
+  useFavicon(isRunning);
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
