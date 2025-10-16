@@ -61,13 +61,13 @@ export function PrivacySettings({ currentPrivacy }: PrivacySettingsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isUpdating}>
+        <Button variant="outline" size="sm" disabled={isUpdating} className="min-h-[44px]">
           <CurrentIcon className="w-4 h-4 mr-2" />
           {currentOption?.label || "Followers Only"}
           <ChevronDown className="w-4 h-4 ml-2" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-64 bg-background/95 backdrop-blur-xl border-2">
         {PRIVACY_OPTIONS.map((option) => {
           const Icon = option.icon;
           const isCurrent = option.value === privacy;

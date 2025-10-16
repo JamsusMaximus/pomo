@@ -20,7 +20,12 @@ const PAGES = [
   { path: "/admin", name: "Admin" },
   { path: "/changelog", name: "Changelog" },
   { path: "/download", name: "Download" },
+  { path: "/rules", name: "Rules" },
+  { path: "/sign-in", name: "Sign In" },
+  { path: "/sign-up", name: "Sign Up" },
 ];
+
+const REDIRECTS = [{ from: "/signin", to: "/sign-in", name: "Sign In (typo redirect)" }];
 
 /**
  * Wait for server to be ready by polling the health endpoint
@@ -48,6 +53,40 @@ async function waitForServer(maxAttempts = 30, delayMs = 1000) {
 
   console.error(`❌ Server not ready after ${maxAttempts} attempts`);
   return false;
+}
+
+async function testRedirect(redirect) {
+  try {
+    const response = await fetch(`${BASE_URL}${redirect.from}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      },
+      redirect: "manual", // Don't follow redirects automatically
+    });
+
+    const status = response.status;
+
+    // Check if it's a redirect (3xx status)
+    if (status >= 300 && status < 400) {
+      const location = response.headers.get("location");
+      const expectedUrl = `${BASE_URL}${redirect.to}`;
+      const actualUrl = location?.startsWith("http") ? location : `${BASE_URL}${location}`;
+
+      if (actualUrl === expectedUrl || location === redirect.to) {
+        console.log(`✅ ${redirect.name}: ${redirect.from} → ${redirect.to} (${status})`);
+        return true;
+      } else {
+        console.log(`❌ ${redirect.name}: Expected redirect to ${redirect.to}, got ${location}`);
+        return false;
+      }
+    } else {
+      console.log(`❌ ${redirect.name}: Expected redirect (3xx), got ${status}`);
+      return false;
+    }
+  } catch (error) {
+    console.log(`❌ ${redirect.name}: ${error.message}`);
+    return false;
+  }
 }
 
 async function testPage(page, retries = 2) {
@@ -112,7 +151,9 @@ async function testPage(page, retries = 2) {
 
 async function main() {
   const mode = IS_PROD ? "PRODUCTION" : "DEVELOPMENT";
-  console.log(`\n🧪 Testing ${PAGES.length} pages in ${mode} mode`);
+  console.log(
+    `\n🧪 Testing ${PAGES.length} pages and ${REDIRECTS.length} redirects in ${mode} mode`
+  );
   console.log(`📍 Server: ${BASE_URL}\n`);
 
   // Wait for server to be ready
@@ -125,18 +166,24 @@ async function main() {
   }
 
   // Test all pages
-  const results = await Promise.all(PAGES.map((page) => testPage(page)));
+  console.log("📄 Testing pages...\n");
+  const pageResults = await Promise.all(PAGES.map((page) => testPage(page)));
 
-  const passed = results.filter(Boolean).length;
-  const failed = results.length - passed;
+  // Test all redirects
+  console.log("\n🔀 Testing redirects...\n");
+  const redirectResults = await Promise.all(REDIRECTS.map((redirect) => testRedirect(redirect)));
 
-  console.log(`\n📊 Results: ${passed}/${results.length} passed`);
+  const allResults = [...pageResults, ...redirectResults];
+  const passed = allResults.filter(Boolean).length;
+  const failed = allResults.length - passed;
+
+  console.log(`\n📊 Results: ${passed}/${allResults.length} passed`);
 
   if (failed > 0) {
-    console.log(`\n⚠️  ${failed} page(s) with issues. Check logs above.`);
+    console.log(`\n⚠️  ${failed} test(s) with issues. Check logs above.`);
     process.exit(1);
   } else {
-    console.log(`\n✨ All pages loading successfully in ${mode} mode!`);
+    console.log(`\n✨ All tests passed in ${mode} mode!`);
   }
 }
 

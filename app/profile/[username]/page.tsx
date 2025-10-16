@@ -13,6 +13,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { use } from "react";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { FocusGraph } from "@/components/FocusGraph";
+import { PomodoroFeed } from "@/components/PomodoroFeed";
 
 interface PublicProfilePageProps {
   params: Promise<{ username: string }>;
@@ -39,7 +40,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
           <h1 className="text-2xl font-bold mb-2">User not found</h1>
           <p className="text-muted-foreground mb-4">The user @{username} doesn&apos;t exist.</p>
           <Link href="/">
-            <Button variant="outline">
+            <Button variant="outline" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>
@@ -66,7 +67,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
         {/* Top navigation */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>
@@ -375,48 +376,57 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
               )}
 
             {/* Recent Sessions */}
-            {profileData.recentSessions && profileData.recentSessions.length > 0 && (
+            {(profileData.isOwnProfile ||
+              (profileData.recentSessions && profileData.recentSessions.length > 0)) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.25 }}
                 className="bg-card rounded-2xl shadow-lg border border-border p-6"
               >
-                <h2 className="text-lg font-bold mb-4">Recent Sessions</h2>
-                <div className="space-y-2">
-                  {profileData.recentSessions
-                    .filter((session) => session.mode === "focus")
-                    .map((session) => {
-                      const date = new Date(session.completedAt);
-                      const isToday = date.toDateString() === new Date().toDateString();
-                      const timeAgo = isToday
-                        ? `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`
-                        : date.toLocaleDateString();
+                {profileData.isOwnProfile ? (
+                  <PomodoroFeed sessions={[]} initialLimit={5} showMoreButton={true} />
+                ) : (
+                  <>
+                    <h2 className="text-lg font-bold mb-4">Recent Sessions</h2>
+                    <div className="space-y-2">
+                      {profileData.recentSessions
+                        ?.filter((session) => session.mode === "focus")
+                        .map((session) => {
+                          const date = new Date(session.completedAt);
+                          const isToday = date.toDateString() === new Date().toDateString();
+                          const timeAgo = isToday
+                            ? `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`
+                            : date.toLocaleDateString();
 
-                      return (
-                        <div
-                          key={session._id}
-                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-orange-500" />
-                            <div>
-                              <p className="text-sm font-medium">
-                                Focus Session
-                                {session.tag && (
-                                  <span className="ml-2 text-xs text-muted-foreground">
-                                    #{session.tag}
-                                  </span>
-                                )}
+                          return (
+                            <div
+                              key={session._id}
+                              className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    Focus Session
+                                    {session.tag && (
+                                      <span className="ml-2 text-xs text-muted-foreground">
+                                        #{session.tag}
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {session.duration / 60}m
                               </p>
-                              <p className="text-xs text-muted-foreground">{timeAgo}</p>
                             </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{session.duration / 60}m</p>
-                        </div>
-                      );
-                    })}
-                </div>
+                          );
+                        })}
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
           </>

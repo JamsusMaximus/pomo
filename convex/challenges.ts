@@ -15,57 +15,35 @@
 
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { calculateUserStats, type UserStats } from "./stats_helpers";
+import type { Doc } from "./_generated/dataModel";
 
 /**
- * Calculate the best historical streak from all sessions
- * Finds the longest consecutive daily streak in the entire history
+ * Calculate progress for a specific challenge based on user stats
+ * Single source of truth for challenge progress calculation
  */
-function calculateBestHistoricalStreak(sessions: Array<{ completedAt: number }>): number {
-  if (sessions.length === 0) {
-    return 0;
-  }
+function calculateChallengeProgress(challenge: Doc<"challenges">, stats: UserStats): number {
+  const now = new Date();
 
-  // Group sessions by date
-  const sessionsByDate: Record<string, number> = {};
-  sessions.forEach((session) => {
-    const date = new Date(session.completedAt);
-    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    sessionsByDate[dateKey] = (sessionsByDate[dateKey] || 0) + 1;
-  });
-
-  // Get all dates sorted chronologically
-  const sortedDates = Object.keys(sessionsByDate).sort();
-
-  if (sortedDates.length === 0) {
-    return 0;
-  }
-
-  let maxStreak = 0;
-  let currentStreak = 1;
-
-  // Iterate through sorted dates to find longest consecutive streak
-  for (let i = 1; i < sortedDates.length; i++) {
-    const prevDate = new Date(sortedDates[i - 1]);
-    const currDate = new Date(sortedDates[i]);
-
-    // Calculate difference in days
-    const diffTime = currDate.getTime() - prevDate.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      // Consecutive day
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      // Gap in streak, reset
-      currentStreak = 1;
+  switch (challenge.type) {
+    case "total":
+      return stats.total;
+    case "daily":
+      return stats.today;
+    case "weekly":
+      return stats.week;
+    case "monthly":
+      return stats.month;
+    case "recurring_monthly": {
+      const currentMonth = now.getMonth() + 1;
+      return challenge.recurringMonth === currentMonth ? stats.month : 0;
     }
+    case "streak":
+      // Use best historical streak for challenges (doesn't reset)
+      return stats.bestStreak;
+    default:
+      return 0;
   }
-
-  // Don't forget the last streak
-  maxStreak = Math.max(maxStreak, currentStreak);
-
-  return maxStreak;
 }
 
 /**
@@ -83,6 +61,7 @@ export const getActiveChallenges = query({
 
 /**
  * Get user's challenge progress
+ * Uses computed stats - always accurate, no cache sync needed
  */
 export const getUserChallenges = query({
   args: {},
@@ -101,19 +80,21 @@ export const getUserChallenges = query({
       return { active: [], completed: [] };
     }
 
+    // Calculate stats once from pomodoros table (single source of truth)
+    const stats = await calculateUserStats(ctx, user._id);
+
     // Get all active challenges
     const allChallenges = await ctx.db
       .query("challenges")
       .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
-    // Get user's challenge records
+    // Get user's completion records (only stores completion, not progress)
     const userChallenges = await ctx.db
       .query("userChallenges")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
-    // Create a map for quick lookup
     const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
 
     const activeChallengesData = [];
@@ -123,9 +104,12 @@ export const getUserChallenges = query({
     for (const challenge of allChallenges) {
       const userChallenge = userChallengeMap.get(challenge._id);
 
+      // Always compute progress from real stats
+      const progress = calculateChallengeProgress(challenge, stats);
+
       const data = {
         ...challenge,
-        progress: userChallenge?.progress || 0,
+        progress,
         completed: userChallenge?.completed || false,
         completedAt: userChallenge?.completedAt,
       };
@@ -146,6 +130,7 @@ export const getUserChallenges = query({
 
 /**
  * Manually sync user's challenge progress (useful for existing users)
+ * Now much simpler - just marks completed challenges, all progress is computed on-read
  */
 export const syncMyProgress = mutation({
   args: {},
@@ -160,22 +145,8 @@ export const syncMyProgress = mutation({
 
     if (!user) throw new Error("User not found");
 
-    // Get user's pomodoros to calculate best streak
-    const pomodoros = await ctx.db
-      .query("pomodoros")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .filter((q) => q.eq(q.field("mode"), "focus"))
-      .collect();
-
-    // Calculate best historical streak
-    const historicalBest = calculateBestHistoricalStreak(pomodoros);
-    const currentBest = user.bestDailyStreak ?? 0;
-    const actualBest = Math.max(historicalBest, currentBest);
-
-    // Update user's best streak if needed
-    if (actualBest > currentBest) {
-      await ctx.db.patch(user._id, { bestDailyStreak: actualBest });
-    }
+    // Calculate stats from pomodoros table
+    const stats = await calculateUserStats(ctx, user._id);
 
     // Get all active challenges - auto-seed if none exist
     let challenges = await ctx.db
@@ -323,61 +294,12 @@ export const syncMyProgress = mutation({
       }
     }
 
-    // Reuse pomodoros already fetched above (no need to query again)
-
-    // Get current date info
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTimestamp = today.getTime();
-
+    // Process each challenge - compute progress from stats
     let syncedCount = 0;
 
     for (const challenge of challenges) {
-      let progress = 0;
-
-      // Calculate progress based on challenge type
-      switch (challenge.type) {
-        case "total":
-          progress = pomodoros.length;
-          break;
-
-        case "daily": {
-          const todayPomos = pomodoros.filter((p) => p.completedAt >= todayTimestamp);
-          progress = todayPomos.length;
-          break;
-        }
-
-        case "weekly": {
-          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          const weekPomos = pomodoros.filter((p) => p.completedAt >= weekAgo);
-          progress = weekPomos.length;
-          break;
-        }
-
-        case "monthly": {
-          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
-          progress = monthPomos.length;
-          break;
-        }
-
-        case "recurring_monthly": {
-          if (challenge.recurringMonth === now.getMonth() + 1) {
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const monthPomos = pomodoros.filter((p) => p.completedAt >= monthStart);
-            progress = monthPomos.length;
-          }
-          break;
-        }
-
-        case "streak": {
-          // Use best historical streak instead of current streak
-          // This way challenges don't reset when you lose your streak
-          progress = user.bestDailyStreak ?? 0;
-          break;
-        }
-      }
-
+      // Always compute progress from real stats (single source of truth)
+      const progress = calculateChallengeProgress(challenge, stats);
       const completed = progress >= challenge.target;
 
       // Check if user challenge exists
@@ -390,24 +312,25 @@ export const syncMyProgress = mutation({
 
       if (existing) {
         // Once completed, always stay completed (preserve completion date)
-        const shouldStayCompleted = existing.completed || completed;
-        const finalCompletedAt =
-          existing.completedAt || (completed && !existing.completed ? Date.now() : undefined);
-
-        await ctx.db.patch(existing._id, {
-          progress: Math.max(existing.progress, progress), // Only increase progress
-          completed: shouldStayCompleted,
-          completedAt: finalCompletedAt,
-        });
-      } else {
+        if (!existing.completed && completed) {
+          await ctx.db.patch(existing._id, {
+            completed: true,
+            completedAt: Date.now(),
+          });
+        }
+        // If already completed, nothing to update
+      } else if (completed) {
+        // Only create record if challenge is completed
+        // Progress is computed on-read, no need to store it
         await ctx.db.insert("userChallenges", {
           userId: user._id,
           challengeId: challenge._id,
-          progress,
-          completed,
-          completedAt: completed ? Date.now() : undefined,
+          progress: 0, // Deprecated field, kept for schema compatibility
+          completed: true,
+          completedAt: Date.now(),
         });
       }
+      // If not completed and no existing record, no action needed
 
       syncedCount++;
     }
@@ -417,7 +340,12 @@ export const syncMyProgress = mutation({
 });
 
 /**
- * Update challenge progress (called after each pomodoro)
+ * @deprecated This function is no longer used after the computed-on-read refactor.
+ * Challenge progress is now calculated dynamically from the pomodoros table.
+ * Scheduled for removal in future cleanup.
+ *
+ * Old behavior: Was called after each pomodoro to update cached progress.
+ * New behavior: All queries compute progress on-read using calculateUserStats().
  */
 export const updateChallengeProgress = internalMutation({
   args: {
@@ -705,5 +633,75 @@ export const toggleChallengeActive = mutation({
     await ctx.db.patch(challengeId, {
       active: !challenge.active,
     });
+  },
+});
+
+/**
+ * Get next challenge with highest completion percentage for toast notification
+ * Returns the incomplete challenge closest to completion
+ * Uses computed stats - always accurate, no cache dependencies
+ */
+export const getNextChallenge = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) return null;
+
+    // Calculate stats once from pomodoros table (single source of truth)
+    const stats = await calculateUserStats(ctx, user._id);
+
+    // Get all active challenges
+    const allChallenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_active", (q) => q.eq("active", true))
+      .collect();
+
+    if (allChallenges.length === 0) return null;
+
+    // Get user's completion records
+    const userChallenges = await ctx.db
+      .query("userChallenges")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
+
+    // Calculate percentage for each incomplete challenge
+    const incompleteChallenges = allChallenges
+      .map((challenge) => {
+        const userChallenge = userChallengeMap.get(challenge._id);
+        const completed = userChallenge?.completed || false;
+
+        // Skip completed challenges
+        if (completed) return null;
+
+        // Always compute progress from real stats (no cache!)
+        const progress = calculateChallengeProgress(challenge, stats);
+        const percentage = (progress / challenge.target) * 100;
+
+        return {
+          name: challenge.name,
+          description: challenge.description,
+          badge: challenge.badge,
+          progress,
+          target: challenge.target,
+          percentage: Math.min(100, Math.round(percentage)),
+        };
+      })
+      .filter((c) => c !== null);
+
+    if (incompleteChallenges.length === 0) return null;
+
+    // Sort by highest percentage and return the top one
+    incompleteChallenges.sort((a, b) => b!.percentage - a!.percentage);
+
+    return incompleteChallenges[0];
   },
 });

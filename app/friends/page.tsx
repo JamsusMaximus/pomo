@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 function FriendsPageContent() {
   const { user } = useUser();
   const friendsActivity = useQuery(api.follows.getFriendsActivity);
+  const suggestedFriends = useQuery(api.follows.getSuggestedFriends);
 
   if (!user) {
     return (
@@ -24,13 +25,13 @@ function FriendsPageContent() {
   }
 
   // Show nothing while loading
-  if (friendsActivity === undefined) {
+  if (friendsActivity === undefined || suggestedFriends === undefined) {
     return null;
   }
 
   return (
     <main className="min-h-screen px-4 pt-6 md:pt-24 pb-20 md:pb-12">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-8">
         {/* Friends List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -60,6 +61,23 @@ function FriendsPageContent() {
             </div>
           )}
         </motion.div>
+
+        {/* Suggested Friends */}
+        {suggestedFriends.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-bold">Suggested Friends ({suggestedFriends.length})</h2>
+            </div>
+            {suggestedFriends.map((friend, index) => (
+              <FriendCard key={friend._id} friend={friend} index={index} />
+            ))}
+          </motion.div>
+        )}
       </div>
     </main>
   );

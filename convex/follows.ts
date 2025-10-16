@@ -249,6 +249,137 @@ export const getFollowing = query({
 });
 
 /**
+ * Helper function to get enriched user data (used by getFriendsActivity and getSuggestedFriends)
+ */
+async function getEnrichedUserData(ctx: any, friend: any) {
+  // Get all friend's focus sessions for streak calculation
+  const allSessions = await ctx.db
+    .query("pomodoros")
+    .withIndex("by_user", (q: any) => q.eq("userId", friend._id))
+    .filter((q: any) => q.eq(q.field("mode"), "focus"))
+    .collect();
+
+  // Calculate calendar day boundaries
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  // Calculate today's pomos based on calendar day (not 24h rolling window)
+  const todayPomos = allSessions.filter((s: any) => s.completedAt >= todayStart).length;
+
+  // Calculate total pomos from actual sessions (not cached value)
+  const totalPomos = allSessions.length;
+
+  // Calculate current daily streak
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sortedSessions = [...allSessions].sort((a, b) => b.completedAt - a.completedAt);
+
+  let dailyStreak = 0;
+  const currentDate = new Date(today);
+  let checkingDate = true;
+
+  while (checkingDate) {
+    currentDate.setHours(0, 0, 0, 0);
+    const dateStart = currentDate.getTime();
+    const dateEnd = dateStart + 24 * 60 * 60 * 1000;
+
+    const hasSession = sortedSessions.some(
+      (s) => s.completedAt >= dateStart && s.completedAt < dateEnd
+    );
+
+    if (hasSession) {
+      dailyStreak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else if (currentDate.getTime() === today.getTime()) {
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      checkingDate = false;
+    }
+  }
+
+  // Get 3 most recent focus sessions
+  const recentSessions = sortedSessions.slice(0, 3).map((session) => ({
+    tag: session.tag,
+    duration: session.duration,
+    completedAt: session.completedAt,
+  }));
+
+  // Get latest completed challenge
+  const latestChallenge = await ctx.db
+    .query("userChallenges")
+    .withIndex("by_user_completed", (q: any) => q.eq("userId", friend._id).eq("completed", true))
+    .order("desc")
+    .first();
+
+  let latestChallengeData = null;
+  if (latestChallenge) {
+    const challenge = await ctx.db.get(latestChallenge.challengeId);
+    if (challenge) {
+      latestChallengeData = {
+        name: challenge.name,
+        description: challenge.description,
+        badge: challenge.badge,
+        completedAt: latestChallenge.completedAt,
+      };
+    }
+  }
+
+  // Calculate level (using same logic as profile page)
+  const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
+
+  let currentLevel = 1;
+  let levelTitle = "Beginner";
+
+  if (levelConfigs.length > 0) {
+    // Sort by threshold to ensure correct order
+    const sortedConfigs = [...levelConfigs].sort((a, b) => a.threshold - b.threshold);
+
+    // Find the highest level the user has reached
+    for (const level of sortedConfigs) {
+      if (totalPomos >= level.threshold) {
+        currentLevel = level.level;
+        levelTitle = level.title;
+      } else {
+        break;
+      }
+    }
+  } else {
+    // Fallback to default levels
+    const defaultLevels = [
+      { level: 1, title: "Beginner", threshold: 0 },
+      { level: 2, title: "Novice", threshold: 2 },
+      { level: 3, title: "Apprentice", threshold: 4 },
+      { level: 4, title: "Adept", threshold: 8 },
+      { level: 5, title: "Expert", threshold: 16 },
+      { level: 6, title: "Master", threshold: 31 },
+      { level: 7, title: "Grandmaster", threshold: 51 },
+      { level: 8, title: "Legend", threshold: 76 },
+      { level: 9, title: "Mythic", threshold: 106 },
+      { level: 10, title: "Immortal", threshold: 141 },
+    ];
+    for (const level of defaultLevels) {
+      if (totalPomos >= level.threshold) {
+        currentLevel = level.level;
+        levelTitle = level.title;
+      }
+    }
+  }
+
+  return {
+    _id: friend._id,
+    username: friend.username,
+    avatarUrl: friend.avatarUrl,
+    totalPomos: totalPomos,
+    todayPomos: todayPomos,
+    currentStreak: dailyStreak,
+    level: currentLevel,
+    levelTitle: levelTitle,
+    recentSessions: recentSessions,
+    latestChallenge: latestChallengeData,
+  };
+}
+
+/**
  * Get enriched activity data for all users that the current user follows
  * Returns friend cards with stats and recent sessions
  */
@@ -278,128 +409,64 @@ export const getFriendsActivity = query({
       follows.map(async (follow) => {
         const friend = await ctx.db.get(follow.followingId);
         if (!friend) return null;
-
-        // Get all friend's focus sessions for streak calculation
-        const allSessions = await ctx.db
-          .query("pomodoros")
-          .withIndex("by_user", (q) => q.eq("userId", friend._id))
-          .filter((q) => q.eq(q.field("mode"), "focus"))
-          .collect();
-
-        // Calculate current daily streak
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const sortedSessions = [...allSessions].sort((a, b) => b.completedAt - a.completedAt);
-
-        let dailyStreak = 0;
-        const currentDate = new Date(today);
-        let checkingDate = true;
-
-        while (checkingDate) {
-          currentDate.setHours(0, 0, 0, 0);
-          const dateStart = currentDate.getTime();
-          const dateEnd = dateStart + 24 * 60 * 60 * 1000;
-
-          const hasSession = sortedSessions.some(
-            (s) => s.completedAt >= dateStart && s.completedAt < dateEnd
-          );
-
-          if (hasSession) {
-            dailyStreak++;
-            currentDate.setDate(currentDate.getDate() - 1);
-          } else if (currentDate.getTime() === today.getTime()) {
-            currentDate.setDate(currentDate.getDate() - 1);
-          } else {
-            checkingDate = false;
-          }
-        }
-
-        // Get 3 most recent focus sessions
-        const recentSessions = sortedSessions.slice(0, 3).map((session) => ({
-          tag: session.tag,
-          duration: session.duration,
-          completedAt: session.completedAt,
-        }));
-
-        // Get latest completed challenge
-        const latestChallenge = await ctx.db
-          .query("userChallenges")
-          .withIndex("by_user_completed", (q) => q.eq("userId", friend._id).eq("completed", true))
-          .order("desc")
-          .first();
-
-        let latestChallengeData = null;
-        if (latestChallenge) {
-          const challenge = await ctx.db.get(latestChallenge.challengeId);
-          if (challenge) {
-            latestChallengeData = {
-              name: challenge.name,
-              description: challenge.description,
-              badge: challenge.badge,
-              completedAt: latestChallenge.completedAt,
-            };
-          }
-        }
-
-        // Calculate level (using same logic as profile page)
-        const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
-        const totalPomos = friend.totalPomos ?? 0;
-
-        let currentLevel = 1;
-        let levelTitle = "Beginner";
-
-        if (levelConfigs.length > 0) {
-          // Sort by threshold to ensure correct order
-          const sortedConfigs = [...levelConfigs].sort((a, b) => a.threshold - b.threshold);
-
-          // Find the highest level the user has reached
-          for (const level of sortedConfigs) {
-            if (totalPomos >= level.threshold) {
-              currentLevel = level.level;
-              levelTitle = level.title;
-            } else {
-              break;
-            }
-          }
-        } else {
-          // Fallback to default levels
-          const defaultLevels = [
-            { level: 1, title: "Beginner", threshold: 0 },
-            { level: 2, title: "Novice", threshold: 2 },
-            { level: 3, title: "Apprentice", threshold: 4 },
-            { level: 4, title: "Adept", threshold: 8 },
-            { level: 5, title: "Expert", threshold: 16 },
-            { level: 6, title: "Master", threshold: 31 },
-            { level: 7, title: "Grandmaster", threshold: 51 },
-            { level: 8, title: "Legend", threshold: 76 },
-            { level: 9, title: "Mythic", threshold: 106 },
-            { level: 10, title: "Immortal", threshold: 141 },
-          ];
-          for (const level of defaultLevels) {
-            if (totalPomos >= level.threshold) {
-              currentLevel = level.level;
-              levelTitle = level.title;
-            }
-          }
-        }
-
-        return {
-          _id: friend._id,
-          username: friend.username,
-          avatarUrl: friend.avatarUrl,
-          totalPomos: totalPomos,
-          todayPomos: friend.todayPomos ?? 0,
-          currentStreak: dailyStreak,
-          level: currentLevel,
-          levelTitle: levelTitle,
-          recentSessions: recentSessions,
-          latestChallenge: latestChallengeData,
-        };
+        return await getEnrichedUserData(ctx, friend);
       })
     );
 
     // Filter out nulls and sort by most active today (pomos today desc, then total desc)
     return friendsData
+      .filter((f) => f !== null)
+      .sort((a, b) => {
+        if (b!.todayPomos !== a!.todayPomos) {
+          return b!.todayPomos - a!.todayPomos;
+        }
+        return b!.totalPomos - a!.totalPomos;
+      });
+  },
+});
+
+/**
+ * Get all users on the platform as suggested friends
+ * Excludes current user and users already being followed
+ */
+export const getSuggestedFriends = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!currentUser) return [];
+
+    // Get all users current user is following
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", currentUser._id))
+      .collect();
+
+    const followingIds = new Set(follows.map((f) => f.followingId));
+
+    // Get all users on the platform
+    const allUsers = await ctx.db.query("users").collect();
+
+    // Filter out current user and already followed users
+    const suggestedUsers = allUsers.filter(
+      (user) => user._id !== currentUser._id && !followingIds.has(user._id)
+    );
+
+    // Fetch enriched data for each suggested friend in parallel
+    const suggestedFriendsData = await Promise.all(
+      suggestedUsers.map(async (user) => {
+        return await getEnrichedUserData(ctx, user);
+      })
+    );
+
+    // Sort by most active today (pomos today desc, then total desc)
+    return suggestedFriendsData
       .filter((f) => f !== null)
       .sort((a, b) => {
         if (b!.todayPomos !== a!.todayPomos) {

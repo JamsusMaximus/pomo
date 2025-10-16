@@ -25,7 +25,7 @@ export function ShareProfileButton({ username }: ShareProfileButtonProps) {
   };
 
   return (
-    <Button onClick={handleShare} variant="outline" size="sm">
+    <Button onClick={handleShare} variant="outline" size="sm" className="min-h-[44px]">
       {copied ? (
         <>
           <Check className="w-4 h-4 mr-2 text-green-500" />

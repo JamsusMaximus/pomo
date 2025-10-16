@@ -10,14 +10,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getLevelInfo, getLevelTitle } from "@/lib/levels";
-import { Users } from "lucide-react";
+import { Users, Lock } from "lucide-react";
 
 interface NavbarProps {
   isTimerRunning?: boolean;
 }
 
 export function Navbar({ isTimerRunning = false }: NavbarProps) {
-  const { user, isSignedIn } = useUser();
+  const { user } = useUser();
   const profileStats = useQuery(api.stats.getProfileStats);
   const stats = useQuery(api.stats.getStats);
   const levelConfig = useQuery(api.levels.getLevelConfig);
@@ -134,16 +134,27 @@ export function Navbar({ isTimerRunning = false }: NavbarProps) {
               <span>Friends</span>
             </Link>
           </SignedIn>
+
+          {/* Rules Menu */}
+          <Link
+            href="/rules"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted transition-colors text-sm font-medium"
+          >
+            <Lock className="w-4 h-4" />
+            <span>Rules</span>
+          </Link>
         </div>
 
         {/* Right: Profile, Level, Dark Mode */}
         <div className="flex items-center gap-3">
           <SignedOut>
-            <SignUpButton mode="modal">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </SignUpButton>
+            <div className="flex items-center">
+              <SignUpButton mode="modal">
+                <Button variant="ghost" size="sm" className="h-10 flex items-center">
+                  Sign up / Sign in
+                </Button>
+              </SignUpButton>
+            </div>
           </SignedOut>
           <SignedIn>
             <Link

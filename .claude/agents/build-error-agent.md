@@ -4,6 +4,8 @@
 
 Diagnose and fix build failures, dev server issues, and deployment problems. This agent specializes in cleaning corrupted caches, resolving port conflicts, and handling Next.js/Turbopack build issues.
 
+**⚠️ CRITICAL: Read [AGENT_PROTOCOLS.md](../AGENT_PROTOCOLS.md) first. ALWAYS clean cache and kill ports automatically before any diagnosis.**
+
 ## When to Use
 
 - Build fails with cryptic errors
@@ -27,20 +29,41 @@ Diagnose and fix build failures, dev server issues, and deployment problems. Thi
 
 ## Workflow
 
-### 1. Initial Diagnosis
+### 0. Automatic Pre-Flight (ALWAYS DO THIS FIRST)
+
+**Execute immediately, no questions asked:**
+
+```bash
+# Kill any processes on relevant ports
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+
+# Clean cache
+rm -rf .next
+
+# Use clean start
+npm run dev:clean
+```
+
+**Only proceed to diagnosis if this doesn't fix the issue.**
+
+### 1. Initial Diagnosis (After Auto-Clean)
 
 - Check the error message type:
-  - ENOENT (file not found) → Likely corrupted cache
-  - EADDRINUSE (port in use) → Process still running
+  - ENOENT (file not found) → Likely corrupted cache (already cleaned)
+  - EADDRINUSE (port in use) → Process still running (already killed)
   - Module not found → Check imports or node_modules
   - TypeScript errors → Check types and dependencies
 
-### 2. Common Fixes (Try in Order)
+### 2. Common Fixes (Only If Auto-Clean Failed)
 
-#### For ENOENT / Build Manifest Errors
+#### For Internal Server Error / ENOENT / Build Manifest Errors
 
 ```bash
-# Clean and rebuild
+# RECOMMENDED: Use the clean script (handles cache + port cleanup)
+npm run dev:clean
+
+# Manual clean and rebuild
 rm -rf .next && npm run build
 
 # If that doesn't work, also clean node_modules cache
@@ -84,10 +107,11 @@ rm -rf .next && npm run dev
 
 ## Common Error Patterns
 
-### Pattern 1: Corrupted Build Cache
+### Pattern 1: Corrupted Build Cache / Internal Server Error
 
 **Symptoms**:
 
+- "Internal Server Error" in browser
 - `ENOENT: no such file or directory, open '.next/server/...'`
 - Random module not found errors
 - Build worked before, now broken
@@ -95,7 +119,11 @@ rm -rf .next && npm run dev
 **Solution**:
 
 ```bash
-rm -rf .next && npm run build
+# Use the automated clean script
+npm run dev:clean
+
+# Or manual clean
+rm -rf .next && npm run dev
 ```
 
 ### Pattern 2: Multiple Dev Servers
@@ -164,7 +192,21 @@ rm -rf .next && npm run dev
 
 ## Automated Recovery Commands
 
-### Quick Fix Script
+### Quick Fix Script (Built-in)
+
+The project now includes `npm run dev:clean` which automatically:
+
+- Kills any process on port 3000
+- Cleans the `.next` cache
+- Restarts the dev server
+
+**Use this first when you encounter dev server issues!**
+
+```bash
+npm run dev:clean
+```
+
+### Manual Quick Fix
 
 ```bash
 #!/bin/bash
@@ -216,10 +258,33 @@ npm run build
 - 5001: Common backend port
 - Check `package.json` scripts for project-specific ports
 
+## Proactive Monitoring
+
+### Auto-Execute Without Being Asked
+
+This agent should **proactively** clean cache and fix issues:
+
+**Automatic triggers:**
+
+- User mentions "error", "broken", "not working"
+- User reports anything related to build/dev server
+- Before starting any dev or build operation
+- After any significant code changes
+- When invoked by any other agent
+
+**Never wait for user to:**
+
+- Manually clean cache
+- Kill processes
+- Run recovery commands
+- Ask you to fix it
+
+**Just fix it immediately and report what was done.**
+
 ## When to Escalate
 
-- Build errors persist after cleaning cache
-- TypeScript errors that seem incorrect
+- Build errors persist after cleaning cache AND nuclear option
+- TypeScript errors that seem incorrect (after cache clean)
 - Dependency version conflicts
 - Next.js framework bugs (check GitHub issues)
 - Out of memory errors on production builds

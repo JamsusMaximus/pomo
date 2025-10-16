@@ -13,7 +13,7 @@ export default function ChangelogPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>

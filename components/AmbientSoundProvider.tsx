@@ -1,5 +1,5 @@
 /**
- * @fileoverview Global ambient sound provider that persists across page navigation
+ * @fileoverview Global ambient sound provider supporting multiple simultaneous sounds
  */
 
 "use client";
@@ -13,206 +13,225 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import {
-  AMBIENT_SOUNDS,
-  AmbientSoundId,
-  DEFAULT_VOLUME,
-  AMBIENT_VOLUME_KEY,
-  AMBIENT_SOUND_KEY,
-  AMBIENT_ENABLED_KEY,
-} from "@/lib/ambientSounds";
+import { AMBIENT_SOUNDS, AmbientSoundId, VOLUME_STORAGE_PREFIX } from "@/lib/ambientSounds";
 
-const FADE_DURATION = 1000; // 1 second fade in/out
+const FADE_DURATION = 1500; // 1.5 second fade in/out
+
+// Ease-in-out function for smooth animation
+const easeInOutCubic = (t: number): number => {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
 
 interface AmbientSoundContextType {
-  isPlaying: boolean;
-  volume: number;
-  activeSound: AmbientSoundId;
-  play: () => void;
-  pause: () => void;
-  toggle: () => void;
-  changeVolume: (newVolume: number) => void;
-  changeSound: (soundId: AmbientSoundId) => void;
-  availableSounds: (typeof AMBIENT_SOUNDS)[keyof typeof AMBIENT_SOUNDS][];
+  volumes: Record<AmbientSoundId, number>;
+  isPlaying: Record<AmbientSoundId, boolean>;
+  setVolume: (soundId: AmbientSoundId, volume: number) => void;
+  toggleSound: (soundId: AmbientSoundId) => void;
 }
 
 const AmbientSoundContext = createContext<AmbientSoundContextType | null>(null);
 
 export function AmbientSoundProvider({ children }: { children: ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Store audio elements and fade intervals in refs
+  const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
+  const fadeIntervalsRef = useRef<Record<string, NodeJS.Timeout | null>>({});
 
-  // Load persisted state
-  const [volume, setVolume] = useState<number>(() => {
-    if (typeof window === "undefined") return DEFAULT_VOLUME;
-    const saved = localStorage.getItem(AMBIENT_VOLUME_KEY);
-    return saved ? parseFloat(saved) : DEFAULT_VOLUME;
+  // Initialize volumes - always start at 0 on page load
+  const [volumes, setVolumes] = useState<Record<AmbientSoundId, number>>({
+    rain: 0,
+    thunder: 0,
+    ocean: 0,
+    whitenoise: 0,
   });
 
-  const [activeSound, setActiveSound] = useState<AmbientSoundId>(() => {
-    if (typeof window === "undefined") return "rain";
-    const saved = localStorage.getItem(AMBIENT_SOUND_KEY);
-    return (saved as AmbientSoundId) || "rain";
+  // Track which sounds are playing
+  const [isPlaying, setIsPlaying] = useState<Record<AmbientSoundId, boolean>>({
+    rain: false,
+    thunder: false,
+    ocean: false,
+    whitenoise: false,
   });
 
-  const [isEnabled, setIsEnabled] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const saved = localStorage.getItem(AMBIENT_ENABLED_KEY);
-    return saved === "true";
-  });
-
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  // Initialize audio element
+  // Initialize audio elements and clear localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    if (!audioRef.current) {
-      const audio = new Audio();
-      audio.loop = true;
-      audio.preload = "auto";
-      audioRef.current = audio;
-    }
+    // Clear any saved volumes - always start fresh
+    Object.keys(AMBIENT_SOUNDS).forEach((soundId) => {
+      localStorage.removeItem(`${VOLUME_STORAGE_PREFIX}${soundId}`);
+    });
 
-    const audio = audioRef.current;
-    audio.src = AMBIENT_SOUNDS[activeSound].file;
-    audio.volume = 0; // Start at 0 for fade in
+    Object.entries(AMBIENT_SOUNDS).forEach(([soundId, sound]) => {
+      if (!audioRefs.current[soundId]) {
+        const audio = new Audio();
+        audio.loop = true;
+        audio.preload = "auto";
+        audio.src = sound.file;
+        audio.volume = 0; // Start at 0
+        audioRefs.current[soundId] = audio;
+      }
+    });
 
     return () => {
-      if (fadeIntervalRef.current) {
-        clearInterval(fadeIntervalRef.current);
-      }
-      // Don't pause on cleanup - let it continue playing
-    };
-  }, [activeSound]);
-
-  // Fade helper function
-  const fade = useCallback((targetVolume: number, duration: number, onComplete?: () => void) => {
-    if (!audioRef.current) return;
-
-    if (fadeIntervalRef.current) {
-      clearInterval(fadeIntervalRef.current);
-    }
-
-    const audio = audioRef.current;
-    const startVolume = audio.volume;
-    const volumeDiff = targetVolume - startVolume;
-    const steps = 20;
-    const stepDuration = duration / steps;
-    const volumeStep = volumeDiff / steps;
-    let currentStep = 0;
-
-    fadeIntervalRef.current = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        audio.volume = targetVolume;
-        if (fadeIntervalRef.current) {
-          clearInterval(fadeIntervalRef.current);
-          fadeIntervalRef.current = null;
+      // Cleanup: stop all sounds and clear intervals
+      Object.keys(audioRefs.current).forEach((soundId) => {
+        if (fadeIntervalsRef.current[soundId]) {
+          clearInterval(fadeIntervalsRef.current[soundId]!);
         }
-        onComplete?.();
-      } else {
-        audio.volume = startVolume + volumeStep * currentStep;
-      }
-    }, stepDuration);
+        audioRefs.current[soundId]?.pause();
+      });
+    };
   }, []);
 
-  // Play with fade in
-  const play = useCallback(() => {
-    if (!audioRef.current) return;
+  // Fade helper function
+  const fade = useCallback(
+    (soundId: string, targetVolume: number, duration: number, onComplete?: () => void) => {
+      const audio = audioRefs.current[soundId];
+      if (!audio) return;
 
-    const audio = audioRef.current;
-    audio.volume = 0;
-
-    audio
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-        fade(volume, FADE_DURATION);
-      })
-      .catch((error) => {
-        console.error("Failed to play ambient sound:", error);
-      });
-  }, [volume, fade]);
-
-  // Pause with fade out
-  const pause = useCallback(() => {
-    if (!audioRef.current) return;
-
-    fade(0, FADE_DURATION, () => {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    });
-  }, [fade]);
-
-  // Toggle play/pause
-  const toggle = useCallback(() => {
-    if (isPlaying) {
-      pause();
-      setIsEnabled(false);
-    } else {
-      play();
-      setIsEnabled(true);
-    }
-  }, [isPlaying, play, pause]);
-
-  // Change volume
-  const changeVolume = useCallback(
-    (newVolume: number) => {
-      const clampedVolume = Math.max(0, Math.min(1, newVolume));
-      setVolume(clampedVolume);
-
-      if (audioRef.current && isPlaying) {
-        audioRef.current.volume = clampedVolume;
+      if (fadeIntervalsRef.current[soundId]) {
+        clearInterval(fadeIntervalsRef.current[soundId]!);
       }
 
-      localStorage.setItem(AMBIENT_VOLUME_KEY, clampedVolume.toString());
+      const startVolume = audio.volume;
+      const volumeDiff = targetVolume - startVolume;
+      const steps = 20;
+      const stepDuration = duration / steps;
+      const volumeStep = volumeDiff / steps;
+      let currentStep = 0;
+
+      fadeIntervalsRef.current[soundId] = setInterval(() => {
+        currentStep++;
+        if (currentStep >= steps) {
+          audio.volume = targetVolume;
+          if (fadeIntervalsRef.current[soundId]) {
+            clearInterval(fadeIntervalsRef.current[soundId]!);
+            fadeIntervalsRef.current[soundId] = null;
+          }
+          onComplete?.();
+        } else {
+          audio.volume = startVolume + volumeStep * currentStep;
+        }
+      }, stepDuration);
+    },
+    []
+  );
+
+  // Set volume for a specific sound (immediate, no fade - used by slider)
+  const setVolume = useCallback(
+    (soundId: AmbientSoundId, volume: number) => {
+      const clampedVolume = Math.max(0, Math.min(1, volume));
+      const audio = audioRefs.current[soundId];
+
+      setVolumes((prev) => ({
+        ...prev,
+        [soundId]: clampedVolume,
+      }));
+
+      localStorage.setItem(`${VOLUME_STORAGE_PREFIX}${soundId}`, clampedVolume.toString());
+
+      if (audio) {
+        if (clampedVolume === 0 && isPlaying[soundId]) {
+          // Stop immediately (no fade for slider)
+          audio.pause();
+          audio.volume = 0;
+          setIsPlaying((prev) => ({ ...prev, [soundId]: false }));
+        } else if (clampedVolume > 0 && !isPlaying[soundId]) {
+          // Start playing immediately at target volume (no fade for slider)
+          audio.volume = clampedVolume;
+          audio
+            .play()
+            .then(() => {
+              setIsPlaying((prev) => ({ ...prev, [soundId]: true }));
+            })
+            .catch((error) => {
+              console.error(`Failed to play ${soundId}:`, error);
+            });
+        } else if (isPlaying[soundId]) {
+          // Just adjust volume immediately (no fade)
+          audio.volume = clampedVolume;
+        }
+      }
     },
     [isPlaying]
   );
 
-  // Change sound
-  const changeSound = useCallback(
+  // Toggle sound (icon click - goes to 100% with fade or 0% with fade)
+  const toggleSound = useCallback(
     (soundId: AmbientSoundId) => {
-      const wasPlaying = isPlaying;
+      const currentVolume = volumes[soundId];
+      const audio = audioRefs.current[soundId];
 
-      if (wasPlaying) {
-        pause();
-      }
+      if (!audio) return;
 
-      setActiveSound(soundId);
-      localStorage.setItem(AMBIENT_SOUND_KEY, soundId);
+      if (currentVolume > 0) {
+        // Turn off with fade - animate both audio and slider using RAF
+        const startVolume = currentVolume;
+        const startTime = performance.now();
 
-      if (wasPlaying) {
-        // Small delay to let the audio source change
-        setTimeout(() => play(), 100);
+        const animateFadeOut = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / FADE_DURATION, 1);
+          const easedProgress = easeInOutCubic(progress);
+          const newVolume = startVolume * (1 - easedProgress);
+
+          audio.volume = newVolume;
+          setVolumes((prev) => ({ ...prev, [soundId]: newVolume }));
+
+          if (progress < 1) {
+            requestAnimationFrame(animateFadeOut);
+          } else {
+            audio.pause();
+            audio.volume = 0;
+            setIsPlaying((prev) => ({ ...prev, [soundId]: false }));
+            setVolumes((prev) => ({ ...prev, [soundId]: 0 }));
+            localStorage.setItem(`${VOLUME_STORAGE_PREFIX}${soundId}`, "0");
+          }
+        };
+
+        requestAnimationFrame(animateFadeOut);
+      } else {
+        // Turn on to 100% with fade - animate both audio and slider using RAF
+        audio.volume = 0;
+        audio
+          .play()
+          .then(() => {
+            setIsPlaying((prev) => ({ ...prev, [soundId]: true }));
+
+            const startTime = performance.now();
+
+            const animateFadeIn = (currentTime: number) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / FADE_DURATION, 1);
+              const easedProgress = easeInOutCubic(progress);
+              const newVolume = easedProgress;
+
+              audio.volume = newVolume;
+              setVolumes((prev) => ({ ...prev, [soundId]: newVolume }));
+
+              if (progress < 1) {
+                requestAnimationFrame(animateFadeIn);
+              } else {
+                setVolumes((prev) => ({ ...prev, [soundId]: 1 }));
+                localStorage.setItem(`${VOLUME_STORAGE_PREFIX}${soundId}`, "1");
+              }
+            };
+
+            requestAnimationFrame(animateFadeIn);
+          })
+          .catch((error) => {
+            console.error(`Failed to play ${soundId}:`, error);
+          });
       }
     },
-    [isPlaying, pause, play]
+    [volumes]
   );
 
-  // Persist enabled state
-  useEffect(() => {
-    localStorage.setItem(AMBIENT_ENABLED_KEY, isEnabled.toString());
-  }, [isEnabled]);
-
-  // Auto-play if enabled on mount
-  useEffect(() => {
-    if (isEnabled && !isPlaying && audioRef.current) {
-      play();
-    }
-  }, []); // Only run on mount
-
   const value: AmbientSoundContextType = {
+    volumes,
     isPlaying,
-    volume,
-    activeSound,
-    play,
-    pause,
-    toggle,
-    changeVolume,
-    changeSound,
-    availableSounds: Object.values(AMBIENT_SOUNDS),
+    setVolume,
+    toggleSound,
   };
 
   return <AmbientSoundContext.Provider value={value}>{children}</AmbientSoundContext.Provider>;

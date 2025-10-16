@@ -1,4 +1,33 @@
-# Scripts
+# Scripts Directory
+
+Utility scripts for development, deployment, and maintenance.
+
+## Development Scripts
+
+### Clean Dev (`clean-dev.sh`)
+
+**Quick cache cleanup and port recovery**
+
+```bash
+npm run dev:clean
+```
+
+**What it does:**
+
+- Removes `.next` cache directory
+- Kills any process on port 3000
+- Restarts dev server
+
+**When to use:**
+
+- "Internal Server Error" in browser
+- Port conflict errors
+- Hot reload stops working
+- After pulling code changes
+
+See [Troubleshooting Internal Server Error](../docs/troubleshooting-internal-server-error.md) for details.
+
+---
 
 ## Generate Changelog
 

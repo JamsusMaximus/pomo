@@ -12,6 +12,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 
 interface PomodoroFeedProps {
   sessions: PomodoroSession[]; // Fallback for non-signed in users
+  initialLimit?: number; // Initial number of sessions to show
+  showMoreButton?: boolean; // Whether to show a "show more" button
 }
 
 function formatTime(timestamp: number): string {
@@ -28,11 +30,16 @@ function formatDuration(seconds: number): string {
   return `${minutes}m`;
 }
 
-export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
+export function PomodoroFeed({
+  sessions,
+  initialLimit,
+  showMoreButton = false,
+}: PomodoroFeedProps) {
   const { isSignedIn } = useUser();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string>("");
   const [showSuggestionsFor, setShowSuggestionsFor] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState<number | null>(initialLimit || null);
 
   // Fetch from Convex if signed in, otherwise use localStorage sessions
   const convexSessions = useQuery(api.pomodoros.getMyPomodoros, { limit: 20 });
@@ -43,7 +50,13 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
 
   // Filter to only focus sessions and sort by completion time (most recent first)
   const focusSessions = displaySessions.filter((s) => s.mode === "focus");
-  const sortedSessions = [...focusSessions].sort((a, b) => b.completedAt - a.completedAt);
+  const allSortedSessions = [...focusSessions].sort((a, b) => b.completedAt - a.completedAt);
+
+  // Apply limit if specified
+  const sortedSessions = displayLimit
+    ? allSortedSessions.slice(0, displayLimit)
+    : allSortedSessions;
+  const hasMore = displayLimit && allSortedSessions.length > displayLimit;
 
   const handleStartEdit = (sessionId: string, currentTag?: string) => {
     setEditingId(sessionId);
@@ -256,6 +269,16 @@ export function PomodoroFeed({ sessions }: PomodoroFeedProps) {
           );
         })}
       </div>
+      {showMoreButton && hasMore && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setDisplayLimit(null)}
+            className="px-4 py-2 text-sm font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 rounded-lg transition-colors"
+          >
+            Show More ({allSortedSessions.length - sortedSessions.length} more)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

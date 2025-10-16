@@ -171,7 +171,7 @@ export function ActivityHeatmap({ data, compact = false }: ActivityHeatmapProps)
                     year: "numeric",
                   });
                   const tooltip = day.data
-                    ? `${day.data.count} pomodoros (${day.data.minutes}m) on ${dateStr}`
+                    ? `${day.data.count} ${day.data.count === 1 ? "pomo" : "pomos"} on ${dateStr}`
                     : `No activity on ${dateStr}`;
 
                   return (

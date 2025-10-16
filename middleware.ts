@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 // Define public routes (accessible without auth)
 const isPublicRoute = createRouteMatcher([
@@ -8,10 +9,16 @@ const isPublicRoute = createRouteMatcher([
   "/sso-callback", // OAuth callback for Clerk
   "/download", // Download page is public
   "/changelog", // Changelog is public
+  "/rules", // Rules page is public
   "/profile/(.*)", // Public profiles are accessible without auth
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Redirect common typo: /signin → /sign-in
+  if (req.nextUrl.pathname === "/signin") {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
   // Protect only non-public routes
   if (!isPublicRoute(req)) {
     await auth.protect();
@@ -21,7 +28,7 @@ export default clerkMiddleware(async (auth, req) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|icon|apple-icon|favicon.ico|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|wav|ogg)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],

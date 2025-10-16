@@ -16,9 +16,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { motion } from "@/components/motion";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignUpButton } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ import { useTimer } from "@/hooks/useTimer";
 import { formatTime } from "@/lib/format";
 import { FOCUS_DEFAULT, BREAK_DEFAULT } from "@/lib/constants";
 import { loadPreferences, savePreferences } from "@/lib/storage/preferences";
-import { getLevelInfo, getLevelTitle } from "@/lib/levels";
 import {
   saveCompletedSession,
   loadSessions,
@@ -34,12 +33,14 @@ import {
   getUnsyncedSessions,
   markSessionsSynced,
 } from "@/lib/storage/sessions";
-import { PomodoroFeed } from "@/components/PomodoroFeed";
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { TagInput } from "@/components/TagInput";
+import { ChallengeToast } from "@/components/ChallengeToast";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
+import { AnimatePresence } from "@/components/motion";
+import { useSearchParams } from "next/navigation";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -53,6 +54,9 @@ const calculatePomosToday = (sessions: PomodoroSession[]) => {
 };
 
 function HomeContent() {
+  const searchParams = useSearchParams();
+  const autostart = searchParams.get("autostart") === "true";
+
   const [focusDuration, setFocusDuration] = useState(FOCUS_DEFAULT);
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -72,69 +76,19 @@ function HomeContent() {
   const [flowSessionId, setFlowSessionId] = useState<string | null>(null);
   const [showFlowCompleteToast, setShowFlowCompleteToast] = useState(false);
   const [flowToastCount, setFlowToastCount] = useState(0);
+  const [showChallengeToast, setShowChallengeToast] = useState(false);
+  const challengeToastTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAutostartedRef = useRef(false);
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
 
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
-  const profileStats = useQuery(api.stats.getProfileStats); // Fast cached query for profile
-  const stats = useQuery(api.stats.getStats);
-  const levelConfig = useQuery(api.levels.getLevelConfig);
+  const nextChallenge = useQuery(api.challenges.getNextChallenge);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
   const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
-
-  // Memoize level info calculation to avoid expensive recalculation
-  // Use profileStats for instant profile section, fallback to stats for other uses
-  const levelInfo = useMemo(() => {
-    const statsToUse = profileStats || stats;
-    if (!statsToUse) return null;
-
-    const pomos = statsToUse.total.count;
-
-    // Use lib fallback if levelConfig is still loading or empty
-    if (!levelConfig || !Array.isArray(levelConfig) || levelConfig.length === 0) {
-      const info = getLevelInfo(pomos);
-      return { ...info, title: getLevelTitle(info.currentLevel) };
-    }
-
-    let currentLevel = levelConfig[0];
-    for (const level of levelConfig) {
-      if (level.threshold <= pomos) {
-        currentLevel = level;
-      } else {
-        break;
-      }
-    }
-
-    const currentIndex = levelConfig.findIndex((l) => l.level === currentLevel.level);
-    const nextLevel = levelConfig[currentIndex + 1];
-
-    if (!nextLevel) {
-      return {
-        currentLevel: currentLevel.level,
-        pomosForCurrentLevel: currentLevel.threshold,
-        pomosForNextLevel: currentLevel.threshold,
-        pomosRemaining: 0,
-        progress: 100,
-        title: currentLevel.title,
-      };
-    }
-
-    const pomosInCurrentLevel = pomos - currentLevel.threshold;
-    const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
-    const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
-
-    return {
-      currentLevel: currentLevel.level,
-      pomosForCurrentLevel: currentLevel.threshold,
-      pomosForNextLevel: nextLevel.threshold,
-      pomosRemaining: nextLevel.threshold - pomos,
-      progress: Math.min(100, Math.max(0, progress)),
-      title: currentLevel.title,
-    };
-  }, [profileStats, stats, levelConfig]);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
@@ -155,6 +109,15 @@ function HomeContent() {
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
+      }
+    };
+  }, []);
+
+  // Cleanup challenge toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (challengeToastTimerRef.current) {
+        clearTimeout(challengeToastTimerRef.current);
       }
     };
   }, []);
@@ -330,6 +293,22 @@ function HomeContent() {
               console.error("Failed to save session to Convex:", err);
               // Session remains unsynced and will be retried later
             });
+
+          // Show challenge toast if there's a next challenge
+          if (nextChallenge) {
+            // Clear previous timeout if it exists
+            if (challengeToastTimerRef.current) {
+              clearTimeout(challengeToastTimerRef.current);
+            }
+
+            setShowChallengeToast(true);
+
+            // Auto-dismiss after 8 seconds
+            challengeToastTimerRef.current = setTimeout(() => {
+              setShowChallengeToast(false);
+              challengeToastTimerRef.current = null;
+            }, 8000);
+          }
         }
 
         // Refresh sessions display (cyclesCompleted auto-updates via useMemo)
@@ -619,6 +598,18 @@ function HomeContent() {
     setIsTimerRunning(isRunning);
   }, [isRunning, setIsTimerRunning]);
 
+  // Autostart timer if ?autostart=true parameter is present
+  useEffect(() => {
+    if (autostart && isHydrated && !hasAutostartedRef.current && !isRunning) {
+      hasAutostartedRef.current = true;
+      // Small delay to ensure UI is ready
+      setTimeout(() => {
+        start();
+        setShowSpaceHint(false);
+      }, 500);
+    }
+  }, [autostart, isHydrated, isRunning, start]);
+
   // Update browser tab title with live countdown
   useEffect(() => {
     if (isFlowMode && isRunning) {
@@ -634,12 +625,12 @@ function HomeContent() {
       }
     } else {
       // Reset to default title when not running
-      document.title = "Pomodoro";
+      document.title = "Lock.in";
     }
 
     // Cleanup: reset title when component unmounts
     return () => {
-      document.title = "Pomodoro";
+      document.title = "Lock.in";
     };
   }, [remaining, mode, isRunning, isFlowMode, flowElapsedTime]);
 
@@ -761,6 +752,16 @@ function HomeContent() {
           </div>
         </motion.div>
       )}
+
+      {/* Challenge Progress Toast */}
+      <AnimatePresence>
+        {showChallengeToast && nextChallenge && (
+          <ChallengeToast
+            challenge={nextChallenge}
+            onDismiss={() => setShowChallengeToast(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Timer Card Container */}
@@ -959,7 +960,7 @@ function HomeContent() {
                   <Button
                     onClick={isRunning ? pause : start}
                     size="lg"
-                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5"
+                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
                   >
                     <span>
                       {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
@@ -977,10 +978,8 @@ function HomeContent() {
                     {/* Shimmer effect - only on initial load when showing "Start" */}
                     {showStartShimmer && !isRunning && !isPaused && (
                       <motion.div
-                        className="absolute inset-0 pointer-events-none"
+                        className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent"
                         style={{
-                          background:
-                            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.2) 55%, transparent 100%)",
                           backgroundSize: "200% 100%",
                         }}
                         animate={{
@@ -1014,7 +1013,7 @@ function HomeContent() {
                           variant="outline"
                           onClick={handleEnterFlowMode}
                           size="lg"
-                          className="w-full py-3 border-orange-500/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                          className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground"
                         >
                           Enter Flow Mode
                         </Button>
@@ -1078,15 +1077,25 @@ function HomeContent() {
           <AmbientSoundControls />
         </motion.div>
 
-        {/* Pomodoro Feed */}
-        {isHydrated && (
+        {/* Sign In CTA - Only show when signed out */}
+        {!isSignedIn && isHydrated && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            className="w-full bg-card rounded-2xl border border-border p-6"
+            className="w-full"
           >
-            <PomodoroFeed sessions={sessions} />
+            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl border border-orange-500/20 p-6 text-center">
+              <h3 className="text-lg font-semibold mb-2">Track Your Progress</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Sign in to save your pomodoros, earn badges, and compete with friends
+              </p>
+              <SignUpButton mode="modal">
+                <Button size="lg" className="w-full sm:w-auto min-h-[44px]">
+                  Sign In / Sign Up
+                </Button>
+              </SignUpButton>
+            </div>
           </motion.div>
         )}
       </div>
@@ -1100,7 +1109,11 @@ export default function Home() {
       fallbackTitle="Timer Error"
       fallbackMessage="The pomodoro timer encountered an error. Your progress has been saved."
     >
-      <HomeContent />
+      <Suspense
+        fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}
+      >
+        <HomeContent />
+      </Suspense>
     </ErrorBoundary>
   );
 }

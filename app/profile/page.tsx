@@ -274,68 +274,100 @@ function ProfilePageContent() {
   return (
     <main className="min-h-screen px-4 pt-6 md:pt-24 pb-20 md:pb-12">
       <div className="max-w-4xl mx-auto">
+        {/* Debug info banner - Development only */}
+        {process.env.NODE_ENV === "development" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <div className="bg-gradient-to-r from-orange-500/10 to-orange-500/5 border border-orange-500/20 rounded-lg p-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-4 flex-wrap text-xs">
+                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                    Debug Mode
+                  </span>
+                  <span className="text-muted-foreground">
+                    Local: {localStats.total}{" "}
+                    {localStats.unsynced > 0 && `(${localStats.unsynced} unsynced)`}
+                  </span>
+                  <span className="text-muted-foreground">Convex: {stats?.total.count || 0}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSeedData}
+                    disabled={isSeeding}
+                    className="h-8 text-xs"
+                  >
+                    <Database className={`w-3 h-3 mr-1 ${isSeeding ? "animate-pulse" : ""}`} />
+                    Seed 6-Week Streak
+                  </Button>
+                  {stats && stats.total.count > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleClearData}
+                      disabled={isClearing}
+                      className="h-8 text-xs"
+                    >
+                      <Trash2 className={`w-3 h-3 mr-1 ${isClearing ? "animate-pulse" : ""}`} />
+                      Clear All
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Top navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="min-h-[44px]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Timer
             </Button>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Debug: Local storage info */}
             {localStats.unsynced > 0 && (
-              <Button variant="outline" size="sm" onClick={handleManualSync} disabled={isSyncing}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                className="min-h-[44px]"
+              >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
-                Sync {localStats.unsynced} Local Sessions
+                <span className="hidden sm:inline">Sync {localStats.unsynced} Local Sessions</span>
+                <span className="sm:hidden">Sync ({localStats.unsynced})</span>
               </Button>
             )}
             {user?.username && <ShareProfileButton username={user.username} />}
             {currentUserData && <PrivacySettings currentPrivacy={currentUserData.privacy} />}
-            <Button variant="outline" size="sm" onClick={() => openUserProfile()}>
-              <Settings className="w-4 h-4 mr-2" />
-              Manage Account
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openUserProfile()}
+              className="min-h-[44px]"
+            >
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Manage Account</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => signOut(() => router.push("/"))}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => signOut(() => router.push("/"))}
+              className="min-h-[44px]"
+            >
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
-
-        {/* Debug info card - Development only */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-medium text-sm">Debug & Test Data</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleSeedData} disabled={isSeeding}>
-                  <Database className={`w-4 h-4 mr-2 ${isSeeding ? "animate-pulse" : ""}`} />
-                  {isSeeding ? "Seeding..." : "Seed 6-Week Streak"}
-                </Button>
-                {stats && stats.total.count > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleClearData}
-                    disabled={isClearing}
-                  >
-                    <Trash2 className={`w-4 h-4 mr-2 ${isClearing ? "animate-pulse" : ""}`} />
-                    Clear All
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="text-sm space-y-1">
-              <p className="text-muted-foreground">
-                • Local storage: {localStats.total} focus sessions
-              </p>
-              <p className="text-muted-foreground">• Unsynced: {localStats.unsynced}</p>
-              <p className="text-muted-foreground">• Convex: {stats?.total.count || 0}</p>
-            </div>
-          </div>
-        )}
 
         {/* Main Content - Two Column Layout */}
         {stats &&
