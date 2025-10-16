@@ -8,7 +8,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Public Routes", () => {
   test("home page loads successfully", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Pomo/i);
+    await expect(page).toHaveTitle(/Lock\.in/i);
     // Check for timer component
     await expect(page.locator("text=Start").or(page.locator("text=Pause"))).toBeVisible();
   });
