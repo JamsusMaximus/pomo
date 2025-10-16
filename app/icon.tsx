@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Static favicon generation using Next.js ImageResponse API
+ * @module app/icon
+ *
+ * Key responsibilities:
+ * - Generate favicon for browser tabs
+ * - Use locked padlock emoji (🔒) for brand consistency
+ * - Static icon (does not change based on timer state)
+ *
+ * Dependencies: next/og
+ * Used by: Next.js metadata system (automatically loaded)
+ */
+
 import { ImageResponse } from "next/og";
 
 // Image metadata
