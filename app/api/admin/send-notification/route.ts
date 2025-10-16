@@ -4,12 +4,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import webpush from "web-push";
 
-// Configure VAPID details
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
-
-webpush.setVapidDetails("mailto:jddmcaulay@gmail.com", vapidPublicKey, vapidPrivateKey);
-
 // Helper to get admin emails from environment
 function getAdminEmails(): string[] {
   const adminEmailsEnv = process.env.ADMIN_EMAILS;
@@ -19,6 +13,16 @@ function getAdminEmails(): string[] {
 
 export async function POST(request: NextRequest) {
   try {
+    // Configure VAPID details at runtime
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      return NextResponse.json({ error: "VAPID keys not configured" }, { status: 500 });
+    }
+
+    webpush.setVapidDetails("mailto:jddmcaulay@gmail.com", vapidPublicKey, vapidPrivateKey);
+
     // Verify admin access via Clerk
     const { userId, getToken } = await auth();
     if (!userId) {
