@@ -13,6 +13,36 @@
 
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { calculateUserStats, type UserStats } from "./stats_helpers";
+import type { Doc } from "./_generated/dataModel";
+
+/**
+ * Calculate progress for a specific challenge based on user stats
+ * Same logic as in challenges.ts - single source of truth
+ */
+function calculateChallengeProgress(challenge: Doc<"challenges">, stats: UserStats): number {
+  const now = new Date();
+
+  switch (challenge.type) {
+    case "total":
+      return stats.total;
+    case "daily":
+      return stats.today;
+    case "weekly":
+      return stats.week;
+    case "monthly":
+      return stats.month;
+    case "recurring_monthly": {
+      const currentMonth = now.getMonth() + 1;
+      return challenge.recurringMonth === currentMonth ? stats.month : 0;
+    }
+    case "streak":
+      // Use best historical streak for challenges (doesn't reset)
+      return stats.bestStreak;
+    default:
+      return 0;
+  }
+}
 
 /**
  * Get default level configuration
@@ -230,50 +260,51 @@ export const getProfileData = query({
       });
     }
 
-    // Get user challenges
-    const challenges = await ctx.db.query("challenges").collect();
+    // Calculate user stats for challenge progress
+    const userStats = await calculateUserStats(ctx, user._id);
+
+    // Get all active challenges
+    const allChallenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_active", (q) => q.eq("active", true))
+      .collect();
+
+    // Get user's completion records
     const userChallenges = await ctx.db
       .query("userChallenges")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
-    const activeChallenges = userChallenges
-      .filter((uc) => !uc.completed)
-      .map((uc) => {
-        const challenge = challenges.find((c) => c._id === uc.challengeId);
-        if (!challenge) return null;
-        return {
-          _id: uc._id,
-          name: challenge.name,
-          description: challenge.description,
-          type: challenge.type,
-          target: challenge.target,
-          badge: challenge.badge,
-          progress: uc.progress,
-          completedAt: uc.completedAt,
-          recurringMonth: challenge.recurringMonth,
-        };
-      })
-      .filter((c) => c !== null);
+    const userChallengeMap = new Map(userChallenges.map((uc) => [uc.challengeId, uc]));
 
-    const completedChallenges = userChallenges
-      .filter((uc) => uc.completed)
-      .map((uc) => {
-        const challenge = challenges.find((c) => c._id === uc.challengeId);
-        if (!challenge) return null;
-        return {
-          _id: uc._id,
-          name: challenge.name,
-          description: challenge.description,
-          type: challenge.type,
-          target: challenge.target,
-          badge: challenge.badge,
-          progress: uc.progress,
-          completedAt: uc.completedAt,
-          recurringMonth: challenge.recurringMonth,
-        };
-      })
-      .filter((c) => c !== null);
+    const activeChallenges = [];
+    const completedChallenges = [];
+
+    // Process all active challenges
+    for (const challenge of allChallenges) {
+      const userChallenge = userChallengeMap.get(challenge._id);
+
+      // Always compute progress from real stats (single source of truth)
+      const progress = calculateChallengeProgress(challenge, userStats);
+
+      const data = {
+        _id: challenge._id,
+        name: challenge.name,
+        description: challenge.description,
+        type: challenge.type,
+        target: challenge.target,
+        badge: challenge.badge,
+        progress,
+        completedAt: userChallenge?.completedAt,
+        recurringMonth: challenge.recurringMonth,
+      };
+
+      if (userChallenge?.completed) {
+        completedChallenges.push(data);
+      } else {
+        activeChallenges.push(data);
+      }
+    }
 
     // Get level config with fallback to defaults
     const levelConfigs = await ctx.db.query("levelConfig").withIndex("by_level").collect();
