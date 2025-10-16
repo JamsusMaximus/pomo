@@ -18,7 +18,6 @@ import type { QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { calculateStreaks } from "./streakHelpers";
 import { getStartOfDay } from "./timeHelpers";
-import { calculateUserStats } from "./stats_helpers";
 
 /**
  * Follow a user
@@ -347,64 +346,22 @@ async function getEnrichedUserData(
     completedAt: session.completedAt,
   }));
 
-  // Calculate stats for challenge progress
-  const userStats = await calculateUserStats(ctx, friend._id);
+  // Get latest completed challenge
+  const latestChallenge = await ctx.db
+    .query("userChallenges")
+    .withIndex("by_user_completed", (q) => q.eq("userId", friend._id).eq("completed", true))
+    .order("desc")
+    .first();
 
-  // Find latest completed challenge by computing progress from stats
   let latestChallengeData = null;
-  let latestCompletedAt = 0;
-
-  // Get all active challenges
-  const activeChallenges = Array.from(challengeMap.values()).filter((c) => c.active);
-
-  for (const challenge of activeChallenges) {
-    // Compute progress from stats
-    const progress = (() => {
-      const now = new Date();
-      switch (challenge.type) {
-        case "total":
-          return userStats.total;
-        case "daily":
-          return userStats.today;
-        case "weekly":
-          return userStats.week;
-        case "monthly":
-          return userStats.month;
-        case "recurring_monthly": {
-          const currentMonth = now.getMonth() + 1;
-          return challenge.recurringMonth === currentMonth ? userStats.month : 0;
-        }
-        case "streak":
-          return userStats.bestStreak;
-        default:
-          return 0;
-      }
-    })();
-
-    const isCompleted = progress >= challenge.target;
-
-    if (isCompleted) {
-      // Check if we have a completion timestamp from userChallenges
-      const userChallenge = await ctx.db
-        .query("userChallenges")
-        .withIndex("by_user_and_challenge", (q) =>
-          q.eq("userId", friend._id).eq("challengeId", challenge._id)
-        )
-        .first();
-
-      const completedAt = userChallenge?.completedAt ?? Date.now();
-
-      // Track the most recently completed challenge
-      if (completedAt > latestCompletedAt) {
-        latestCompletedAt = completedAt;
-        latestChallengeData = {
-          name: challenge.name,
-          description: challenge.description,
-          badge: challenge.badge,
-          completedAt,
-        };
-      }
-    }
+  if (latestChallenge && challengeMap.has(latestChallenge.challengeId)) {
+    const challenge = challengeMap.get(latestChallenge.challengeId)!;
+    latestChallengeData = {
+      name: challenge.name,
+      description: challenge.description,
+      badge: challenge.badge,
+      completedAt: latestChallenge.completedAt,
+    };
   }
 
   // Calculate level using pre-fetched configs (no query!)

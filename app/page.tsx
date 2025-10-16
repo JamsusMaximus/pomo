@@ -42,7 +42,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
-import { Play, Pause } from "lucide-react";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -702,6 +701,8 @@ function HomeContent() {
 
   // Handle entering flow mode
   const handleEnterFlowMode = async () => {
+    if (isRunning) return; // Don't allow entering flow mode while timer is running
+
     setIsFlowMode(true);
 
     // Start flow session in Convex if signed in
@@ -715,11 +716,8 @@ function HomeContent() {
       }
     }
 
-    // If timer is not running yet, start it immediately
-    // If already running, it will continue seamlessly
-    if (!isRunning) {
-      start();
-    }
+    // Start the timer immediately
+    start();
   };
 
   // Handle stopping flow mode
@@ -1032,12 +1030,9 @@ function HomeContent() {
                     size="lg"
                     className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
                   >
-                    <div className="flex items-center gap-2">
-                      {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                      <span>
-                        {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
-                      </span>
-                    </div>
+                    <span>
+                      {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                    </span>
                     {/* Space bar hint inside button */}
                     {showSpaceHint && !isRunning && !isPaused && !isMobile && (
                       <motion.kbd
@@ -1068,16 +1063,14 @@ function HomeContent() {
                   </Button>
                 </motion.div>
 
-                {/* Enter FLOW button - show when not in flow mode */}
-                {(isRunning || !isPaused) && (
+                {/* Enter FLOW button - show when not running */}
+                {!isRunning && !isPaused && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full flex flex-col items-center gap-3"
                   >
-                    {!isRunning && !isPaused && (
-                      <span className="text-xs text-muted-foreground">or</span>
-                    )}
+                    <span className="text-xs text-muted-foreground">or</span>
                     <div className="w-full flex flex-col items-center gap-2">
                       <motion.div
                         whileTap={{ scale: 0.98 }}
@@ -1088,16 +1081,13 @@ function HomeContent() {
                           variant="outline"
                           onClick={handleEnterFlowMode}
                           size="lg"
-                          className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground flex items-center justify-center gap-2"
+                          className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground"
                         >
-                          <span className="text-lg">∞</span>
-                          <span>Enter Flow Mode</span>
+                          Enter Flow Mode
                         </Button>
                       </motion.div>
                       <span className="text-xs text-muted-foreground text-center">
-                        {isRunning
-                          ? "Continue this pomo then keep going"
-                          : "Back to back pomos, no breaks"}
+                        Back to back pomos, no breaks
                       </span>
                     </div>
                   </motion.div>

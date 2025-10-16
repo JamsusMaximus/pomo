@@ -193,18 +193,6 @@ export function useTimer({
     }
   }, [isRunning, mode, isFlowMode, flowCompletedPomos, flowStartTime]);
 
-  // Initialize flow tracking when entering flow mode with active timer
-  useEffect(() => {
-    if (isFlowMode && isRunning && !flowStartTime && startedAtRef.current) {
-      // Calculate how much time has already elapsed in the current pomo
-      const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
-      // Set flow start time to account for already-elapsed time
-      const adjustedStartTime = Date.now() - elapsed * 1000;
-      setFlowStartTime(adjustedStartTime);
-      console.log(`✅ Flow mode entered midway (${elapsed}s into pomo)`);
-    }
-  }, [isFlowMode, isRunning, flowStartTime]);
-
   // Update flow elapsed time every second when in flow mode
   useEffect(() => {
     if (!isFlowMode || !isRunning || !flowStartTime) return;

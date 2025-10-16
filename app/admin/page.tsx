@@ -6,21 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  User,
-  Trash2,
-  Database,
-  RefreshCw,
-  Award,
-  Power,
-  PowerOff,
-  Bell,
-  Plus,
-  Edit,
-  Eye,
-  Send,
-} from "lucide-react";
+import { ArrowLeft, User, Trash2, Database, RefreshCw, Award, Power, PowerOff } from "lucide-react";
 import { useState } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
 
@@ -29,29 +15,18 @@ export default function AdminPage() {
   const { signOut, openSignIn } = useClerk();
   const stats = useQuery(api.stats.getStats);
   const allChallenges = useQuery(api.challenges.getAllChallenges);
-  const notificationRules = useQuery(api.notificationRules.getAllRules);
-  const subscriptionStats = useQuery(api.pushSubscriptions.getSubscriptionStats);
-  const notificationStats = useQuery(api.notificationRules.getNotificationStats);
 
   const seedTestData = useMutation(api.seed.seedTestData);
   const seedMinimalData = useMutation(api.seed.seedMinimalData);
   const clearAllData = useMutation(api.seed.clearAllData);
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const toggleChallengeActive = useMutation(api.challenges.toggleChallengeActive);
-  const toggleRule = useMutation(api.notificationRules.updateRule);
-  const deleteRule = useMutation(api.notificationRules.deleteRule);
 
   const [isSeeding, setIsSeeding] = useState(false);
   const [isSeedingMinimal, setIsSeedingMinimal] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [togglingChallengeId, setTogglingChallengeId] = useState<Id<"challenges"> | null>(null);
-  const [togglingRuleId, setTogglingRuleId] = useState<Id<"notificationRules"> | null>(null);
-  const [showCreateRuleForm, setShowCreateRuleForm] = useState(false);
-  const [showSendNotificationForm, setShowSendNotificationForm] = useState(false);
-  const [isSendingNotification, setIsSendingNotification] = useState(false);
-  const [notificationTitle, setNotificationTitle] = useState("Lock.in");
-  const [notificationBody, setNotificationBody] = useState("Time to focus!");
 
   const handleSignOut = async () => {
     await signOut();
@@ -124,81 +99,6 @@ export default function AdminPage() {
       alert(`❌ Failed to toggle challenge: ${message}`);
     } finally {
       setTogglingChallengeId(null);
-    }
-  };
-
-  const handleToggleRule = async (ruleId: Id<"notificationRules">, currentEnabled: boolean) => {
-    setTogglingRuleId(ruleId);
-    try {
-      await toggleRule({ ruleId, enabled: !currentEnabled });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`❌ Failed to toggle rule: ${message}`);
-    } finally {
-      setTogglingRuleId(null);
-    }
-  };
-
-  const handleDeleteRule = async (ruleId: Id<"notificationRules">) => {
-    if (!confirm("Are you sure you want to delete this notification rule?")) return;
-    try {
-      await deleteRule({ ruleId });
-      alert("✅ Rule deleted successfully");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`❌ Failed to delete rule: ${message}`);
-    }
-  };
-
-  const handleSendNotification = async () => {
-    if (!notificationTitle.trim() || !notificationBody.trim()) {
-      alert("❌ Please enter both title and body");
-      return;
-    }
-
-    const confirmMessage =
-      subscriptionStats && subscriptionStats.total > 0
-        ? `Send notification to ${subscriptionStats.total} device(s)?`
-        : "No subscriptions found. Send anyway to test?";
-
-    if (!confirm(confirmMessage)) return;
-
-    setIsSendingNotification(true);
-    try {
-      const response = await fetch("/api/admin/send-notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: notificationTitle,
-          body: notificationBody,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      alert(
-        `✅ Notification sent!\n\n` +
-          `Total: ${result.total}\n` +
-          `Sent: ${result.sent}\n` +
-          `Failed: ${result.failed}\n\n` +
-          (result.errors.length > 0 ? `Errors:\n${result.errors.slice(0, 3).join("\n")}` : "")
-      );
-
-      setShowSendNotificationForm(false);
-      setNotificationTitle("Lock.in");
-      setNotificationBody("Time to focus!");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`❌ Failed to send notification: ${message}`);
-    } finally {
-      setIsSendingNotification(false);
     }
   };
 
@@ -450,264 +350,6 @@ export default function AdminPage() {
                 </p>
               </div>
             )}
-          </Card>
-
-          {/* Push Notifications Management */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  Push Notifications
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage notification rules and monitor delivery
-                </p>
-              </div>
-              <Button
-                onClick={() => setShowCreateRuleForm(!showCreateRuleForm)}
-                size="sm"
-                variant="outline"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Rule
-              </Button>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              <div className="p-3 border rounded-lg">
-                <p className="text-xs text-muted-foreground">Subscriptions</p>
-                <p className="text-2xl font-bold">{subscriptionStats?.total || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {subscriptionStats?.uniqueUsers || 0} users
-                </p>
-              </div>
-              <div className="p-3 border rounded-lg">
-                <p className="text-xs text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{subscriptionStats?.active || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">Last 30 days</p>
-              </div>
-              <div className="p-3 border rounded-lg">
-                <p className="text-xs text-muted-foreground">Total Sent</p>
-                <p className="text-2xl font-bold">{notificationStats?.total || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">All time</p>
-              </div>
-              <div className="p-3 border rounded-lg">
-                <p className="text-xs text-muted-foreground">Delivery Rate</p>
-                <p className="text-2xl font-bold">{notificationStats?.deliveryRate || "0%"}</p>
-                <p className="text-xs text-muted-foreground mt-1">Click-through</p>
-              </div>
-            </div>
-
-            {/* Send Notification Now Section */}
-            <div className="mb-6 p-4 border-2 border-orange-200 dark:border-orange-900 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Send className="w-5 h-5" />
-                    Send Notification Now
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Send an immediate push notification to all users with PWA installed
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setShowSendNotificationForm(!showSendNotificationForm)}
-                  size="sm"
-                  variant={showSendNotificationForm ? "outline" : "default"}
-                >
-                  {showSendNotificationForm ? "Hide" : "Send Now"}
-                </Button>
-              </div>
-
-              {showSendNotificationForm && (
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <label className="text-sm font-medium block mb-1">Notification Title</label>
-                    <input
-                      type="text"
-                      value={notificationTitle}
-                      onChange={(e) => setNotificationTitle(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-900 text-sm"
-                      placeholder="Lock.in"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1">Notification Body</label>
-                    <textarea
-                      value={notificationBody}
-                      onChange={(e) => setNotificationBody(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-900 text-sm resize-none"
-                      rows={3}
-                      placeholder="Time to focus!"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleSendNotification}
-                      disabled={isSendingNotification}
-                      className="flex-1"
-                    >
-                      {isSendingNotification ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Send to {subscriptionStats?.total || 0} Device(s)
-                        </>
-                      )}
-                    </Button>
-                    <Button onClick={() => setShowSendNotificationForm(false)} variant="outline">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Create Rule Form */}
-            {showCreateRuleForm && (
-              <div className="mb-6 p-4 border-2 border-orange-200 dark:border-orange-900 rounded-lg bg-orange-50 dark:bg-orange-950">
-                <h3 className="font-semibold mb-3">Create New Notification Rule</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  This is a placeholder for the rule creation form. Full implementation coming soon!
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium">Rule Name</label>
-                    <p className="text-xs text-muted-foreground">
-                      Example: &quot;24h Inactivity Reminder&quot;
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Trigger Type</label>
-                    <p className="text-xs text-muted-foreground">
-                      Options: inactivity, streak_risk, challenge_available, friend_activity,
-                      daily_goal, manual
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Notification Content</label>
-                    <p className="text-xs text-muted-foreground">
-                      Title, body, icon, actions, etc.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setShowCreateRuleForm(false)}
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                >
-                  Close
-                </Button>
-              </div>
-            )}
-
-            {/* Rules List */}
-            {notificationRules && notificationRules.length > 0 ? (
-              <div className="space-y-2">
-                {notificationRules.map((rule) => (
-                  <div
-                    key={rule._id}
-                    className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm">{rule.name}</h3>
-                        <span
-                          className={`px-2 py-0.5 text-xs rounded-full ${
-                            rule.enabled
-                              ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                          }`}
-                        >
-                          {rule.enabled ? "Enabled" : "Disabled"}
-                        </span>
-                        <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                          {rule.trigger}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2">{rule.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>📬 {rule.notification.title}</span>
-                        {rule.schedule && <span>⏰ {rule.schedule.type}</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => alert("View logs - Coming soon!")}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => alert("Edit rule - Coming soon!")}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleToggleRule(rule._id, rule.enabled)}
-                        disabled={togglingRuleId === rule._id}
-                      >
-                        {togglingRuleId === rule._id ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : rule.enabled ? (
-                          <>
-                            <PowerOff className="w-4 h-4 mr-1" />
-                            Disable
-                          </>
-                        ) : (
-                          <>
-                            <Power className="w-4 h-4 mr-1" />
-                            Enable
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteRule(rule._id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-dashed rounded-lg">
-                <Bell className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  No notification rules created yet. Create your first rule to start sending push
-                  notifications.
-                </p>
-                <Button onClick={() => setShowCreateRuleForm(true)} size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Rule
-                </Button>
-              </div>
-            )}
-
-            {/* Info Box */}
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm font-semibold mb-2">📱 PWA Setup Required</p>
-              <p className="text-xs text-muted-foreground">
-                Push notifications require users to install the app as a PWA and grant notification
-                permissions. Service worker registration and subscription UI is being added to the
-                app.
-              </p>
-            </div>
           </Card>
 
           {/* Quick Links */}
