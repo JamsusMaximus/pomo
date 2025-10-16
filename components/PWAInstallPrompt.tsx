@@ -25,11 +25,12 @@ export function PWAInstallPrompt() {
     // Check if running in standalone mode (already installed)
     const isStandaloneMode =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
+      ("standalone" in window.navigator &&
+        (window.navigator as { standalone?: boolean }).standalone === true);
     setIsStandalone(isStandaloneMode);
 
     // Check if iOS
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
     setIsIOS(iOS);
 
     // Check if user has dismissed before (in this session)
