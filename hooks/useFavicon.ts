@@ -1,8 +1,28 @@
+/**
+ * @fileoverview Custom hook for dynamic favicon that changes based on timer state
+ * @module hooks/useFavicon
+ *
+ * Key responsibilities:
+ * - Generate emoji-based favicons using canvas
+ * - Update favicon when timer starts/stops (🔒 locked / 🔓 unlocked)
+ * - Restore default favicon on unmount
+ *
+ * Dependencies: React hooks, browser Canvas API
+ * Used by: app/page.tsx
+ */
+
 import { useEffect } from "react";
 
 /**
- * Custom hook to dynamically change the favicon
- * Generates emoji-based favicons using canvas
+ * Custom hook to dynamically change the favicon based on timer state
+ *
+ * @param isRunning - Whether the timer is currently running
+ *
+ * @example
+ * ```tsx
+ * const { isRunning } = useTimer({ ... });
+ * useFavicon(isRunning);
+ * ```
  */
 export function useFavicon(isRunning: boolean) {
   useEffect(() => {

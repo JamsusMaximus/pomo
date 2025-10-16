@@ -1,5 +1,5 @@
 /**
- * @fileoverview Custom React hook for Pomodoro timer functionality
+ * @fileoverview Custom React hook for Pomodoro timer functionality with persistence
  * @module hooks/useTimer
  *
  * Key responsibilities:
@@ -8,13 +8,20 @@
  * - Provide start, pause, reset, and skip controls
  * - Auto-start break mode when focus completes (configurable)
  * - Support debug mode for testing (set custom duration)
+ * - Persist timer state to survive page reloads (e.g., during Vercel deployments)
  *
- * Dependencies: React hooks
+ * Dependencies: React hooks, lib/storage/timerState.ts
  * Used by: app/page.tsx (main timer UI)
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Mode } from "@/types/pomodoro";
+import {
+  saveTimerState,
+  loadTimerState,
+  clearTimerState,
+  calculateRemainingTime,
+} from "@/lib/storage/timerState";
 
 /**
  * Options for configuring the Pomodoro timer
@@ -63,13 +70,16 @@ interface UseTimerReturn {
 }
 
 /**
- * Drift-resistant Pomodoro timer hook
+ * Drift-resistant Pomodoro timer hook with localStorage persistence
  *
  * Features:
  * - Uses Date.now() for elapsed time calculation (prevents drift)
  * - Visibility change reconciliation (handles tab switching)
  * - Auto-mode switching (focus → break → focus)
  * - Pause/resume support
+ * - Survives page reloads (saves state to localStorage)
+ * - Automatically restores running/paused timer on mount
+ * - Clears saved state when timer completes or is reset
  *
  * Performance: O(1) updates every second, no expensive calculations
  *
@@ -108,6 +118,7 @@ export function useTimer({
   const focusDurationRef = useRef(focusDuration);
   const breakDurationRef = useRef(breakDuration);
   const isFlowModeRef = useRef(isFlowMode);
+  const hasRestoredRef = useRef(false);
 
   // Keep refs in sync
   useEffect(() => {
@@ -122,6 +133,85 @@ export function useTimer({
   useEffect(() => {
     isFlowModeRef.current = isFlowMode;
   }, [isFlowMode]);
+
+  // PERSISTENCE: Restore timer state on mount (survives page reloads during deployment)
+  useEffect(() => {
+    if (hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
+    const savedState = loadTimerState();
+    if (!savedState) return;
+
+    console.log("🔄 Restoring timer state from localStorage");
+
+    // Calculate how much time is remaining
+    const remainingTime = calculateRemainingTime(savedState);
+
+    // If timer expired while page was closed, don't restore
+    if (remainingTime === 0) {
+      console.log("⏱️  Timer expired, clearing saved state");
+      clearTimerState();
+      return;
+    }
+
+    // Restore timer state
+    setMode(savedState.mode);
+    setRemaining(remainingTime);
+    durationRef.current = savedState.duration;
+    modeRef.current = savedState.mode;
+
+    // Restore flow mode state if applicable
+    if (savedState.isFlowMode) {
+      setFlowCompletedPomos(savedState.flowCompletedPomos);
+      setFlowStartTime(savedState.flowStartTime);
+      if (savedState.flowStartTime) {
+        const flowElapsed = Math.floor((Date.now() - savedState.flowStartTime) / 1000);
+        setFlowElapsedTime(flowElapsed);
+      }
+    }
+
+    // Restore timing refs
+    if (savedState.pausedAt) {
+      // Timer was paused - adjust pausedAt to current time
+      startedAtRef.current = savedState.startedAt;
+      pausedAtRef.current = Date.now();
+      setIsRunning(false);
+      console.log("⏸️  Restored paused timer with", remainingTime, "seconds remaining");
+    } else if (savedState.isRunning) {
+      // Timer was running - adjust startedAt to account for elapsed time
+      const elapsed = savedState.duration - remainingTime;
+      startedAtRef.current = Date.now() - elapsed * 1000;
+      pausedAtRef.current = null;
+      setIsRunning(true);
+      console.log("▶️  Restored running timer with", remainingTime, "seconds remaining");
+    }
+  }, []); // Run once on mount
+
+  // PERSISTENCE: Save timer state whenever it changes
+  useEffect(() => {
+    // Don't save during initial restoration
+    if (!hasRestoredRef.current) return;
+
+    // Only save if timer is running or paused (not idle)
+    if (!isRunning && !pausedAtRef.current) {
+      clearTimerState();
+      return;
+    }
+
+    // Save current timer state
+    if (startedAtRef.current) {
+      saveTimerState({
+        isRunning,
+        mode,
+        startedAt: startedAtRef.current,
+        duration: durationRef.current,
+        pausedAt: pausedAtRef.current,
+        isFlowMode,
+        flowCompletedPomos,
+        flowStartTime,
+      });
+    }
+  }, [isRunning, mode, isFlowMode, flowCompletedPomos, flowStartTime]);
 
   // Update flow elapsed time every second when in flow mode
   useEffect(() => {
@@ -171,6 +261,9 @@ export function useTimer({
           pausedAtRef.current = null;
           setIsRunning(true);
         }, 100);
+      } else {
+        // PERSISTENCE: Clear saved state if not auto-starting
+        clearTimerState();
       }
     } else {
       // Break finished → switch to focus and signal cycle complete
@@ -180,6 +273,9 @@ export function useTimer({
       setRemaining(focusDurationRef.current);
       onModeChange?.(newMode);
       onCycleComplete?.();
+
+      // PERSISTENCE: Clear saved state after break completes
+      clearTimerState();
     }
 
     // Reset timing refs for next session (unless auto-starting)
@@ -273,6 +369,9 @@ export function useTimer({
     setFlowCompletedPomos(0);
     setFlowStartTime(null);
     setFlowElapsedTime(0);
+
+    // PERSISTENCE: Clear saved timer state on reset
+    clearTimerState();
   }, []);
 
   const setDebugTime = useCallback((seconds: number) => {

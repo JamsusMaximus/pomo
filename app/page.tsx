@@ -90,9 +90,6 @@ function HomeContent() {
   // Ambient sound context for fading before notifications
   const { fadeAllToVolume, restoreVolumes, volumes } = useAmbientSoundContext();
 
-  // Dynamic favicon based on timer state
-  useFavicon(isRunning);
-
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
   const nextChallenge = useQuery(api.challenges.getNextChallenge);
@@ -369,6 +366,9 @@ function HomeContent() {
       setPreviousMode(newMode);
     },
   });
+
+  // Dynamic favicon based on timer state
+  useFavicon(isRunning);
 
   // Request notification permission on mount
   useEffect(() => {
