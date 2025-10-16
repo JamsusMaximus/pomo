@@ -3,11 +3,11 @@
  * @module hooks/useFavicon
  *
  * Key responsibilities:
- * - Generate emoji-based favicons using canvas
- * - Update favicon when timer starts/stops (🔒 locked / 🔓 unlocked)
+ * - Generate SVG-based favicons
+ * - Update favicon when timer starts/stops (filled circle = running, outline = stopped)
  * - Restore default favicon on unmount
  *
- * Dependencies: React hooks, browser Canvas API
+ * Dependencies: React hooks
  * Used by: app/page.tsx
  */
 
@@ -26,25 +26,15 @@ import { useEffect } from "react";
  */
 export function useFavicon(isRunning: boolean) {
   useEffect(() => {
-    // Generate favicon from emoji
-    const generateFavicon = (emoji: string) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 32;
-      canvas.height = 32;
-      const ctx = canvas.getContext("2d");
-
-      if (!ctx) return null;
-
-      // Clear canvas
-      ctx.clearRect(0, 0, 32, 32);
-
-      // Draw emoji
-      ctx.font = "24px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(emoji, 16, 16);
-
-      return canvas.toDataURL("image/png");
+    // Generate SVG-based favicon
+    const generateFavicon = (color: string, isFilled: boolean) => {
+      const svg = `
+        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="${color}" stroke-width="3"/>
+          ${isFilled ? `<circle cx="16" cy="16" r="8" fill="${color}"/>` : ""}
+        </svg>
+      `;
+      return `data:image/svg+xml,${encodeURIComponent(svg)}`;
     };
 
     // Remove all existing favicon links to avoid conflicts
@@ -54,19 +44,18 @@ export function useFavicon(isRunning: boolean) {
     // Create new favicon link element
     const favicon = document.createElement("link");
     favicon.rel = "icon";
-    favicon.type = "image/png";
+    favicon.type = "image/svg+xml";
     document.head.appendChild(favicon);
 
     // Set favicon based on timer state
-    const iconData = generateFavicon(isRunning ? "🔒" : "🔓");
-    if (iconData) {
-      favicon.href = iconData;
-    }
+    // Orange filled circle when running, gray outline when stopped
+    const iconData = generateFavicon(isRunning ? "#f97316" : "#6b7280", isRunning);
+    favicon.href = iconData;
 
-    // Cleanup: reset to open padlock when component unmounts
+    // Cleanup: reset to gray outline when component unmounts
     return () => {
-      const resetIcon = generateFavicon("🔓");
-      if (resetIcon) {
+      const resetIcon = generateFavicon("#6b7280", false);
+      if (favicon) {
         favicon.href = resetIcon;
       }
     };
