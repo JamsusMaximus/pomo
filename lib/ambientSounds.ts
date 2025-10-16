@@ -8,7 +8,7 @@ export interface AmbientSound {
   id: AmbientSoundId;
   name: string;
   file: string;
-  icon?: string;
+  icon?: string; // Lucide icon name (e.g., "CloudRain")
 }
 
 export const AMBIENT_SOUNDS = {
@@ -16,7 +16,7 @@ export const AMBIENT_SOUNDS = {
     id: "rain" as const,
     name: "Light Rain",
     file: "/audio/ambient/rain.mp3",
-    icon: "🌧️",
+    icon: "CloudRain",
   },
   // Future sounds can be added here:
   // ocean: {

@@ -8,12 +8,19 @@ import { useEffect, useState } from "react";
 import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 interface AmbientSoundControlsProps {
   className?: string;
 }
+
+// Map icon names to Lucide icon components
+const iconMap: Record<string, LucideIcon> = {
+  CloudRain,
+  // Add more icons here as new sounds are added
+};
 
 export function AmbientSoundControls({ className }: AmbientSoundControlsProps) {
   const [mounted, setMounted] = useState(false);
@@ -25,6 +32,7 @@ export function AmbientSoundControls({ className }: AmbientSoundControlsProps) {
   }, []);
 
   const currentSound = availableSounds.find((s) => s.id === activeSound);
+  const IconComponent = currentSound?.icon ? iconMap[currentSound.icon] : null;
 
   return (
     <div className={cn("flex items-center gap-3 rounded-lg border bg-card p-4", className)}>
@@ -41,9 +49,9 @@ export function AmbientSoundControls({ className }: AmbientSoundControlsProps) {
 
       {/* Sound Info */}
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-lg" aria-hidden="true">
-          {currentSound?.icon}
-        </span>
+        {IconComponent && (
+          <IconComponent className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        )}
         <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
           {currentSound?.name}
         </span>
