@@ -26,6 +26,10 @@ export interface LevelInfo {
   progress: number; // Progress percentage (0-100)
 }
 
+export interface LevelInfoWithTitle extends LevelInfo {
+  title: string;
+}
+
 /**
  * Calculate the total pomos threshold for a specific level
  * Level 1-5: Exponential (2^(level-1))
@@ -99,4 +103,62 @@ export function getLevelTitle(level: number): string {
   if (level <= 0) return titles[0];
   if (level > titles.length) return titles[titles.length - 1];
   return titles[level - 1];
+}
+
+/**
+ * Calculate level info from database level configurations
+ * Falls back to default calculation if no configs provided
+ *
+ * @param pomos - Total completed pomodoros
+ * @param levelConfigs - Database level configurations (sorted by threshold)
+ * @returns Level info with title
+ */
+export function getLevelInfoFromConfig(
+  pomos: number,
+  levelConfigs?: Array<{ level: number; title: string; threshold: number }>
+): LevelInfoWithTitle {
+  // Fallback to default calculation if no config
+  if (!levelConfigs || !Array.isArray(levelConfigs) || levelConfigs.length === 0) {
+    const info = getLevelInfo(pomos);
+    return { ...info, title: getLevelTitle(info.currentLevel) };
+  }
+
+  // Find current level from database config (assumes sorted by threshold)
+  let currentLevel = levelConfigs[0];
+  for (const level of levelConfigs) {
+    if (level.threshold <= pomos) {
+      currentLevel = level;
+    } else {
+      break;
+    }
+  }
+
+  const currentIndex = levelConfigs.findIndex((l) => l.level === currentLevel.level);
+  const nextLevel = levelConfigs[currentIndex + 1];
+
+  // Max level reached
+  if (!nextLevel) {
+    return {
+      currentLevel: currentLevel.level,
+      pomosForCurrentLevel: currentLevel.threshold,
+      pomosForNextLevel: currentLevel.threshold,
+      pomosRemaining: 0,
+      progress: 100,
+      title: currentLevel.title,
+    };
+  }
+
+  // Calculate progress to next level
+  const pomosInCurrentLevel = pomos - currentLevel.threshold;
+  const pomosNeededForNextLevel = nextLevel.threshold - currentLevel.threshold;
+  const progress = (pomosInCurrentLevel / pomosNeededForNextLevel) * 100;
+
+  return {
+    currentLevel: currentLevel.level,
+    pomosForCurrentLevel: currentLevel.threshold,
+    pomosForNextLevel: nextLevel.threshold,
+    pomosRemaining: nextLevel.threshold - pomos,
+    progress: Math.min(100, Math.max(0, progress)),
+    title: currentLevel.title,
+  };
 }

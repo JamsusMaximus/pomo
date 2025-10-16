@@ -109,13 +109,10 @@ export const getPublicProfile = query({
     }
 
     // Full access - get all stats using helper function
-    console.log("Getting stats for targetUser:", targetUser.username, targetUser._id);
     const stats = await calculateUserStats(ctx, targetUser._id);
-    console.log("Stats result:", stats);
 
     // Get activity for heatmap (past year)
     const activity = await getActivityForUser(ctx, targetUser._id);
-    console.log("Activity result count:", activity.length);
 
     // Get recent sessions (last 10)
     const last10Sessions = await ctx.db
@@ -182,32 +179,6 @@ async function calculateUserStats(ctx: QueryCtx, userId: Id<"users">) {
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .filter((q) => q.eq(q.field("mode"), "focus"))
     .collect();
-
-  console.log("calculateUserStats - userId:", userId, "sessions count:", sessions.length);
-
-  // Debug: Check if there are sessions without filtering by user
-  const allPomodoros = await ctx.db.query("pomodoros").collect();
-  const focusPomodoros = allPomodoros.filter((p) => p.mode === "focus");
-  console.log("Total focus pomodoros in DB:", focusPomodoros.length);
-  console.log(
-    "User's pomodoros (should be 186):",
-    focusPomodoros.filter((p) => p.userId === userId).length
-  );
-
-  // Check if there are pomodoros with a different userId but same username
-  const allUsers = await ctx.db.query("users").collect();
-  console.log(
-    "All users in DB:",
-    allUsers.map((u) => ({ id: u._id, username: u.username, clerkId: u.clerkId }))
-  );
-
-  // Count pomodoros per user
-  const pomosByUser = allUsers.map((u) => ({
-    username: u.username,
-    userId: u._id,
-    pomoCount: focusPomodoros.filter((p) => p.userId === u._id).length,
-  }));
-  console.log("Pomodoros by user:", pomosByUser);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

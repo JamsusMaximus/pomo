@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Design Review Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #f97316;
+    }
+    .summary {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .summary h2 { color: #333; margin-bottom: 15px; }
+    .stat {
+      display: inline-block;
+      margin-right: 30px;
+      font-size: 1.1rem;
+    }
+    .stat strong { color: #f97316; font-size: 1.3rem; }
+    .severity-critical { color: #dc2626; font-weight: bold; }
+    .severity-high { color: #ea580c; }
+    .severity-medium { color: #f59e0b; }
+    .severity-low { color: #84cc16; }
+    .page-section {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .page-section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #f97316;
+    }
+    .viewport-result {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #f97316;
+    }
+    .viewport-result h4 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    .issue {
+      background: #fff;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    .issue.critical { border-left-color: #dc2626; background: #fef2f2; }
+    .issue.high { border-left-color: #ea580c; background: #fff7ed; }
+    .issue.medium { border-left-color: #f59e0b; background: #fffbeb; }
+    .issue.low { border-left-color: #84cc16; background: #f7fee7; }
+    .issue-header {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .severity-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .severity-badge.critical { background: #dc2626; color: white; }
+    .severity-badge.high { background: #ea580c; color: white; }
+    .severity-badge.medium { background: #f59e0b; color: white; }
+    .severity-badge.low { background: #84cc16; color: white; }
+    .recommendation {
+      margin-top: 10px;
+      padding: 10px;
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .recommendation strong { color: #1e40af; }
+    .details {
+      margin-top: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      background: #1f2937;
+      color: #f3f4f6;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .screenshot {
+      margin-top: 15px;
+    }
+    .screenshot img {
+      max-width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .no-issues {
+      color: #059669;
+      font-weight: 600;
+      padding: 20px;
+      text-align: center;
+      background: #d1fae5;
+      border-radius: 8px;
+    }
+    .timestamp {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 Mobile Design Review Report</h1>
+    <p class="timestamp">Generated: 16/10/2025, 11:32:11</p>
+
+    <div class="summary">
+      <h2>Summary</h2>
+      <div class="stat">
+        <strong>5</strong> pages tested
+      </div>
+      <div class="stat">
+        <strong>15</strong> viewport tests
+      </div>
+      <div class="stat">
+        <strong class="severity-critical">0</strong> critical issues
+      </div>
+      <div class="stat">
+        <strong class="severity-high">9</strong> high priority
+      </div>
+      <div class="stat">
+        <strong class="severity-medium">12</strong> medium priority
+      </div>
+    </div>
+
+    
+      <div class="page-section">
+        <h3>Home (Signed Out)</h3>
+        <p><strong>Path:</strong> /</p>
+        <p><strong>Auth Required:</strong> No</p>
+
+        
+          <div class="viewport-result">
+            <h4>iPhone SE (375x667)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>3 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Debug: 2s (85x32px) [.inline-flex]<br>- 🔔 Enable (85x32px) [.inline-flex]<br>- Test 🔔 (85x32px) [.inline-flex]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/home__signed_out__iphone_se.png" alt="Home (Signed Out) on iPhone SE">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>iPhone 14 Pro (393x852)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>3 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Debug: 2s (85x32px) [.inline-flex]<br>- 🔔 Enable (85x32px) [.inline-flex]<br>- Test 🔔 (85x32px) [.inline-flex]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/home__signed_out__iphone_14_pro.png" alt="Home (Signed Out) on iPhone 14 Pro">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>Samsung Galaxy S21 (360x800)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>3 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Debug: 2s (85x32px) [.inline-flex]<br>- 🔔 Enable (85x32px) [.inline-flex]<br>- Test 🔔 (85x32px) [.inline-flex]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/home__signed_out__samsung_galaxy_s21.png" alt="Home (Signed Out) on Samsung Galaxy S21">
+            </div>
+          </div>
+        
+      </div>
+    
+      <div class="page-section">
+        <h3>Rules</h3>
+        <p><strong>Path:</strong> /rules</p>
+        <p><strong>Auth Required:</strong> No</p>
+
+        
+          <div class="viewport-result">
+            <h4>iPhone SE (375x667)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (257x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/rules_iphone_se.png" alt="Rules on iPhone SE">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>iPhone 14 Pro (393x852)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (275x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/rules_iphone_14_pro.png" alt="Rules on iPhone 14 Pro">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>Samsung Galaxy S21 (360x800)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (242x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/rules_samsung_galaxy_s21.png" alt="Rules on Samsung Galaxy S21">
+            </div>
+          </div>
+        
+      </div>
+    
+      <div class="page-section">
+        <h3>Friends</h3>
+        <p><strong>Path:</strong> /friends</p>
+        <p><strong>Auth Required:</strong> Yes</p>
+
+        
+          <div class="viewport-result">
+            <h4>iPhone SE (375x667)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (257x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/friends_iphone_se.png" alt="Friends on iPhone SE">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>iPhone 14 Pro (393x852)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (275x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/friends_iphone_14_pro.png" alt="Friends on iPhone 14 Pro">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>Samsung Galaxy S21 (360x800)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (242x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/friends_samsung_galaxy_s21.png" alt="Friends on Samsung Galaxy S21">
+            </div>
+          </div>
+        
+      </div>
+    
+      <div class="page-section">
+        <h3>Profile</h3>
+        <p><strong>Path:</strong> /profile</p>
+        <p><strong>Auth Required:</strong> Yes</p>
+
+        
+          <div class="viewport-result">
+            <h4>iPhone SE (375x667)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (257x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (257x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/profile_iphone_se.png" alt="Profile on iPhone SE">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>iPhone 14 Pro (393x852)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (275x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (275x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/profile_iphone_14_pro.png" alt="Profile on iPhone 14 Pro">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>Samsung Galaxy S21 (360x800)</h4>
+
+            
+              
+                <div class="issue medium">
+                  <div class="issue-header">
+                    <span class="severity-badge medium">medium</span>
+                    <span>6 button(s) smaller than recommended 44x44px touch target</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Increase padding or min-height/min-width to meet iOS/Android touch target guidelines
+                    </div>
+                  
+                  
+                    <div class="details">
+                      Affected buttons:<br>
+                      - Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (242x32px) [.cl-socialButtonsIconButton]<br>- Unlabeled button (16x6px) [button]<br>- Show password (40x24px) [.cl-formFieldInputShowPasswordButton]<br>- Continue (242x30px) [.cl-formButtonPrimary]
+                    </div>
+                  
+                  
+                  
+                </div>
+              
+                <div class="issue high">
+                  <div class="issue-header">
+                    <span class="severity-badge high">high</span>
+                    <span>No navigation elements found on this page</span>
+                  </div>
+                  
+                    <div class="recommendation">
+                      <strong>💡 Recommendation:</strong> Add mobile navigation or back button for better UX
+                    </div>
+                  
+                  
+                  
+                  
+                </div>
+              
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/profile_samsung_galaxy_s21.png" alt="Profile on Samsung Galaxy S21">
+            </div>
+          </div>
+        
+      </div>
+    
+      <div class="page-section">
+        <h3>Changelog</h3>
+        <p><strong>Path:</strong> /changelog</p>
+        <p><strong>Auth Required:</strong> No</p>
+
+        
+          <div class="viewport-result">
+            <h4>iPhone SE (375x667)</h4>
+
+            
+              <div class="no-issues">✅ No issues found!</div>
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/changelog_iphone_se.png" alt="Changelog on iPhone SE">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>iPhone 14 Pro (393x852)</h4>
+
+            
+              <div class="no-issues">✅ No issues found!</div>
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/changelog_iphone_14_pro.png" alt="Changelog on iPhone 14 Pro">
+            </div>
+          </div>
+        
+          <div class="viewport-result">
+            <h4>Samsung Galaxy S21 (360x800)</h4>
+
+            
+              <div class="no-issues">✅ No issues found!</div>
+            
+
+            <div class="screenshot">
+              <h5>Screenshot:</h5>
+              <img src="screenshots/changelog_samsung_galaxy_s21.png" alt="Changelog on Samsung Galaxy S21">
+            </div>
+          </div>
+        
+      </div>
+    
+  </div>
+</body>
+</html>

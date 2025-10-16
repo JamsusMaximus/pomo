@@ -14,9 +14,22 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { calculateUserStats, type UserStats } from "./stats_helpers";
 import type { Doc } from "./_generated/dataModel";
+
+/**
+ * Get admin emails from environment variable
+ * Fallback to empty array if not configured
+ */
+function getAdminEmails(): string[] {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS;
+  if (!adminEmailsEnv) {
+    console.warn("ADMIN_EMAILS environment variable not set. No admins configured.");
+    return [];
+  }
+  return adminEmailsEnv.split(",").map((email) => email.trim());
+}
 
 /**
  * Calculate progress for a specific challenge based on user stats
@@ -340,244 +353,6 @@ export const syncMyProgress = mutation({
 });
 
 /**
- * @deprecated This function is no longer used after the computed-on-read refactor.
- * Challenge progress is now calculated dynamically from the pomodoros table.
- * Scheduled for removal in future cleanup.
- *
- * Old behavior: Was called after each pomodoro to update cached progress.
- * New behavior: All queries compute progress on-read using calculateUserStats().
- */
-export const updateChallengeProgress = internalMutation({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, { userId }) => {
-    // Get user with cached counts
-    const user = await ctx.db.get(userId);
-    if (!user) return;
-
-    // Get all active challenges - auto-seed if none exist
-    let challenges = await ctx.db
-      .query("challenges")
-      .withIndex("by_active", (q) => q.eq("active", true))
-      .collect();
-
-    // If no challenges exist at all, seed default challenges
-    if (challenges.length === 0) {
-      const allChallenges = await ctx.db.query("challenges").collect();
-      if (allChallenges.length === 0) {
-        const defaultChallenges = [
-          {
-            name: "First Steps",
-            description: "Complete your first pomodoro",
-            type: "total" as const,
-            target: 1,
-            badge: "Target",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Getting Started",
-            description: "Complete 10 pomodoros",
-            type: "total" as const,
-            target: 10,
-            badge: "Sprout",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Half Century",
-            description: "Complete 50 total pomodoros",
-            type: "total" as const,
-            target: 50,
-            badge: "Flame",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Century Club",
-            description: "Complete 100 total pomodoros",
-            type: "total" as const,
-            target: 100,
-            badge: "Award",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Dedication",
-            description: "Complete 250 total pomodoros",
-            type: "total" as const,
-            target: 250,
-            badge: "Star",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Master",
-            description: "Complete 500 total pomodoros",
-            type: "total" as const,
-            target: 500,
-            badge: "Trophy",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Streak Starter",
-            description: "Maintain a 3-day streak",
-            type: "streak" as const,
-            target: 3,
-            badge: "Flame",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Week Warrior",
-            description: "Maintain a 7-day streak",
-            type: "streak" as const,
-            target: 7,
-            badge: "Swords",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Consistency King",
-            description: "Maintain a 30-day streak",
-            type: "streak" as const,
-            target: 30,
-            badge: "Crown",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Daily Dozen",
-            description: "Complete 12 pomodoros in one day",
-            type: "daily" as const,
-            target: 12,
-            badge: "Sparkles",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Weekend Warrior",
-            description: "Complete 20 pomodoros in one week",
-            type: "weekly" as const,
-            target: 20,
-            badge: "Zap",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-          {
-            name: "Monthly Marathon",
-            description: "Complete 100 pomodoros in one month",
-            type: "monthly" as const,
-            target: 100,
-            badge: "Medal",
-            recurring: false,
-            active: true,
-            createdAt: Date.now(),
-          },
-        ];
-
-        // Insert all challenges
-        await Promise.all(
-          defaultChallenges.map((challenge) => ctx.db.insert("challenges", challenge))
-        );
-
-        // Re-fetch challenges after seeding
-        challenges = await ctx.db
-          .query("challenges")
-          .withIndex("by_active", (q) => q.eq("active", true))
-          .collect();
-      }
-    }
-
-    // Get current date info
-    const now = new Date();
-
-    for (const challenge of challenges) {
-      let progress = 0;
-
-      // Calculate progress using cached counts (O(1) instead of O(N))
-      switch (challenge.type) {
-        case "total":
-          progress = user.totalPomos ?? 0;
-          break;
-
-        case "daily":
-          progress = user.todayPomos ?? 0;
-          break;
-
-        case "weekly":
-          progress = user.weekPomos ?? 0;
-          break;
-
-        case "monthly":
-          progress = user.monthPomos ?? 0;
-          break;
-
-        case "recurring_monthly": {
-          // Only count if it's the correct month
-          const currentMonth = now.getMonth() + 1;
-          if (challenge.recurringMonth === currentMonth) {
-            progress = user.monthPomos ?? 0;
-          }
-          break;
-        }
-
-        case "streak": {
-          // Use best historical streak instead of current streak
-          progress = user.bestDailyStreak ?? 0;
-          break;
-        }
-      }
-
-      // Check if user challenge exists
-      const existing = await ctx.db
-        .query("userChallenges")
-        .withIndex("by_user_and_challenge", (q) =>
-          q.eq("userId", userId).eq("challengeId", challenge._id)
-        )
-        .first();
-
-      const completed = progress >= challenge.target;
-
-      if (existing) {
-        // Once completed, always stay completed (preserve completion date)
-        const shouldStayCompleted = existing.completed || completed;
-        const finalCompletedAt =
-          existing.completedAt || (completed && !existing.completed ? Date.now() : undefined);
-
-        await ctx.db.patch(existing._id, {
-          progress: Math.max(existing.progress, progress), // Only increase progress
-          completed: shouldStayCompleted,
-          completedAt: finalCompletedAt,
-        });
-      } else {
-        // Create new
-        await ctx.db.insert("userChallenges", {
-          userId,
-          challengeId: challenge._id,
-          progress,
-          completed,
-          completedAt: completed ? Date.now() : undefined,
-        });
-      }
-    }
-  },
-});
-
-/**
  * Admin: Create new challenge
  */
 export const createChallenge = mutation({
@@ -598,7 +373,13 @@ export const createChallenge = mutation({
     recurringMonth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // TODO: Add admin check here
+    // Admin authorization check
+    const identity = await ctx.auth.getUserIdentity();
+    const adminEmails = getAdminEmails();
+    if (!identity || !adminEmails.includes(identity.email || "")) {
+      throw new Error("Unauthorized: Admin access only");
+    }
+
     return await ctx.db.insert("challenges", {
       ...args,
       active: true,
@@ -613,7 +394,13 @@ export const createChallenge = mutation({
 export const getAllChallenges = query({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add admin check here
+    // Admin authorization check
+    const identity = await ctx.auth.getUserIdentity();
+    const adminEmails = getAdminEmails();
+    if (!identity || !adminEmails.includes(identity.email || "")) {
+      throw new Error("Unauthorized: Admin access only");
+    }
+
     return await ctx.db.query("challenges").collect();
   },
 });
@@ -626,7 +413,13 @@ export const toggleChallengeActive = mutation({
     challengeId: v.id("challenges"),
   },
   handler: async (ctx, { challengeId }) => {
-    // TODO: Add admin check here
+    // Admin authorization check
+    const identity = await ctx.auth.getUserIdentity();
+    const adminEmails = getAdminEmails();
+    if (!identity || !adminEmails.includes(identity.email || "")) {
+      throw new Error("Unauthorized: Admin access only");
+    }
+
     const challenge = await ctx.db.get(challengeId);
     if (!challenge) throw new Error("Challenge not found");
 

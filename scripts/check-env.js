@@ -4,6 +4,7 @@
  * Validates required environment variables before starting dev server
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
 
@@ -19,6 +20,11 @@ function checkEnvFile() {
   const envPath = path.join(__dirname, "..", ".env.local");
   const envExamplePath = path.join(__dirname, "..", ".env.example");
 
+  // Skip file check in CI environments (env vars are set directly)
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    return;
+  }
+
   if (!fs.existsSync(envPath)) {
     console.error("\n❌ Missing .env.local file!\n");
     console.log("📝 Copy .env.example to .env.local and fill in your values:\n");
@@ -32,6 +38,12 @@ function checkEnvFile() {
 
 function loadEnvFile() {
   const envPath = path.join(__dirname, "..", ".env.local");
+
+  // In CI, return empty object (env vars come from process.env)
+  if (process.env.CI || process.env.GITHUB_ACTIONS || !fs.existsSync(envPath)) {
+    return {};
+  }
+
   const envContent = fs.readFileSync(envPath, "utf8");
   const env = {};
 
