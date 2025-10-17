@@ -29,9 +29,9 @@ jobs:
         run: npm ci
 
       - name: Deploy to Convex Production
-        run: npx convex deploy --yes
+        run: npx convex deploy --cmd 'npm run build' --prod --yes
         env:
-          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_PROD_DEPLOYMENT }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Deployment Summary
         run: |
