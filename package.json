@@ -2,6 +2,7 @@
   "name": "pomo",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "predev": "bash scripts/validate-environment.sh && node scripts/check-env.js",
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:convex\" --names \"next,convex\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail --restart-tries 3",
