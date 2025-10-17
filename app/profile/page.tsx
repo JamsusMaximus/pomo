@@ -109,12 +109,12 @@ function ProfilePageContent() {
   const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
 
-  // Fitness period state (7 or 90 days) - only for UI filtering, not query parameter
-  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 90>(90);
+  // Fitness period state (7 or 30 days) - only for UI filtering, not query parameter
+  const [fitnessPeriod, setFitnessPeriod] = useState<7 | 30>(30);
   const [hasSetDefaultPeriod, setHasSetDefaultPeriod] = useState(false);
 
-  // Single optimized query - always fetch 90 days, filter client-side
-  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod: 90 });
+  // Single optimized query - always fetch 30 days, filter client-side
+  const profileData = useQuery(api.profile.getProfileData, { fitnessPeriod: 30 });
   const syncProgress = useMutation(api.challenges.syncMyProgress);
   const saveSession = useMutation(api.pomodoros.saveSession);
   const longestFlow = useQuery(api.flowSessions.getLongestFlowSession);
@@ -152,7 +152,7 @@ function ProfilePageContent() {
     if (profileData?.stats.userCreatedAt && !hasSetDefaultPeriod) {
       const daysSinceCreation =
         (Date.now() - profileData.stats.userCreatedAt) / (1000 * 60 * 60 * 24);
-      const defaultPeriod = daysSinceCreation <= 7 ? 7 : 90;
+      const defaultPeriod = daysSinceCreation <= 7 ? 7 : 30;
       setFitnessPeriod(defaultPeriod);
       setHasSetDefaultPeriod(true);
     }
@@ -781,14 +781,14 @@ function ProfilePageContent() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setFitnessPeriod(90)}
+                              onClick={() => setFitnessPeriod(30)}
                               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                                fitnessPeriod === 90
+                                fitnessPeriod === 30
                                   ? "bg-orange-500 text-white"
                                   : "text-muted-foreground hover:text-foreground"
                               }`}
                             >
-                              90 days
+                              30 days
                             </button>
                           </div>
                         </div>
@@ -835,7 +835,7 @@ function ProfilePageContent() {
                           }
                         }
 
-                        // For 7-day view, show all data. For 90-day, show at least 30 days
+                        // For 7-day view, show all data. For 30-day, show at least 30 days
                         const minDataPoints =
                           fitnessPeriod === 7 ? periodData.length : Math.min(30, periodData.length);
                         const cutoffIndex = Math.max(lastMeaningfulIndex + 1, minDataPoints);
