@@ -1,5 +1,16 @@
 # Development files
-scripts/
+scripts/clean-dev.sh
+scripts/install-hooks.sh
+scripts/doc-check-pre-commit.sh
+scripts/pre-push.sh
+scripts/update-sw-version.sh
+scripts/test-pages.mjs
+scripts/mobile-design-review.mjs
+scripts/monitor-pr-build.js
+scripts/generate-changelog.mjs
+scripts/generate-icons.js
+scripts/create-test-friend.ts
+scripts/README.md
 tests/
 *.test.ts
 *.spec.ts
