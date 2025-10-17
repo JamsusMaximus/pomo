@@ -7,23 +7,27 @@
       "env": [
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "CLERK_SECRET_KEY",
+        "CLERK_JWT_ISSUER_DOMAIN",
         "NEXT_PUBLIC_CONVEX_URL",
         "CONVEX_DEPLOY_KEY",
+        "CONVEX_DEPLOYMENT",
         "VERCEL",
         "VERCEL_ENV",
         "TAURI_BUILD"
       ],
       "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "hooks/**",
-        "public/**",
-        "convex/**",
+        "app/**/*.{ts,tsx,js,jsx}",
+        "app/**/*.css",
+        "components/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "hooks/**/*.{ts,tsx}",
+        "public/**/*.{png,svg,ico,json,webmanifest,js}",
+        "convex/**/*.ts",
         "next.config.ts",
         "tsconfig.json",
         "tailwind.config.ts",
-        "postcss.config.mjs"
+        "postcss.config.mjs",
+        "package.json"
       ]
     },
     "typecheck": {

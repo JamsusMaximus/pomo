@@ -1,0 +1,53 @@
+# Development files
+scripts/clean-dev.sh
+scripts/install-hooks.sh
+scripts/doc-check-pre-commit.sh
+scripts/pre-push.sh
+scripts/update-sw-version.sh
+scripts/test-pages.mjs
+scripts/mobile-design-review.mjs
+scripts/monitor-pr-build.js
+scripts/generate-changelog.mjs
+scripts/generate-icons.js
+scripts/create-test-friend.ts
+scripts/README.md
+tests/
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
+playwright-report/
+test-results/
+coverage/
+
+# GitHub workflows
+.github/
+
+# Documentation
+*.md
+!README.md
+ARCHITECTURE.md
+AI_CONTEXT.md
+DEV_SETUP.md
+TESTING_*.md
+
+# Public dev files
+public/*.html
+public/*.md
+public/generate-icons.html
+public/create-emoji-icons.html
+public/pwa-debug.html
+public/ICONS_NEEDED.md
+
+# Build artifacts from other environments
+src-tauri/
+.turbo/
+.changelog-last-run
+
+# Dev dependencies not needed for build
+playwright.config.ts
+vitest.config.ts
+
+# Development tools
+.vscode/
+.idea/

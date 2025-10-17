@@ -6,6 +6,22 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: process.env.TAURI_BUILD === "true",
   },
+  experimental: {
+    // Optimize package imports to reduce bundle size
+    optimizePackageImports: [
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-progress",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slider",
+      "@radix-ui/react-slot",
+      "lucide-react",
+      "date-fns",
+      "framer-motion", // Tree-shake unused motion components
+    ],
+    // Use webpack build worker for parallel compilation
+    webpackBuildWorker: true,
+  },
 };
 
 export default nextConfig;
