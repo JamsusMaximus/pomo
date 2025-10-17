@@ -36,7 +36,6 @@ import {
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
 import { TagInput } from "@/components/TagInput";
-import { NotificationSubscribe } from "@/components/NotificationSubscribe";
 import { ChallengeToast } from "@/components/ChallengeToast";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
