@@ -47,12 +47,18 @@ export function saveSessions(sessions: PomodoroSession[]): void {
  * @param tag - Optional tag/label for focus sessions
  * @returns The created session object
  */
-export function saveCompletedSession(mode: Mode, duration: number, tag?: string): PomodoroSession {
+export function saveCompletedSession(
+  mode: Mode,
+  duration: number,
+  tag?: string,
+  tagPrivate?: boolean
+): PomodoroSession {
   const session: PomodoroSession = {
     id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     mode,
     duration,
     tag: tag || undefined,
+    tagPrivate: tagPrivate || undefined,
     completedAt: Date.now(),
     synced: false,
   };

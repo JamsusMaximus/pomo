@@ -36,6 +36,7 @@ import {
 import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
 import { TagInput } from "@/components/TagInput";
+import { NotificationSubscribe } from "@/components/NotificationSubscribe";
 import { ChallengeToast } from "@/components/ChallengeToast";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -63,6 +64,7 @@ function HomeContent() {
   const [breakDuration, setBreakDuration] = useState(BREAK_DEFAULT);
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentTag, setCurrentTag] = useState("");
+  const [currentTagPrivate, setCurrentTagPrivate] = useState(false);
   const [previousMode, setPreviousMode] = useState<Mode>("focus");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [showSpaceHint, setShowSpaceHint] = useState(true);
@@ -249,7 +251,12 @@ function HomeContent() {
       }, 600);
 
       // Save completed pomo immediately
-      const localSession = saveCompletedSession("focus", focusDuration, currentTag);
+      const localSession = saveCompletedSession(
+        "focus",
+        focusDuration,
+        currentTag,
+        currentTagPrivate
+      );
 
       // Save to Convex if signed in
       if (isSignedIn) {
@@ -257,6 +264,7 @@ function HomeContent() {
           mode: "focus",
           duration: focusDuration,
           tag: currentTag || undefined,
+          tagPrivate: currentTagPrivate || undefined,
           completedAt: Date.now(),
         })
           .then(() => {
@@ -298,7 +306,12 @@ function HomeContent() {
         showNotification("Pomodoro Complete! 🎉", "Great work! Time for a break.");
 
         // Save locally first to get the session ID
-        const localSession = saveCompletedSession("focus", focusDuration, currentTag);
+        const localSession = saveCompletedSession(
+          "focus",
+          focusDuration,
+          currentTag,
+          currentTagPrivate
+        );
 
         // Save to Convex if signed in, then mark as synced
         if (isSignedIn) {
@@ -306,6 +319,7 @@ function HomeContent() {
             mode: "focus",
             duration: focusDuration,
             tag: currentTag || undefined,
+            tagPrivate: currentTagPrivate || undefined,
             completedAt: Date.now(),
           })
             .then(() => {
@@ -497,6 +511,7 @@ function HomeContent() {
               mode: session.mode,
               duration: session.duration,
               tag: session.tag,
+              tagPrivate: session.tagPrivate,
               completedAt: session.completedAt,
             })
           )
@@ -1012,7 +1027,9 @@ function HomeContent() {
                 value={currentTag}
                 onChange={setCurrentTag}
                 disabled={isRunning}
-                placeholder="Tag (e.g., coding, writing, design)"
+                isPrivate={currentTagPrivate}
+                onPrivacyChange={setCurrentTagPrivate}
+                isSignedIn={isSignedIn}
               />
             </div>
           )}

@@ -27,6 +27,7 @@ export const saveSession = mutation({
     mode: v.union(v.literal("focus"), v.literal("break")),
     duration: v.number(),
     tag: v.optional(v.string()),
+    tagPrivate: v.optional(v.boolean()),
     completedAt: v.number(),
   },
   handler: async (ctx, args) => {
@@ -66,6 +67,7 @@ export const saveSession = mutation({
       mode: args.mode,
       duration: args.duration,
       tag: args.tag,
+      tagPrivate: args.tagPrivate,
       completedAt: args.completedAt,
     });
 
@@ -216,6 +218,7 @@ export const updateSessionTag = mutation({
   args: {
     sessionId: v.id("pomodoros"),
     tag: v.optional(v.string()),
+    tagPrivate: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -233,9 +236,10 @@ export const updateSessionTag = mutation({
     if (!session) throw new Error("Session not found");
     if (session.userId !== user._id) throw new Error("Unauthorized");
 
-    // Update the tag
+    // Update the tag and/or privacy
     await ctx.db.patch(args.sessionId, {
       tag: args.tag || undefined,
+      tagPrivate: args.tagPrivate,
     });
 
     return { success: true };

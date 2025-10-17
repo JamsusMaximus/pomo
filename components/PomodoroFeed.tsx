@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "@/components/motion";
 import type { PomodoroSession } from "@/types/pomodoro";
 import { useQuery, useMutation } from "convex/react";
@@ -38,12 +38,25 @@ export function PomodoroFeed({
   const { isSignedIn } = useUser();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string>("");
+  const [editingTagPrivate, setEditingTagPrivate] = useState<boolean>(false);
   const [showSuggestionsFor, setShowSuggestionsFor] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState<number | null>(initialLimit || null);
+  const [showPrivacyToast, setShowPrivacyToast] = useState<string | null>(null); // sessionId of toast to show
+  const [privacyToastIsPrivate, setPrivacyToastIsPrivate] = useState<boolean>(false);
+  const privacyToastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch from Convex if signed in, otherwise use localStorage sessions
   const convexSessions = useQuery(api.pomodoros.getMyPomodoros, { limit: 20 });
   const updateSessionTag = useMutation(api.pomodoros.updateSessionTag);
+
+  // Cleanup privacy toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (privacyToastTimerRef.current) {
+        clearTimeout(privacyToastTimerRef.current);
+      }
+    };
+  }, []);
 
   // Use Convex sessions if available and user is signed in, otherwise fallback to localStorage
   const displaySessions = isSignedIn && convexSessions ? convexSessions : sessions;
@@ -58,9 +71,10 @@ export function PomodoroFeed({
     : allSortedSessions;
   const hasMore = displayLimit && allSortedSessions.length > displayLimit;
 
-  const handleStartEdit = (sessionId: string, currentTag?: string) => {
+  const handleStartEdit = (sessionId: string, currentTag?: string, currentTagPrivate?: boolean) => {
     setEditingId(sessionId);
     setEditingTag(currentTag || "");
+    setEditingTagPrivate(currentTagPrivate || false);
   };
 
   const handleShowSuggestions = (sessionId: string) => {
@@ -90,9 +104,11 @@ export function PomodoroFeed({
       await updateSessionTag({
         sessionId: sessionId as Id<"pomodoros">,
         tag: editingTag || undefined,
+        tagPrivate: editingTagPrivate || undefined,
       });
       setEditingId(null);
       setEditingTag("");
+      setEditingTagPrivate(false);
       setShowSuggestionsFor(null);
     } catch (error) {
       console.error("Failed to update tag:", error);
@@ -102,7 +118,42 @@ export function PomodoroFeed({
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingTag("");
+    setEditingTagPrivate(false);
     setShowSuggestionsFor(null);
+  };
+
+  const handleTogglePrivacy = async (
+    sessionId: string,
+    currentTag: string,
+    currentPrivate: boolean
+  ) => {
+    if (!isSignedIn) return;
+
+    const newPrivateState = !currentPrivate;
+
+    try {
+      await updateSessionTag({
+        sessionId: sessionId as Id<"pomodoros">,
+        tag: currentTag,
+        tagPrivate: newPrivateState || undefined,
+      });
+
+      // Clear existing timer if any
+      if (privacyToastTimerRef.current) {
+        clearTimeout(privacyToastTimerRef.current);
+      }
+
+      // Show toast
+      setShowPrivacyToast(sessionId);
+      setPrivacyToastIsPrivate(newPrivateState);
+
+      // Auto-hide after 2 seconds
+      privacyToastTimerRef.current = setTimeout(() => {
+        setShowPrivacyToast(null);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to toggle privacy:", error);
+    }
   };
 
   if (focusSessions.length === 0) {
@@ -154,6 +205,22 @@ export function PomodoroFeed({
 
                   {/* Tag or Edit Input */}
                   <div className="flex-1 min-w-0 relative">
+                    {/* Privacy Toast - appears above tag */}
+                    <AnimatePresence>
+                      {showPrivacyToast === sessionId && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute -top-12 left-0 z-50 bg-card border border-border rounded-lg shadow-lg px-4 py-2 text-sm whitespace-nowrap"
+                        >
+                          {privacyToastIsPrivate
+                            ? "Tag is private (only you can see it)"
+                            : "This tag can be seen by your friends"}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <AnimatePresence mode="wait">
                       {isEditing ? (
                         <motion.div
@@ -168,6 +235,9 @@ export function PomodoroFeed({
                               value={editingTag}
                               onChange={setEditingTag}
                               placeholder="Add tag..."
+                              isPrivate={editingTagPrivate}
+                              onPrivacyChange={setEditingTagPrivate}
+                              isSignedIn={isSignedIn}
                             />
                           </div>
                           <div className="flex gap-1 shrink-0">
@@ -220,8 +290,65 @@ export function PomodoroFeed({
                           className="flex items-center gap-2"
                         >
                           {session.tag ? (
-                            <div className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 text-xs font-medium border border-orange-500/20">
-                              {session.tag}
+                            <div className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 text-xs font-medium border border-orange-500/20 flex items-center gap-2">
+                              <span>{session.tag}</span>
+                              {/* Privacy toggle button - only show for Convex sessions that can be edited */}
+                              {canEdit && "tagPrivate" in session && (
+                                <button
+                                  onClick={() =>
+                                    handleTogglePrivacy(
+                                      sessionId,
+                                      session.tag!,
+                                      "tagPrivate" in session ? session.tagPrivate || false : false
+                                    )
+                                  }
+                                  className={`p-0.5 rounded transition-colors ${
+                                    session.tagPrivate
+                                      ? "text-orange-500 hover:text-orange-600"
+                                      : "text-gray-300 hover:text-gray-400"
+                                  }`}
+                                  title={
+                                    session.tagPrivate
+                                      ? "Tag is private (only you can see it)"
+                                      : "This tag can be seen by your friends"
+                                  }
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    {session.tagPrivate ? (
+                                      <>
+                                        {/* Eye with slash (private) */}
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                        />
+                                      </>
+                                    ) : (
+                                      <>
+                                        {/* Eye (public) */}
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                        />
+                                      </>
+                                    )}
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           ) : canEdit ? (
                             <button
@@ -250,7 +377,13 @@ export function PomodoroFeed({
                 {/* Edit Button */}
                 {canEdit && !isEditing && (
                   <button
-                    onClick={() => handleStartEdit(sessionId, session.tag)}
+                    onClick={() =>
+                      handleStartEdit(
+                        sessionId,
+                        session.tag,
+                        "tagPrivate" in session ? session.tagPrivate : false
+                      )
+                    }
                     className="shrink-0 p-1.5 rounded-md hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground transition-colors"
                     title="Edit tag"
                   >

@@ -10,6 +10,7 @@ export interface PersistedPreferences {
 export interface PomodoroSession {
   id: string;
   tag?: string;
+  tagPrivate?: boolean; // Hide tag from others (pomo itself still visible per privacy settings)
   duration: number; // seconds
   mode: Mode;
   completedAt: number; // timestamp

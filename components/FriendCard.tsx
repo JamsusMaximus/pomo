@@ -156,7 +156,7 @@ export function FriendCard({ friend, index }: FriendCardProps) {
                       className="flex items-center gap-2 text-xs text-muted-foreground"
                     >
                       <span className="px-2 py-0.5 rounded-full bg-muted/50 w-30 break-words whitespace-normal">
-                        {session.tag || "Untitled"}
+                        {session.tag || "Focus session"}
                       </span>
                       <span>·</span>
                       <span className="shrink-0">{formatDuration(session.duration)}</span>

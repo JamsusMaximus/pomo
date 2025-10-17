@@ -161,6 +161,15 @@ export const getPublicProfile = query({
       .order("desc")
       .take(10);
 
+    // Filter private tags for non-owners
+    const filteredSessions = isOwnProfile
+      ? last10Sessions
+      : last10Sessions.map((session) => ({
+          ...session,
+          tag: session.tagPrivate ? undefined : session.tag,
+          tagPrivate: undefined, // Don't expose privacy flag to others
+        }));
+
     // Get level info
     const levelInfo = getLevelInfo(userStats.total);
 
@@ -205,7 +214,7 @@ export const getPublicProfile = query({
       hasAccess: true,
       stats,
       activity,
-      recentSessions: last10Sessions,
+      recentSessions: filteredSessions,
       levelInfo,
       challengesCompleted: completedChallengesWithDetails.length,
       completedChallengesDetails: completedChallengesWithDetails,
