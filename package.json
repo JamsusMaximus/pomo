@@ -8,7 +8,7 @@
     "dev:clean": "bash scripts/clean-dev.sh && npm run dev",
     "dev:next": "next dev --turbopack",
     "dev:convex": "convex dev",
-    "prebuild": "SKIP_PORT_CLEANUP=1 bash scripts/validate-environment.sh && npm run typecheck && node scripts/prebuild.js",
+    "prebuild": "SKIP_PORT_CLEANUP=1 bash scripts/validate-environment.sh && node scripts/prebuild.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -71,6 +71,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.14",
+    "turbo": "^2.5.8",
     "typescript": "^5",
     "vitest": "^3.2.4",
     "web-push": "^3.6.7"

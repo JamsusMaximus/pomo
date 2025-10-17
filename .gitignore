@@ -50,3 +50,4 @@ next-env.d.ts
 
 # changelog rate limit
 .changelog-last-run
+.turbo

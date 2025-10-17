@@ -48,6 +48,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ShareProfileButton } from "@/components/ShareProfileButton";
 import { PrivacySettings } from "@/components/PrivacySettings";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
+import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -489,6 +490,16 @@ function ProfilePageContent() {
                       </motion.div>
                     </div>
                   </div>
+                </motion.div>
+
+                {/* Push Notification Settings */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.03 }}
+                  className="mb-6"
+                >
+                  <PushNotificationSettings />
                 </motion.div>
 
                 {/* Duolingo-Style Daily Streak */}
