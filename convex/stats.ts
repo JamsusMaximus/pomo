@@ -381,12 +381,12 @@ export const getFocusGraph = query({
       return [];
     }
 
-    // Get sessions from past 90 days
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    // Get sessions from past 30 days
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const sessions = await ctx.db
       .query("pomodoros")
       .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", user._id).gte("completedAt", ninetyDaysAgo)
+        q.eq("userId", user._id).gte("completedAt", thirtyDaysAgo)
       )
       .filter((q) => q.eq(q.field("mode"), "focus"))
       .collect();
@@ -407,11 +407,11 @@ export const getFocusGraph = query({
     const focusData: Array<{ date: string; score: number }> = [];
     let currentScore = 0;
 
-    // Generate data for past 90 days
+    // Generate data for past 30 days
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (let i = 89; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;

@@ -73,7 +73,7 @@ function getDefaultLevelConfig() {
  */
 export const getProfileData = query({
   args: {
-    fitnessPeriod: v.optional(v.union(v.literal(7), v.literal(90))),
+    fitnessPeriod: v.optional(v.union(v.literal(7), v.literal(30))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
