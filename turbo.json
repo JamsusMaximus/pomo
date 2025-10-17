@@ -14,16 +14,18 @@
         "TAURI_BUILD"
       ],
       "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "hooks/**",
-        "public/**",
-        "convex/**",
+        "app/**/*.{ts,tsx,js,jsx}",
+        "app/**/*.css",
+        "components/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "hooks/**/*.{ts,tsx}",
+        "public/**/*.{png,svg,ico,json,webmanifest,js}",
+        "convex/**/*.ts",
         "next.config.ts",
         "tsconfig.json",
         "tailwind.config.ts",
-        "postcss.config.mjs"
+        "postcss.config.mjs",
+        "package.json"
       ]
     },
     "typecheck": {

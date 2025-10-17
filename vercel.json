@@ -1,5 +1,7 @@
 {
-  "buildCommand": "npx turbo run build",
-  "installCommand": "npm ci",
-  "devCommand": "npm run dev"
+  "buildCommand": "pnpm exec turbo run build --remote-cache-timeout=60",
+  "installCommand": "pnpm install --frozen-lockfile --no-optional",
+  "devCommand": "pnpm dev",
+  "framework": "nextjs",
+  "crons": []
 }

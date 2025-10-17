@@ -1,0 +1,42 @@
+# Development files
+scripts/
+tests/
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
+playwright-report/
+test-results/
+coverage/
+
+# GitHub workflows
+.github/
+
+# Documentation
+*.md
+!README.md
+ARCHITECTURE.md
+AI_CONTEXT.md
+DEV_SETUP.md
+TESTING_*.md
+
+# Public dev files
+public/*.html
+public/*.md
+public/generate-icons.html
+public/create-emoji-icons.html
+public/pwa-debug.html
+public/ICONS_NEEDED.md
+
+# Build artifacts from other environments
+src-tauri/
+.turbo/
+.changelog-last-run
+
+# Dev dependencies not needed for build
+playwright.config.ts
+vitest.config.ts
+
+# Development tools
+.vscode/
+.idea/
