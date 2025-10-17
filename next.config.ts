@@ -22,8 +22,6 @@ const nextConfig: NextConfig = {
     // Use webpack build worker for parallel compilation
     webpackBuildWorker: true,
   },
-  // Ensure SWC minification is enabled (faster than Terser)
-  swcMinify: true,
 };
 
 export default nextConfig;
