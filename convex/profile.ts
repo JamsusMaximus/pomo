@@ -202,7 +202,7 @@ export const getProfileData = query({
       sortedSessions.forEach((session) => {
         const date = new Date(session.completedAt);
         date.setHours(0, 0, 0, 0);
-        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
         uniqueDates.add(dateKey);
       });
 
@@ -211,11 +211,8 @@ export const getProfileData = query({
       let currentStreak = 1;
 
       for (let i = 1; i < sortedDates.length; i++) {
-        const [prevYear, prevMonth, prevDay] = sortedDates[i - 1].split("-").map(Number);
-        const [currYear, currMonth, currDay] = sortedDates[i].split("-").map(Number);
-
-        const prevDate = new Date(prevYear, prevMonth, prevDay);
-        const currDate = new Date(currYear, currMonth, currDay);
+        const prevDate = new Date(sortedDates[i - 1]);
+        const currDate = new Date(sortedDates[i]);
 
         const dayDiff = Math.floor(
           (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -232,7 +229,9 @@ export const getProfileData = query({
       return Math.max(maxStreak, currentStreak);
     };
 
-    const bestDailyStreak = user.bestDailyStreak || calculateBestStreak(allSessions);
+    // Always recalculate best streak to ensure accuracy (cached value may be stale)
+    const calculatedBest = calculateBestStreak(allSessions);
+    const bestDailyStreak = Math.max(user.bestDailyStreak || 0, calculatedBest);
 
     // Calculate focus graph with Strava-style decay
     // Strava uses two values: Fitness (long-term) and Fatigue (short-term)
