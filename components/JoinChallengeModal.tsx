@@ -208,7 +208,7 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Joined Successfully!</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  You've joined the challenge. Good luck! 🎯
+                  You&apos;ve joined the challenge. Good luck! 🎯
                 </p>
               </div>
 

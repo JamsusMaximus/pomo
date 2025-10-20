@@ -5,7 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "@/components/motion";
 import { Button } from "@/components/ui/button";
-import { X, Calendar, Copy, Check } from "lucide-react";
+import { X, Copy, Check } from "lucide-react";
 
 interface CreateChallengeModalProps {
   onClose: () => void;
@@ -24,14 +24,6 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split("T")[0];
-
-  // Calculate end date (3 days after start)
-  const getEndDate = (start: string) => {
-    if (!start) return "";
-    const startDate = new Date(start);
-    startDate.setDate(startDate.getDate() + 3);
-    return startDate.toISOString().split("T")[0];
-  };
 
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return "";
