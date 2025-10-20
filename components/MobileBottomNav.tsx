@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Lock, Trophy } from "lucide-react";
+import { Users, Lock, Handshake } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserLevel } from "@/hooks/useUserLevel";
@@ -19,7 +19,7 @@ export function MobileBottomNav() {
   const isFriendsActive = pathname === "/friends";
   const isRulesActive = pathname === "/rules";
   const isHomeActive = pathname === "/";
-  const isChallengesActive = pathname === "/challenges";
+  const isPacktsActive = pathname === "/pacts";
   const isProfileActive = pathname === "/profile";
 
   return (
@@ -83,18 +83,15 @@ export function MobileBottomNav() {
           </span>
         </Link>
 
-        {/* Challenges */}
-        <Link
-          href="/challenges"
-          className="flex flex-col items-center justify-center gap-1.5 flex-1"
-        >
-          <Trophy
-            className={`w-5 h-5 ${isChallengesActive ? "text-orange-500" : "text-muted-foreground"}`}
+        {/* Pacts */}
+        <Link href="/pacts" className="flex flex-col items-center justify-center gap-1.5 flex-1">
+          <Handshake
+            className={`w-5 h-5 ${isPacktsActive ? "text-orange-500" : "text-muted-foreground"}`}
           />
           <span
-            className={`text-[10px] font-medium ${isChallengesActive ? "text-orange-500" : "text-muted-foreground"}`}
+            className={`text-[10px] font-medium ${isPacktsActive ? "text-orange-500" : "text-muted-foreground"}`}
           >
-            Challenges
+            Pacts
           </span>
         </Link>
 

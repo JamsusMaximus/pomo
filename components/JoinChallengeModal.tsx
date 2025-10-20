@@ -41,14 +41,14 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
       setJoined(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to join challenge: ${message}`);
+      alert(`Failed to join pact: ${message}`);
       setIsJoining(false);
     }
   };
 
   const handleClose = () => {
     onClose();
-    // Refresh page to show new challenge
+    // Refresh page to show new pact
     if (joined) {
       window.location.reload();
     }
@@ -88,9 +88,9 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
 
           {!joined ? (
             <>
-              <h2 className="text-2xl font-bold mb-2">Join Challenge</h2>
+              <h2 className="text-2xl font-bold mb-2">Join Pact</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Enter a 6-character join code to join an accountability challenge
+                Enter a 6-character join code to join an accountability pact
               </p>
 
               {/* Join Code Input */}
@@ -181,7 +181,7 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
                   className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
                 >
                   <p className="text-sm text-red-600 dark:text-red-400 text-center">
-                    Challenge not found. Check the code and try again.
+                    Pact not found. Check the code and try again.
                   </p>
                 </motion.div>
               )}
@@ -195,7 +195,7 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
                   disabled={!challenge || isJoining || joinCode.length !== 6}
                   className="flex-1"
                 >
-                  {isJoining ? "Joining..." : "Join Challenge"}
+                  {isJoining ? "Joining..." : "Join Pact"}
                 </Button>
               </div>
             </>
@@ -208,12 +208,12 @@ export function JoinChallengeModal({ onClose }: JoinChallengeModalProps) {
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Joined Successfully!</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  You&apos;ve joined the challenge. Good luck! 🎯
+                  You&apos;ve joined the pact. Good luck! 🎯
                 </p>
               </div>
 
               <Button onClick={handleClose} className="w-full">
-                View Challenge
+                View Pact
               </Button>
             </>
           )}

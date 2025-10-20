@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "@/components/motion";
-import { Trophy, Check, ChevronRight } from "lucide-react";
+import { Handshake, Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export function ActiveChallengesWidget() {
@@ -25,18 +25,18 @@ export function ActiveChallengesWidget() {
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <Link href="/challenges">
+        <Link href="/pacts">
           <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-2 border-orange-500/30 rounded-2xl p-4 hover:border-orange-500/50 transition-colors cursor-pointer group">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
-                  <Trophy className="w-5 h-5 text-white" />
+                  <Handshake className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base">
                     {completedCount === totalCount
-                      ? "All challenges complete today! 🎉"
-                      : `${totalCount} Active Challenge${totalCount !== 1 ? "s" : ""} Today`}
+                      ? "All pacts complete today! 🎉"
+                      : `${totalCount} Active Pact${totalCount !== 1 ? "s" : ""} Today`}
                   </h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     {completedCount} of {totalCount} completed
@@ -71,7 +71,7 @@ export function ActiveChallengesWidget() {
               })}
             </div>
 
-            {/* Challenge names (if space allows) */}
+            {/* Pact names (if space allows) */}
             <div className="flex gap-2 mt-2 flex-wrap">
               {activeChallenges.map((challenge) => (
                 <div

@@ -40,14 +40,14 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
     setIsCreating(true);
     try {
       const result = await createChallenge({
-        name: name || "Focus Challenge",
+        name: name || "Focus Pact",
         startDate,
       });
 
       setJoinCode(result.joinCode);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to create challenge: ${message}`);
+      alert(`Failed to create pact: ${message}`);
       setIsCreating(false);
     }
   };
@@ -60,7 +60,7 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
 
   const handleClose = () => {
     onClose();
-    // Refresh page to show new challenge
+    // Refresh page to show new pact
     if (joinCode) {
       window.location.reload();
     }
@@ -92,24 +92,23 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
           {!joinCode ? (
             // Create form
             <>
-              <h2 className="text-2xl font-bold mb-2">Create Challenge</h2>
+              <h2 className="text-2xl font-bold mb-2">Create Pact</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Start a 4-day accountability challenge. All participants must complete 1 pomodoro
-                each day or everyone fails!
+                Start a 4-day accountability pact. All participants must complete 1 pomodoro each
+                day or everyone fails!
               </p>
 
               <div className="space-y-4 mb-6">
-                {/* Challenge Name */}
+                {/* Pact Name */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Challenge Name{" "}
-                    <span className="text-gray-500 dark:text-gray-400">(optional)</span>
+                    Pact Name <span className="text-gray-500 dark:text-gray-400">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Focus Challenge"
+                    placeholder="Focus Pact"
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-orange-500 focus:outline-none transition-colors"
                     maxLength={50}
                   />
@@ -135,7 +134,7 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
                 {/* Date Preview */}
                 {startDate && (
                   <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm font-medium mb-1">4-day challenge:</p>
+                    <p className="text-sm font-medium mb-1">4-day pact:</p>
                     <div className="flex gap-2 flex-wrap">
                       {[0, 1, 2, 3].map((offset) => {
                         const date = new Date(startDate);
@@ -163,7 +162,7 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
                   disabled={!startDate || isCreating}
                   className="flex-1"
                 >
-                  {isCreating ? "Creating..." : "Create Challenge"}
+                  {isCreating ? "Creating..." : "Create Pact"}
                 </Button>
               </div>
             </>
@@ -174,7 +173,7 @@ export function CreateChallengeModal({ onClose }: CreateChallengeModalProps) {
                 <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">Challenge Created!</h2>
+                <h2 className="text-2xl font-bold mb-2">Pact Created!</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Share this code with friends to invite them
                 </p>

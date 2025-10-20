@@ -257,8 +257,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
       {challenge.status === "pending" && (
         <div className="mt-4 p-3 bg-muted/30 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
-            Challenge starts on {formatDate(challenge.startDate)}. Share the join code to invite
-            friends!
+            Pact starts on {formatDate(challenge.startDate)}. Share the join code to invite friends!
           </p>
         </div>
       )}
@@ -267,7 +266,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
       {challenge.status === "failed" && challenge.failedOn && (
         <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
           <p className="text-sm text-red-600 dark:text-red-400 text-center">
-            Challenge failed on {formatDate(challenge.failedOn)}
+            Pact failed on {formatDate(challenge.failedOn)}
           </p>
         </div>
       )}
@@ -276,7 +275,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
       {challenge.status === "completed" && (
         <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
           <p className="text-sm text-green-600 dark:text-green-400 text-center font-medium">
-            🎉 Challenge completed! Everyone earned the Team Player badge!
+            🎉 Pact completed! Everyone earned the Team Player badge!
           </p>
         </div>
       )}

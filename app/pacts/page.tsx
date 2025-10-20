@@ -1,15 +1,15 @@
 /**
- * @fileoverview Accountability Challenges page for group challenges
- * @module app/challenges/page
+ * @fileoverview Accountability Pacts page for group pacts
+ * @module app/pacts/page
  *
  * Key responsibilities:
- * - Display user's accountability challenges (pending, active, past)
- * - Create new challenges with join codes
- * - Join existing challenges via join code
- * - Navigate to challenge details
+ * - Display user's accountability pacts (pending, active, past)
+ * - Create new pacts with join codes
+ * - Join existing pacts via join code
+ * - Navigate to pact details
  *
  * Dependencies: Convex (accountabilityChallenges), Clerk (auth), Framer Motion (animations)
- * Used by: Root layout (route "/challenges")
+ * Used by: Root layout (route "/pacts")
  */
 
 "use client";
@@ -19,7 +19,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "@/components/motion";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Users, Trophy, XCircle } from "lucide-react";
+import { ArrowLeft, Plus, Users, Handshake, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,7 +29,7 @@ import { ChallengeCard } from "@/components/ChallengeCard";
 import { CreateChallengeModal } from "@/components/CreateChallengeModal";
 import { JoinChallengeModal } from "@/components/JoinChallengeModal";
 
-function ChallengesPageContent() {
+function PacktsPageContent() {
   const { user } = useUser();
   const challenges = useQuery(api.accountabilityChallenges.getMyAccountabilityChallenges);
 
@@ -42,7 +42,7 @@ function ChallengesPageContent() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Please sign in</h1>
           <p className="text-muted-foreground">
-            You need to be signed in to view accountability challenges.
+            You need to be signed in to view accountability pacts.
           </p>
         </div>
       </main>
@@ -61,9 +61,9 @@ function ChallengesPageContent() {
                 Back to Timer
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold">Accountability Challenges</h1>
+            <h1 className="text-3xl font-bold">Accountability Pacts</h1>
             <p className="text-muted-foreground mt-1">
-              Team up with friends for 4-day focus challenges
+              Team up with friends for 4-day focus pacts
             </p>
           </div>
 
@@ -74,16 +74,16 @@ function ChallengesPageContent() {
               className="min-h-[44px]"
             >
               <Users className="w-4 h-4 mr-2" />
-              Join Challenge
+              Join Pact
             </Button>
             <Button onClick={() => setShowCreateModal(true)} className="min-h-[44px]">
               <Plus className="w-4 h-4 mr-2" />
-              Create Challenge
+              Create Pact
             </Button>
           </div>
         </div>
 
-        {/* Active Challenges */}
+        {/* Active Pacts */}
         {challenges && challenges.active.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -92,8 +92,8 @@ function ChallengesPageContent() {
             className="mb-8"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-5 h-5 text-orange-500" />
-              <h2 className="text-xl font-bold">Active Challenges</h2>
+              <Handshake className="w-5 h-5 text-orange-500" />
+              <h2 className="text-xl font-bold">Active Pacts</h2>
               <span className="text-sm text-muted-foreground">({challenges.active.length})</span>
             </div>
             <div className="space-y-4">
@@ -111,7 +111,7 @@ function ChallengesPageContent() {
           </motion.div>
         )}
 
-        {/* Pending Challenges */}
+        {/* Pending Pacts */}
         {challenges && challenges.pending.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -121,7 +121,7 @@ function ChallengesPageContent() {
           >
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-blue-500" />
-              <h2 className="text-xl font-bold">Upcoming Challenges</h2>
+              <h2 className="text-xl font-bold">Upcoming Pacts</h2>
               <span className="text-sm text-muted-foreground">({challenges.pending.length})</span>
             </div>
             <div className="space-y-4">
@@ -139,7 +139,7 @@ function ChallengesPageContent() {
           </motion.div>
         )}
 
-        {/* Past Challenges */}
+        {/* Past Pacts */}
         {challenges && challenges.past.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -149,7 +149,7 @@ function ChallengesPageContent() {
           >
             <div className="flex items-center gap-2 mb-4">
               <XCircle className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-bold">Past Challenges</h2>
+              <h2 className="text-xl font-bold">Past Pacts</h2>
               <span className="text-sm text-muted-foreground">({challenges.past.length})</span>
             </div>
             <div className="space-y-4">
@@ -179,18 +179,18 @@ function ChallengesPageContent() {
               className="bg-card rounded-2xl shadow-lg border border-border p-12 text-center"
             >
               <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-bold mb-2">No Challenges Yet</h3>
+              <h3 className="text-lg font-bold mb-2">No Pacts Yet</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Create a challenge or join one with a code to get started!
+                Create a pact or join one with a code to get started!
               </p>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => setShowJoinModal(true)} variant="outline">
                   <Users className="w-4 h-4 mr-2" />
-                  Join Challenge
+                  Join Pact
                 </Button>
                 <Button onClick={() => setShowCreateModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Challenge
+                  Create Pact
                 </Button>
               </div>
             </motion.div>
@@ -204,13 +204,13 @@ function ChallengesPageContent() {
   );
 }
 
-export default function ChallengesPage() {
+export default function PacktsPage() {
   return (
     <ErrorBoundary
-      fallbackTitle="Challenges Error"
-      fallbackMessage="An error occurred while loading challenges. Please refresh the page."
+      fallbackTitle="Pacts Error"
+      fallbackMessage="An error occurred while loading pacts. Please refresh the page."
     >
-      <ChallengesPageContent />
+      <PacktsPageContent />
     </ErrorBoundary>
   );
 }
