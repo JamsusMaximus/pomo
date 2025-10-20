@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Users, Lock } from "lucide-react";
+import { Users, Lock, Trophy } from "lucide-react";
 import { useUserLevel } from "@/hooks/useUserLevel";
 
 interface NavbarProps {
@@ -79,6 +79,17 @@ export function Navbar({ isTimerRunning = false }: NavbarProps) {
             >
               <Users className="w-4 h-4" />
               <span>Friends</span>
+            </Link>
+          </SignedIn>
+
+          {/* Challenges Menu */}
+          <SignedIn>
+            <Link
+              href="/challenges"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted transition-colors text-sm font-medium"
+            >
+              <Trophy className="w-4 h-4" />
+              <span>Challenges</span>
             </Link>
           </SignedIn>
 

@@ -103,6 +103,48 @@ export default defineSchema({
     .index("by_following", ["followingId"])
     .index("by_follower_and_following", ["followerId", "followingId"]),
 
+  accountabilityChallenges: defineTable({
+    creatorId: v.id("users"),
+    name: v.string(), // "Team Focus Week"
+    joinCode: v.string(), // "ABC123" (6-char unique)
+    startDate: v.string(), // "2025-10-21" (YYYY-MM-DD)
+    endDate: v.string(), // "2025-10-24" (calculated: 4 days)
+    status: v.union(
+      v.literal("pending"), // Not started yet
+      v.literal("active"), // Currently in progress
+      v.literal("completed"), // All participants completed all days
+      v.literal("failed") // Someone missed a day
+    ),
+    requiredPomosPerDay: v.number(), // 1 for MVP
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    failedOn: v.optional(v.string()), // "2025-10-22" (which day it failed)
+    failedByUserId: v.optional(v.id("users")), // who missed the day
+  })
+    .index("by_status", ["status"])
+    .index("by_join_code", ["joinCode"])
+    .index("by_creator", ["creatorId"]),
+
+  accountabilityChallengeParticipants: defineTable({
+    challengeId: v.id("accountabilityChallenges"),
+    userId: v.id("users"),
+    joinedAt: v.number(),
+    role: v.union(v.literal("creator"), v.literal("participant")),
+  })
+    .index("by_challenge", ["challengeId"])
+    .index("by_user", ["userId"])
+    .index("by_challenge_and_user", ["challengeId", "userId"]),
+
+  accountabilityChallengeDailyProgress: defineTable({
+    challengeId: v.id("accountabilityChallenges"),
+    userId: v.id("users"),
+    date: v.string(), // "2025-10-21"
+    pomosCompleted: v.number(), // computed from pomodoros table
+    completed: v.boolean(), // pomosCompleted >= requiredPomosPerDay
+  })
+    .index("by_challenge_and_date", ["challengeId", "date"])
+    .index("by_challenge_and_user", ["challengeId", "userId"]),
+
   pushSubscriptions: defineTable({
     userId: v.id("users"),
     endpoint: v.string(), // Push service endpoint URL

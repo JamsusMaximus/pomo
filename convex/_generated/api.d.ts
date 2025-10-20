@@ -8,11 +8,7 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type * as accountabilityChallenges from "../accountabilityChallenges.js";
 import type * as backfillChallenges from "../backfillChallenges.js";
 import type * as challenges from "../challenges.js";
 import type * as createTestFriend from "../createTestFriend.js";
@@ -38,6 +34,12 @@ import type * as timeHelpers from "../timeHelpers.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
+
 /**
  * A utility for referencing Convex functions in your app's API.
  *
@@ -47,6 +49,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  accountabilityChallenges: typeof accountabilityChallenges;
   backfillChallenges: typeof backfillChallenges;
   challenges: typeof challenges;
   createTestFriend: typeof createTestFriend;
@@ -72,11 +75,15 @@ declare const fullApi: ApiFromModules<{
   timers: typeof timers;
   users: typeof users;
 }>;
+declare const fullApiWithMounts: typeof fullApi;
+
 export declare const api: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "public">
 >;
 export declare const internal: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "internal">
 >;
+
+export declare const components: {};
