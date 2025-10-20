@@ -39,7 +39,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
   };
 
   // Get challenge dates
-  const challengeDates = [];
+  const challengeDates: string[] = [];
   const start = new Date(challenge.startDate);
   const end = new Date(challenge.endDate);
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
