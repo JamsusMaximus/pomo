@@ -8,11 +8,7 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type * as accountabilityChallenges from "../accountabilityChallenges.js";
 import type * as backfillChallenges from "../backfillChallenges.js";
 import type * as challenges from "../challenges.js";
 import type * as createTestFriend from "../createTestFriend.js";
@@ -29,6 +25,7 @@ import type * as publicProfile from "../publicProfile.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as seed from "../seed.js";
 import type * as seedChallenges from "../seedChallenges.js";
+import type * as seedTestPact from "../seedTestPact.js";
 import type * as sendNotifications from "../sendNotifications.js";
 import type * as sendNotificationsSimple from "../sendNotificationsSimple.js";
 import type * as stats from "../stats.js";
@@ -37,6 +34,12 @@ import type * as streakHelpers from "../streakHelpers.js";
 import type * as timeHelpers from "../timeHelpers.js";
 import type * as timers from "../timers.js";
 import type * as users from "../users.js";
+
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -47,6 +50,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  accountabilityChallenges: typeof accountabilityChallenges;
   backfillChallenges: typeof backfillChallenges;
   challenges: typeof challenges;
   createTestFriend: typeof createTestFriend;
@@ -63,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   pushSubscriptions: typeof pushSubscriptions;
   seed: typeof seed;
   seedChallenges: typeof seedChallenges;
+  seedTestPact: typeof seedTestPact;
   sendNotifications: typeof sendNotifications;
   sendNotificationsSimple: typeof sendNotificationsSimple;
   stats: typeof stats;
@@ -72,11 +77,15 @@ declare const fullApi: ApiFromModules<{
   timers: typeof timers;
   users: typeof users;
 }>;
+declare const fullApiWithMounts: typeof fullApi;
+
 export declare const api: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "public">
 >;
 export declare const internal: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "internal">
 >;
+
+export declare const components: {};

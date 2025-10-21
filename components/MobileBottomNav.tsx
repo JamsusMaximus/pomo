@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Lock, Dot } from "lucide-react";
+import { Users, Lock, Handshake } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserLevel } from "@/hooks/useUserLevel";
@@ -19,6 +19,7 @@ export function MobileBottomNav() {
   const isFriendsActive = pathname === "/friends";
   const isRulesActive = pathname === "/rules";
   const isHomeActive = pathname === "/";
+  const isPacktsActive = pathname === "/pacts";
   const isProfileActive = pathname === "/profile";
 
   return (
@@ -82,11 +83,17 @@ export function MobileBottomNav() {
           </span>
         </Link>
 
-        {/* Placeholder - Coming Soon */}
-        <div className="flex flex-col items-center justify-center gap-1.5 flex-1 opacity-30 cursor-not-allowed">
-          <Dot className="w-5 h-5 text-muted-foreground" />
-          <span className="text-[10px] font-medium text-muted-foreground">Soon</span>
-        </div>
+        {/* Pacts */}
+        <Link href="/pacts" className="flex flex-col items-center justify-center gap-1.5 flex-1">
+          <Handshake
+            className={`w-5 h-5 ${isPacktsActive ? "text-orange-500" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`text-[10px] font-medium ${isPacktsActive ? "text-orange-500" : "text-muted-foreground"}`}
+          >
+            Pacts
+          </span>
+        </Link>
 
         {/* Profile with Level */}
         <Link href="/profile" className="flex flex-col items-center justify-center gap-1.5 flex-1">
