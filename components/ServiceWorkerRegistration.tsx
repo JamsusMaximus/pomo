@@ -16,84 +16,27 @@ export function ServiceWorkerRegistration() {
       return;
     }
 
-    // EMERGENCY FIX: Unregister all existing service workers first
-    // This clears out any broken/cached service workers
+    // EMERGENCY FIX: Unregister ALL service workers and DO NOT re-register
+    // This completely disables SW to fix production outage
+    console.log("[PWA] EMERGENCY MODE: Unregistering all service workers");
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       if (registrations.length > 0) {
-        console.log("[PWA] Unregistering", registrations.length, "existing service worker(s)");
+        console.log("[PWA] Found", registrations.length, "service worker(s) - unregistering all");
         Promise.all(registrations.map((reg) => reg.unregister())).then(() => {
-          console.log("[PWA] All service workers unregistered");
-          // Force reload to clear caches
-          window.location.reload();
+          console.log("[PWA] ✅ All service workers unregistered successfully");
+          console.log("[PWA] Service worker functionality DISABLED until further notice");
         });
-        return;
+      } else {
+        console.log("[PWA] No service workers found - good!");
       }
-
-      // Only register new service worker if no existing ones
-      registerServiceWorker();
     });
 
-    function registerServiceWorker() {
-      // Register service worker
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("[PWA] Service worker registered:", registration.scope);
-
-          // Check for updates periodically (every hour)
-          setInterval(
-            () => {
-              registration.update();
-            },
-            60 * 60 * 1000
-          );
-
-          // Listen for updates
-          registration.addEventListener("updatefound", () => {
-            const worker = registration.installing;
-            if (!worker) return;
-
-            worker.addEventListener("statechange", () => {
-              if (worker.state === "installed" && navigator.serviceWorker.controller) {
-                console.log("[PWA] New version available!");
-                setNewWorker(worker);
-                setUpdateAvailable(true);
-              }
-            });
-          });
-        })
-        .catch((error) => {
-          console.error("[PWA] Service worker registration failed:", error);
-        });
-
-      // Listen for messages from service worker
-      navigator.serviceWorker.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "SW_UPDATED") {
-          console.log("[PWA] Service worker updated to version:", event.data.version);
-        }
-      });
-
-      // Listen for controller change (new service worker activated)
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        console.log("[PWA] Controller changed, reloading page");
-        window.location.reload();
-      });
-    }
+    // Service worker registration completely disabled for emergency fix
+    // TODO: Re-enable once sw.js is fixed and tested
   }, []);
 
-  // Show update notification when available
-  useEffect(() => {
-    if (updateAvailable && newWorker) {
-      // Auto-activate the new service worker after a short delay
-      // This ensures users get the latest version without manual intervention
-      const timer = setTimeout(() => {
-        console.log("[PWA] Activating new service worker...");
-        newWorker.postMessage({ type: "SKIP_WAITING" });
-      }, 3000); // 3 second delay to let current operations complete
-
-      return () => clearTimeout(timer);
-    }
-  }, [updateAvailable, newWorker]);
+  // Service worker update handling disabled during emergency fix
+  // useEffect disabled - no new workers will be registered
 
   return null; // This component doesn't render anything
 }
