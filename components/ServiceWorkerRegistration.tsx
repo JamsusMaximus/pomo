@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
  * Registers the service worker for PWA capabilities and push notifications
  */
 export function ServiceWorkerRegistration() {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
+  // Removed unused state - keeping component minimal during emergency SW fix
+  // const [updateAvailable, setUpdateAvailable] = useState(false);
+  // const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
