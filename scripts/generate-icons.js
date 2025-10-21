@@ -5,8 +5,8 @@
  * Creates placeholder icons for testing PWA installation
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 // Create simple SVG icons
 const createSvgIcon = (size) =>

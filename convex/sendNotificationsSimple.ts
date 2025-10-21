@@ -51,7 +51,7 @@ export const sendToAll = action({
     }
 
     // Get all subscriptions
-    const subscriptions: any[] = await ctx.runQuery(api.pushSubscriptions.getAllSubscriptions);
+    const subscriptions = await ctx.runQuery(api.pushSubscriptions.getAllSubscriptions);
 
     const results: { total: number; sent: number; failed: number; errors: string[] } = {
       total: subscriptions.length,

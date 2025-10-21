@@ -392,17 +392,21 @@ async function getEnrichedUserData(
         )
         .first();
 
-      const completedAt = userChallenge?.completedAt ?? Date.now();
+      // Only show challenge if we have a proper userChallenge record with completedAt
+      // This prevents showing incorrect "just now" timestamps for old completions
+      if (userChallenge?.completedAt) {
+        const completedAt = userChallenge.completedAt;
 
-      // Track the most recently completed challenge
-      if (completedAt > latestCompletedAt) {
-        latestCompletedAt = completedAt;
-        latestChallengeData = {
-          name: challenge.name,
-          description: challenge.description,
-          badge: challenge.badge,
-          completedAt,
-        };
+        // Track the most recently completed challenge
+        if (completedAt > latestCompletedAt) {
+          latestCompletedAt = completedAt;
+          latestChallengeData = {
+            name: challenge.name,
+            description: challenge.description,
+            badge: challenge.badge,
+            completedAt,
+          };
+        }
       }
     }
   }

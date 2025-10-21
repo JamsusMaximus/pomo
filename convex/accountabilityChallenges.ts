@@ -364,8 +364,14 @@ export const joinAccountabilityChallenge = mutation({
 
     if (!challenge) throw new Error("Challenge not found");
 
-    // Can't join if challenge has already started
-    if (challenge.status !== "pending") {
+    // Can't join if challenge has ended
+    if (challenge.status === "completed" || challenge.status === "failed") {
+      throw new Error("Challenge has ended");
+    }
+
+    // Allow joining on the start date (until 23:59), but not after
+    const today = new Date().toISOString().split("T")[0];
+    if (today > challenge.startDate) {
       throw new Error("Challenge has already started");
     }
 
