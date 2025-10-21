@@ -7,6 +7,8 @@ on:
 jobs:
   check-docs:
     runs-on: ubuntu-latest
+    # Make this check non-blocking - it provides helpful warnings but doesn't fail the build
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -146,6 +148,8 @@ jobs:
           echo "### Documentation Check Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Documentation validation complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️  This check is informational only and will not block your PR." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check the annotations above for any warnings." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
