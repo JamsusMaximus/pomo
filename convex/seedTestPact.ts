@@ -39,10 +39,6 @@ export const seedTestPact = mutation({
     yesterday.setDate(yesterday.getDate() - 1);
     const startDate = yesterday.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const day3Date = tomorrow.toISOString().split("T")[0];
-
     const dayAfterTomorrow = new Date(now);
     dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
     const endDate = dayAfterTomorrow.toISOString().split("T")[0];

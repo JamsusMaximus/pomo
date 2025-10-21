@@ -31,14 +31,14 @@ const PAGES = [
   { path: "/changelog", name: "Changelog", requiresAuth: false },
 ];
 
-// Common mobile issues to check
-const CHECKS = {
-  horizontalScroll: "Horizontal scrollbar present",
-  buttonsTooSmall: "Buttons smaller than 44x44px (iOS minimum)",
-  textOverflow: "Text overflowing container",
-  navMissing: "Navigation elements missing",
-  offscreenElements: "Interactive elements partially offscreen",
-};
+// Common mobile issues to check (for future use)
+// const CHECKS = {
+//   horizontalScroll: "Horizontal scrollbar present",
+//   buttonsTooSmall: "Buttons smaller than 44x44px (iOS minimum)",
+//   textOverflow: "Text overflowing container",
+//   navMissing: "Navigation elements missing",
+//   offscreenElements: "Interactive elements partially offscreen",
+// };
 
 async function takeScreenshot(page, name, viewport) {
   const filename = `${name.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_${viewport.name.replace(/\s+/g, "_").toLowerCase()}.png`;

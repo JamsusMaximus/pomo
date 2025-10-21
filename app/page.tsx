@@ -839,9 +839,6 @@ function HomeContent() {
       </AnimatePresence>
 
       <div className="w-full max-w-md flex flex-col items-center gap-8">
-        {/* Active Challenges Widget */}
-        {isSignedIn && <ActiveChallengesWidget />}
-
         {/* Timer Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1164,6 +1161,18 @@ function HomeContent() {
             )}
           </div>
         </motion.div>
+
+        {/* Active Challenges Widget */}
+        {isSignedIn && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+            className="w-full"
+          >
+            <ActiveChallengesWidget />
+          </motion.div>
+        )}
 
         {/* Ambient Sound Controls */}
         <motion.div

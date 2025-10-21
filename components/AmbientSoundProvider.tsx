@@ -58,6 +58,10 @@ export function AmbientSoundProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Capture ref values at effect execution time for cleanup
+    const currentAudioRefs = audioRefs.current;
+    const currentFadeIntervals = fadeIntervalsRef.current;
+
     // Clear any saved volumes - always start fresh
     Object.keys(AMBIENT_SOUNDS).forEach((soundId) => {
       localStorage.removeItem(`${VOLUME_STORAGE_PREFIX}${soundId}`);
@@ -76,9 +80,6 @@ export function AmbientSoundProvider({ children }: { children: ReactNode }) {
 
     return () => {
       // Cleanup: stop all sounds and clear intervals
-      // Capture current values to avoid stale refs in cleanup
-      const currentAudioRefs = audioRefs.current;
-      const currentFadeIntervals = fadeIntervalsRef.current;
 
       Object.keys(currentAudioRefs).forEach((soundId) => {
         if (currentFadeIntervals[soundId]) {

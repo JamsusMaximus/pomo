@@ -4,7 +4,6 @@
  */
 
 import { internalMutation } from "../convex/_generated/server";
-import { v } from "convex/values";
 
 export const createTestFriend = internalMutation({
   args: {},

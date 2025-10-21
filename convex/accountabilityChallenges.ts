@@ -672,10 +672,29 @@ export const getActiveChallengesForToday = query({
           .filter((q) => q.eq(q.field("date"), today))
           .first();
 
+        // Get all participants with their avatars
+        const participantRecords = await ctx.db
+          .query("accountabilityChallengeParticipants")
+          .withIndex("by_challenge", (q) => q.eq("challengeId", challenge._id))
+          .collect();
+
+        const participants = await Promise.all(
+          participantRecords.map(async (p) => {
+            const participantUser = await ctx.db.get(p.userId);
+            return {
+              userId: p.userId,
+              username: participantUser?.username || "Unknown",
+              avatarUrl: participantUser?.avatarUrl,
+              role: p.role,
+            };
+          })
+        );
+
         activeChallenges.push({
           ...challenge,
           completedToday: progress?.completed || false,
           pomosToday: progress?.pomosCompleted || 0,
+          participants,
         });
       }
     }

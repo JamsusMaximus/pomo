@@ -392,21 +392,39 @@ async function getEnrichedUserData(
         )
         .first();
 
-      // Only show challenge if we have a proper userChallenge record with completedAt
-      // This prevents showing incorrect "just now" timestamps for old completions
+      // If no userChallenge record exists, use the timestamp of when they likely reached the target
+      // For "total" type challenges, use their Nth pomodoro's completion time (where N = target)
+      // For other types, use their most recent session as a reasonable approximation
+      let completedAt: number;
       if (userChallenge?.completedAt) {
-        const completedAt = userChallenge.completedAt;
-
-        // Track the most recently completed challenge
-        if (completedAt > latestCompletedAt) {
-          latestCompletedAt = completedAt;
-          latestChallengeData = {
-            name: challenge.name,
-            description: challenge.description,
-            badge: challenge.badge,
-            completedAt,
-          };
+        completedAt = userChallenge.completedAt;
+      } else {
+        // Fallback: estimate completion time from pomodoro history
+        if (challenge.type === "total" && userStats.pomodoros.length >= challenge.target) {
+          // Use the completion time of the Nth pomodoro (sorted by completedAt)
+          const sortedPomos = [...userStats.pomodoros].sort(
+            (a, b) => a.completedAt - b.completedAt
+          );
+          completedAt = sortedPomos[challenge.target - 1].completedAt;
+        } else if (userStats.pomodoros.length > 0) {
+          // Use most recent session as approximation
+          const mostRecent = Math.max(...userStats.pomodoros.map((p) => p.completedAt));
+          completedAt = mostRecent;
+        } else {
+          // No pomodoro data, skip this challenge
+          continue;
         }
+      }
+
+      // Track the most recently completed challenge
+      if (completedAt > latestCompletedAt) {
+        latestCompletedAt = completedAt;
+        latestChallengeData = {
+          name: challenge.name,
+          description: challenge.description,
+          badge: challenge.badge,
+          completedAt,
+        };
       }
     }
   }
