@@ -16,23 +16,43 @@ export function ServiceWorkerRegistration() {
       return;
     }
 
-    // EMERGENCY FIX: Unregister ALL service workers and DO NOT re-register
-    // This completely disables SW to fix production outage
-    console.log("[PWA] EMERGENCY MODE: Unregistering all service workers");
+    // EMERGENCY FIX: Force update to new self-destruct service worker
+    console.log("[PWA] EMERGENCY MODE: Forcing service worker update");
+
+    // Unregister all existing workers first
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       if (registrations.length > 0) {
-        console.log("[PWA] Found", registrations.length, "service worker(s) - unregistering all");
+        console.log("[PWA] Unregistering", registrations.length, "old service worker(s)");
         Promise.all(registrations.map((reg) => reg.unregister())).then(() => {
-          console.log("[PWA] ✅ All service workers unregistered successfully");
-          console.log("[PWA] Service worker functionality DISABLED until further notice");
+          console.log("[PWA] Old workers unregistered, registering self-destruct version");
+
+          // Register the new self-destruct worker with cache-busting timestamp
+          const timestamp = Date.now();
+          navigator.serviceWorker
+            .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
+            .then((registration) => {
+              console.log("[PWA] Self-destruct worker registered, forcing update");
+              registration.update(); // Force immediate update check
+            })
+            .catch((err) => {
+              console.error("[PWA] Failed to register self-destruct worker:", err);
+            });
         });
       } else {
-        console.log("[PWA] No service workers found - good!");
+        console.log("[PWA] No existing workers, registering self-destruct version");
+        // Register self-destruct worker with cache-busting
+        const timestamp = Date.now();
+        navigator.serviceWorker
+          .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
+          .then((registration) => {
+            console.log("[PWA] Self-destruct worker registered");
+            registration.update();
+          })
+          .catch((err) => {
+            console.error("[PWA] Failed to register self-destruct worker:", err);
+          });
       }
     });
-
-    // Service worker registration completely disabled for emergency fix
-    // TODO: Re-enable once sw.js is fixed and tested
   }, []);
 
   // Service worker update handling disabled during emergency fix
