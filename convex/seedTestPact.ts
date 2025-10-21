@@ -50,10 +50,10 @@ export const seedTestPact = mutation({
       joinCode += chars[Math.floor(Math.random() * chars.length)];
     }
 
-    // Create the pact
+    // Create the pact with the date in the name
     const pactId = await ctx.db.insert("accountabilityChallenges", {
       creatorId: mainUser._id,
-      name: "Test Focus Pact",
+      name: `21 Oct Pact`,
       joinCode,
       startDate,
       endDate,
@@ -103,7 +103,7 @@ export const seedTestPact = mutation({
       completed: true,
     });
 
-    // Bob completed both days
+    // Bob completed yesterday but NOT today
     await ctx.db.insert("accountabilityChallengeDailyProgress", {
       challengeId: pactId,
       userId: dummyUser2,
@@ -112,13 +112,7 @@ export const seedTestPact = mutation({
       completed: true,
     });
 
-    await ctx.db.insert("accountabilityChallengeDailyProgress", {
-      challengeId: pactId,
-      userId: dummyUser2,
-      date: today,
-      pomosCompleted: 1,
-      completed: true,
-    });
+    // Bob has NOT completed today (no progress record for today)
 
     // jamesmcaulay2 has NOT completed any days (no progress records)
 
@@ -130,10 +124,10 @@ export const seedTestPact = mutation({
 
 Participants:
 - ${mainUser.username} (you) - 0/2 days completed ❌
-- alice_focus - 2/2 days completed ✅
-- bob_productive - 2/2 days completed ✅
+- alice_focus - 2/2 days completed ✅ (GREEN glow)
+- bob_productive - 1/2 days completed ⚠️ (ORANGE/RED glow - not completed today)
 
-Today is Day 2. You're behind! Complete a pomodoro to catch up.`,
+Today is Day 2. You and Bob need to complete a pomodoro!`,
     };
   },
 });

@@ -7,7 +7,7 @@
     "predev": "bash scripts/validate-environment.sh && node scripts/check-env.js",
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:convex\" --names \"next,convex\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail --restart-tries 3",
     "dev:clean": "bash scripts/clean-dev.sh && npm run dev",
-    "dev:next": "next dev --turbopack",
+    "dev:next": "next dev",
     "dev:convex": "convex dev",
     "prebuild": "SKIP_PORT_CLEANUP=1 bash scripts/validate-environment.sh && node scripts/prebuild.js",
     "build": "next build",

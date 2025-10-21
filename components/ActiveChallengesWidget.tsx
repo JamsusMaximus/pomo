@@ -27,7 +27,13 @@ export function ActiveChallengesWidget() {
       });
       return acc;
     },
-    [] as Array<{ userId: string; username: string; avatarUrl?: string; role: string }>
+    [] as Array<{
+      userId: string;
+      username: string;
+      avatarUrl?: string;
+      role: string;
+      completedToday: boolean;
+    }>
   );
 
   return (
@@ -103,16 +109,22 @@ export function ActiveChallengesWidget() {
               {allParticipants.length > 0 && (
                 <div className="flex -space-x-2 ml-3">
                   {allParticipants.slice(0, 4).map((participant, idx) => (
-                    <Avatar
+                    <div
                       key={participant.userId}
-                      className="w-8 h-8 border-2 border-background"
-                      style={{ zIndex: allParticipants.length - idx }}
+                      className={`relative rounded-full bg-card border-2 ${
+                        participant.completedToday
+                          ? "border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+                          : "border-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]"
+                      }`}
+                      style={{ zIndex: idx + 1 }}
                     >
-                      <AvatarImage src={participant.avatarUrl} alt={participant.username} />
-                      <AvatarFallback className="bg-orange-500/20 text-xs">
-                        {participant.username.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={participant.avatarUrl} alt={participant.username} />
+                        <AvatarFallback className="bg-orange-500/20 text-xs">
+                          {participant.username.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
                   ))}
                   {allParticipants.length > 4 && (
                     <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs text-muted-foreground font-medium">
