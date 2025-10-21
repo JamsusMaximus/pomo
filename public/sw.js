@@ -5,7 +5,7 @@
 
 // IMPORTANT: Increment this version whenever you deploy changes
 // This forces users to get the latest app version
-const VERSION = "v1.0.1";
+const VERSION = "v1.0.2";
 const CACHE_NAME = `lockin-${VERSION}`;
 const urlsToCache = ["/", "/site.webmanifest"];
 
@@ -182,7 +182,19 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() => {
         // If network fails, try cache
-        return caches.match(event.request);
+        return caches.match(event.request).then((cachedResponse) => {
+          // If cache also misses, return a basic error response
+          if (!cachedResponse) {
+            return new Response("Network error and no cached version available", {
+              status: 503,
+              statusText: "Service Unavailable",
+              headers: new Headers({
+                "Content-Type": "text/plain",
+              }),
+            });
+          }
+          return cachedResponse;
+        });
       })
   );
 });
