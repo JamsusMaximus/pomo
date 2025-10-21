@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
  * Registers the service worker for PWA capabilities and push notifications
  */
 export function ServiceWorkerRegistration() {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
+  // Removed unused state - keeping component minimal during emergency SW fix
+  // const [updateAvailable, setUpdateAvailable] = useState(false);
+  // const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
@@ -16,65 +17,47 @@ export function ServiceWorkerRegistration() {
       return;
     }
 
-    // Register service worker
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("[PWA] Service worker registered:", registration.scope);
+    // EMERGENCY FIX: Force update to new self-destruct service worker
+    console.log("[PWA] EMERGENCY MODE: Forcing service worker update");
 
-        // Check for updates periodically (every hour)
-        setInterval(
-          () => {
-            registration.update();
-          },
-          60 * 60 * 1000
-        );
+    // Unregister all existing workers first
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      if (registrations.length > 0) {
+        console.log("[PWA] Unregistering", registrations.length, "old service worker(s)");
+        Promise.all(registrations.map((reg) => reg.unregister())).then(() => {
+          console.log("[PWA] Old workers unregistered, registering self-destruct version");
 
-        // Listen for updates
-        registration.addEventListener("updatefound", () => {
-          const worker = registration.installing;
-          if (!worker) return;
-
-          worker.addEventListener("statechange", () => {
-            if (worker.state === "installed" && navigator.serviceWorker.controller) {
-              console.log("[PWA] New version available!");
-              setNewWorker(worker);
-              setUpdateAvailable(true);
-            }
-          });
+          // Register the new self-destruct worker with cache-busting timestamp
+          const timestamp = Date.now();
+          navigator.serviceWorker
+            .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
+            .then((registration) => {
+              console.log("[PWA] Self-destruct worker registered, forcing update");
+              registration.update(); // Force immediate update check
+            })
+            .catch((err) => {
+              console.error("[PWA] Failed to register self-destruct worker:", err);
+            });
         });
-      })
-      .catch((error) => {
-        console.error("[PWA] Service worker registration failed:", error);
-      });
-
-    // Listen for messages from service worker
-    navigator.serviceWorker.addEventListener("message", (event) => {
-      if (event.data && event.data.type === "SW_UPDATED") {
-        console.log("[PWA] Service worker updated to version:", event.data.version);
+      } else {
+        console.log("[PWA] No existing workers, registering self-destruct version");
+        // Register self-destruct worker with cache-busting
+        const timestamp = Date.now();
+        navigator.serviceWorker
+          .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
+          .then((registration) => {
+            console.log("[PWA] Self-destruct worker registered");
+            registration.update();
+          })
+          .catch((err) => {
+            console.error("[PWA] Failed to register self-destruct worker:", err);
+          });
       }
-    });
-
-    // Listen for controller change (new service worker activated)
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      console.log("[PWA] Controller changed, reloading page");
-      window.location.reload();
     });
   }, []);
 
-  // Show update notification when available
-  useEffect(() => {
-    if (updateAvailable && newWorker) {
-      // Auto-activate the new service worker after a short delay
-      // This ensures users get the latest version without manual intervention
-      const timer = setTimeout(() => {
-        console.log("[PWA] Activating new service worker...");
-        newWorker.postMessage({ type: "SKIP_WAITING" });
-      }, 3000); // 3 second delay to let current operations complete
-
-      return () => clearTimeout(timer);
-    }
-  }, [updateAvailable, newWorker]);
+  // Service worker update handling disabled during emergency fix
+  // useEffect disabled - no new workers will be registered
 
   return null; // This component doesn't render anything
 }

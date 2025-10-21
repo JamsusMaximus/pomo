@@ -37,6 +37,7 @@ import { AmbientSoundControls } from "@/components/AmbientSoundControls";
 import { useAmbientSoundContext } from "@/components/AmbientSoundProvider";
 import { TagInput } from "@/components/TagInput";
 import { ChallengeToast } from "@/components/ChallengeToast";
+import { ActiveChallengesWidget } from "@/components/ActiveChallengesWidget";
 import type { Mode, PomodoroSession } from "@/types/pomodoro";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
@@ -838,6 +839,9 @@ function HomeContent() {
       </AnimatePresence>
 
       <div className="w-full max-w-md flex flex-col items-center gap-8">
+        {/* Active Challenges Widget */}
+        {isSignedIn && <ActiveChallengesWidget />}
+
         {/* Timer Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

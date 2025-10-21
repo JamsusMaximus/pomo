@@ -77,6 +77,16 @@ export const saveSession = mutation({
       await ctx.scheduler.runAfter(0, internal.pomodoros.syncChallengesAfterSession, {
         userId: user._id,
       });
+
+      // Check and update accountability challenge status
+      await ctx.scheduler.runAfter(
+        0,
+        internal.accountabilityChallenges.checkAndUpdateChallengeStatus,
+        {
+          userId: user._id,
+          completedAt: args.completedAt,
+        }
+      );
     }
 
     // Stats are computed on-read, Convex reactivity updates all queries

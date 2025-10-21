@@ -76,48 +76,18 @@ export function AmbientSoundProvider({ children }: { children: ReactNode }) {
 
     return () => {
       // Cleanup: stop all sounds and clear intervals
-      Object.keys(audioRefs.current).forEach((soundId) => {
-        if (fadeIntervalsRef.current[soundId]) {
-          clearInterval(fadeIntervalsRef.current[soundId]!);
+      // Capture current values to avoid stale refs in cleanup
+      const currentAudioRefs = audioRefs.current;
+      const currentFadeIntervals = fadeIntervalsRef.current;
+
+      Object.keys(currentAudioRefs).forEach((soundId) => {
+        if (currentFadeIntervals[soundId]) {
+          clearInterval(currentFadeIntervals[soundId]!);
         }
-        audioRefs.current[soundId]?.pause();
+        currentAudioRefs[soundId]?.pause();
       });
     };
   }, []);
-
-  // Fade helper function
-  const fade = useCallback(
-    (soundId: string, targetVolume: number, duration: number, onComplete?: () => void) => {
-      const audio = audioRefs.current[soundId];
-      if (!audio) return;
-
-      if (fadeIntervalsRef.current[soundId]) {
-        clearInterval(fadeIntervalsRef.current[soundId]!);
-      }
-
-      const startVolume = audio.volume;
-      const volumeDiff = targetVolume - startVolume;
-      const steps = 20;
-      const stepDuration = duration / steps;
-      const volumeStep = volumeDiff / steps;
-      let currentStep = 0;
-
-      fadeIntervalsRef.current[soundId] = setInterval(() => {
-        currentStep++;
-        if (currentStep >= steps) {
-          audio.volume = targetVolume;
-          if (fadeIntervalsRef.current[soundId]) {
-            clearInterval(fadeIntervalsRef.current[soundId]!);
-            fadeIntervalsRef.current[soundId] = null;
-          }
-          onComplete?.();
-        } else {
-          audio.volume = startVolume + volumeStep * currentStep;
-        }
-      }, stepDuration);
-    },
-    []
-  );
 
   // Set volume for a specific sound (immediate, no fade - used by slider)
   const setVolume = useCallback(
