@@ -25,6 +25,7 @@ import type * as publicProfile from "../publicProfile.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as seed from "../seed.js";
 import type * as seedChallenges from "../seedChallenges.js";
+import type * as seedTestPact from "../seedTestPact.js";
 import type * as sendNotifications from "../sendNotifications.js";
 import type * as sendNotificationsSimple from "../sendNotificationsSimple.js";
 import type * as stats from "../stats.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   pushSubscriptions: typeof pushSubscriptions;
   seed: typeof seed;
   seedChallenges: typeof seedChallenges;
+  seedTestPact: typeof seedTestPact;
   sendNotifications: typeof sendNotifications;
   sendNotificationsSimple: typeof sendNotificationsSimple;
   stats: typeof stats;

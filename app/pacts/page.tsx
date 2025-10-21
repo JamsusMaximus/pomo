@@ -15,13 +15,13 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Users, Handshake, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Import components (we'll create these next)
@@ -32,9 +32,17 @@ import { JoinChallengeModal } from "@/components/JoinChallengeModal";
 function PacktsPageContent() {
   const { user } = useUser();
   const challenges = useQuery(api.accountabilityChallenges.getMyAccountabilityChallenges);
+  const activatePendingPacts = useMutation(api.accountabilityChallenges.activatePendingPacts);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+
+  // Activate pacts that should start today when page loads
+  useEffect(() => {
+    activatePendingPacts().catch((error) => {
+      console.error("Failed to activate pending pacts:", error);
+    });
+  }, [activatePendingPacts]);
 
   if (!user) {
     return (
@@ -62,9 +70,7 @@ function PacktsPageContent() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold">Accountability Pacts</h1>
-            <p className="text-muted-foreground mt-1">
-              Team up with friends for 4-day focus pacts
-            </p>
+            <p className="text-muted-foreground mt-1">Team up with friends for 4-day focus pacts</p>
           </div>
 
           <div className="flex gap-2">

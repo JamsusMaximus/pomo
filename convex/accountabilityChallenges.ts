@@ -677,3 +677,31 @@ export const getActiveChallengesForToday = query({
     return activeChallenges;
   },
 });
+
+/**
+ * Mutation: Activate pending pacts that should start today or earlier
+ * Call this on page load to ensure pacts activate at the right time
+ */
+export const activatePendingPacts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    // Find all pending challenges that should be active
+    const pendingChallenges = await ctx.db
+      .query("accountabilityChallenges")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    let activatedCount = 0;
+
+    for (const challenge of pendingChallenges) {
+      if (challenge.startDate <= today) {
+        await ctx.db.patch(challenge._id, { status: "active" });
+        activatedCount++;
+      }
+    }
+
+    return { activatedCount };
+  },
+});

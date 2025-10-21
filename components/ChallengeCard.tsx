@@ -140,7 +140,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
         </Button>
       </div>
 
-      {/* Participants */}
+      {/* Participants - only show avatars when not active (pending status) */}
       {details && details.participants && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
@@ -150,28 +150,30 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
               {details.participants.length !== 1 ? "s" : ""}
             </span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {details.participants.slice(0, 8).map((participant) => (
-              <div
-                key={participant.userId}
-                className="flex items-center gap-1"
-                title={participant.username}
-              >
-                <Avatar className="w-6 h-6">
-                  <AvatarImage src={participant.avatarUrl} alt={participant.username} />
-                  <AvatarFallback className="text-xs">
-                    {participant.username[0]?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-muted-foreground">{participant.username}</span>
-              </div>
-            ))}
-            {details.participants.length > 8 && (
-              <span className="text-xs text-muted-foreground">
-                +{details.participants.length - 8} more
-              </span>
-            )}
-          </div>
+          {challenge.status === "pending" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {details.participants.slice(0, 8).map((participant) => (
+                <div
+                  key={participant.userId}
+                  className="flex items-center gap-1"
+                  title={participant.username}
+                >
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={participant.avatarUrl} alt={participant.username} />
+                    <AvatarFallback className="text-xs">
+                      {participant.username[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">{participant.username}</span>
+                </div>
+              ))}
+              {details.participants.length > 8 && (
+                <span className="text-xs text-muted-foreground">
+                  +{details.participants.length - 8} more
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
