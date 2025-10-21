@@ -7,7 +7,7 @@
 console.log("[SW EMERGENCY] Self-destruct service worker loaded");
 
 // Install: Immediately skip waiting and activate
-self.addEventListener("install", (_event) => {
+self.addEventListener("install", () => {
   console.log("[SW EMERGENCY] Installing self-destruct worker");
   self.skipWaiting();
 });
@@ -51,7 +51,7 @@ self.addEventListener("activate", (event) => {
 
 // DO NOT INTERCEPT FETCHES - let them go through normally
 // This is critical - we must not block any requests
-self.addEventListener("fetch", (_event) => {
+self.addEventListener("fetch", () => {
   // Do nothing - let requests pass through to network
   return;
 });
