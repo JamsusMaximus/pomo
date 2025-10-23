@@ -1048,6 +1048,7 @@ function HomeContent() {
                 isPrivate={currentTagPrivate}
                 onPrivacyChange={setCurrentTagPrivate}
                 isSignedIn={isSignedIn}
+                onEnterPress={!isRunning ? start : undefined}
               />
             </div>
           )}
