@@ -92,7 +92,7 @@ A modern, full-featured Pomodoro timer web application built with Next.js, featu
    - **Pre-commit hook**: Auto-formats code, fixes ESLint errors, checks docs
    - **Pre-push hook**: Runs `npm run build` before push (catches build errors before Vercel)
 
-📖 **Detailed setup guide:** See [DEV_SETUP.md](./DEV_SETUP.md) for troubleshooting, VS Code setup, and more.
+📖 **Detailed setup guide:** See [Development Setup](./docs/setup/development.md) for troubleshooting, VS Code setup, and more.
 
 ## 🎯 How It Works
 
@@ -198,29 +198,19 @@ pomo/
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
+See [Production Setup](./docs/setup/production.md) for complete deployment guide.
+
+**Quick deploy:**
 
 ```bash
-# Connect to Vercel
-vercel
+# Deploy Convex backend
+npx convex deploy
 
-# Add environment variables in Vercel dashboard
-# Deploy
+# Deploy to Vercel
 vercel --prod
 ```
 
-### Environment Variables
-
-Set these in your hosting provider:
-
-- `NEXT_PUBLIC_CONVEX_URL`
-- `CONVEX_DEPLOYMENT`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
-
-Set this in Convex dashboard:
-
-- `ADMIN_EMAILS`
+**Environment Variables:** See [Production Setup](./docs/setup/production.md#step-3-configure-vercel)
 
 ## 🧪 Development
 
@@ -291,6 +281,17 @@ Create via admin panel at `/admin` or seed defaults:
 # In Convex dashboard function runner
 mutation: seedDefaultChallenges
 ```
+
+## 📚 Documentation
+
+- **[Development Setup](./docs/setup/development.md)** - Local environment setup
+- **[Production Setup](./docs/setup/production.md)** - Deploy to production
+- **[Testing Guide](./docs/testing/guide.md)** - Testing strategies
+- **[Architecture](./ARCHITECTURE.md)** - System design and technical decisions
+- **[Contributing](./CONTRIBUTING.md)** - Contribution guidelines
+- **[Documentation Index](./docs/README.md)** - Complete documentation navigation
+
+---
 
 ## 📄 License
 

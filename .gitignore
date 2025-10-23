@@ -51,3 +51,12 @@ next-env.d.ts
 # changelog rate limit
 .changelog-last-run
 .turbo
+
+# build artifacts
+*.log
+*.tsbuildinfo
+.DS_Store
+*-summary.md
+mobile-review-results/
+playwright-report/
+test-results/
