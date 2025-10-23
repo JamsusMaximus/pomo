@@ -97,6 +97,7 @@ function HomeContent() {
   const { user, isSignedIn } = useUser();
   const nextChallenge = useQuery(api.challenges.getNextChallenge);
   const convexTodayCount = useQuery(api.pomodoros.getTodayCount);
+  const convexTimer = useQuery(api.timers.getMyTimer);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
   // Use Convex count when signed in, localStorage when not signed in
@@ -421,7 +422,7 @@ function HomeContent() {
       seedTestPomodoros();
     }
 
-    // Load preferences
+    // Load preferences from localStorage initially (will be overridden by Convex if signed in)
     const prefs = loadPreferences();
     if (prefs) {
       setFocusDuration(prefs.focusDuration);
@@ -449,6 +450,15 @@ function HomeContent() {
       clearTimeout(shimmerTimer);
     };
   }, []);
+
+  // Load preferences from Convex when signed in (overrides localStorage)
+  useEffect(() => {
+    if (isSignedIn && convexTimer && isHydrated) {
+      setFocusDuration(convexTimer.focusDuration);
+      setBreakDuration(convexTimer.breakDuration);
+      console.log("✅ Loaded preferences from Convex");
+    }
+  }, [isSignedIn, convexTimer, isHydrated]);
 
   // Persist to localStorage when preferences change
   useEffect(() => {
