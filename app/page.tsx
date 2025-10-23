@@ -462,8 +462,8 @@ function HomeContent() {
         lastName: user.lastName || undefined,
         avatarUrl: user.imageUrl,
       })
-        .then((result) => {
-          console.log(`✅ User ensured in Convex: ${result.username}`);
+        .then(() => {
+          // User successfully ensured in Convex
         })
         .catch((err) => {
           console.error("Failed to ensure user:", err);
@@ -564,12 +564,10 @@ function HomeContent() {
   useEffect(() => {
     // Sync when user transitions from signed out to signed in (show toast)
     if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
-      console.log("User just signed in, syncing local sessions...");
       syncLocalSessions({ silent: false }); // Show toast for sign-in
     }
     // Also sync when app loads and user is already signed in (silent)
     else if (isSignedIn && isHydrated && prevIsSignedIn.current === undefined) {
-      console.log("App loaded with signed-in user, checking for unsynced sessions...");
       syncLocalSessions({ silent: true }); // Silent sync on load
     }
 

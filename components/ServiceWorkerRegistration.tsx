@@ -13,26 +13,19 @@ export function ServiceWorkerRegistration() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-      console.log("[PWA] Service workers not supported");
       return;
     }
 
     // EMERGENCY FIX: Force update to new self-destruct service worker
-    console.log("[PWA] EMERGENCY MODE: Forcing service worker update");
-
     // Unregister all existing workers first
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       if (registrations.length > 0) {
-        console.log("[PWA] Unregistering", registrations.length, "old service worker(s)");
         Promise.all(registrations.map((reg) => reg.unregister())).then(() => {
-          console.log("[PWA] Old workers unregistered, registering self-destruct version");
-
           // Register the new self-destruct worker with cache-busting timestamp
           const timestamp = Date.now();
           navigator.serviceWorker
             .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
             .then((registration) => {
-              console.log("[PWA] Self-destruct worker registered, forcing update");
               registration.update(); // Force immediate update check
             })
             .catch((err) => {
@@ -40,13 +33,11 @@ export function ServiceWorkerRegistration() {
             });
         });
       } else {
-        console.log("[PWA] No existing workers, registering self-destruct version");
         // Register self-destruct worker with cache-busting
         const timestamp = Date.now();
         navigator.serviceWorker
           .register(`/sw.js?v=${timestamp}`, { updateViaCache: "none" })
           .then((registration) => {
-            console.log("[PWA] Self-destruct worker registered");
             registration.update();
           })
           .catch((err) => {
