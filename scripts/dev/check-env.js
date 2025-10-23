@@ -17,8 +17,8 @@ const REQUIRED_VARS = [
 const OPTIONAL_VARS = ["CONVEX_DEPLOYMENT", "ANTHROPIC_API_KEY"];
 
 function checkEnvFile() {
-  const envPath = path.join(__dirname, "..", ".env.local");
-  const envExamplePath = path.join(__dirname, "..", ".env.example");
+  const envPath = path.join(__dirname, "..", "..", ".env.local");
+  const envExamplePath = path.join(__dirname, "..", "..", ".env.example");
 
   // Skip file check in CI environments (env vars are set directly)
   if (process.env.CI || process.env.GITHUB_ACTIONS) {
@@ -37,7 +37,7 @@ function checkEnvFile() {
 }
 
 function loadEnvFile() {
-  const envPath = path.join(__dirname, "..", ".env.local");
+  const envPath = path.join(__dirname, "..", "..", ".env.local");
 
   // In CI, return empty object (env vars come from process.env)
   if (process.env.CI || process.env.GITHUB_ACTIONS || !fs.existsSync(envPath)) {
