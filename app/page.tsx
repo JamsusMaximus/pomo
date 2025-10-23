@@ -96,9 +96,16 @@ function HomeContent() {
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
   const nextChallenge = useQuery(api.challenges.getNextChallenge);
+  const convexTodayCount = useQuery(api.pomodoros.getTodayCount);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
-  const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
+  // Use Convex count when signed in, localStorage when not signed in
+  const cyclesCompleted = useMemo(() => {
+    if (isSignedIn && convexTodayCount !== undefined) {
+      return convexTodayCount;
+    }
+    return calculatePomosToday(sessions);
+  }, [isSignedIn, convexTodayCount, sessions]);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
