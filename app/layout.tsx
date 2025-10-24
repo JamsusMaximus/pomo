@@ -23,7 +23,7 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="light" storageKey="pomo-theme">
           <AmbientSoundProvider>
             <Providers>
-              <ServiceWorkerRegistration />
+              {/* <ServiceWorkerRegistration /> */}
               {/* <PWAInstallPrompt /> */}
               <NavbarWrapper>{children}</NavbarWrapper>
             </Providers>
