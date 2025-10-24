@@ -800,7 +800,7 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-24 pb-24 md:pb-24">
+    <main className="min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24">
       {/* Sync Status Toast */}
       {syncStatus !== "idle" && (
         <motion.div
@@ -880,7 +880,7 @@ function HomeContent() {
         )}
       </AnimatePresence>
 
-      <div className="w-full max-w-md flex flex-col items-center gap-8">
+      <div className="w-full max-w-md flex flex-col items-center gap-8 px-4">
         {/* Timer Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
