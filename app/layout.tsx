@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AmbientSoundProvider } from "@/components/AmbientSoundProvider";
 import { NavbarWrapper } from "@/components/NavbarWrapper";
-import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+// import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 // import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import Providers from "./providers";
 
