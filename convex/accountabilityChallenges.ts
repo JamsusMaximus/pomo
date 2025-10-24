@@ -225,7 +225,7 @@ async function awardTeamPlayerBadge(
     // Create the badge if it doesn't exist
     const challengeId = await ctx.db.insert("challenges", {
       name: "Team Player",
-      description: "Complete a 4-day accountability challenge",
+      description: "Complete an accountability pact with your team",
       type: "total", // Using total type for now
       target: 1,
       badge: "Users",
@@ -270,8 +270,11 @@ async function awardTeamPlayerBadge(
  */
 export const createAccountabilityChallenge = mutation({
   args: {
-    name: v.string(),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
     startDate: v.string(), // YYYY-MM-DD
+    durationDays: v.number(), // 2-365
+    minDailyPomos: v.number(), // 1-50
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -284,6 +287,14 @@ export const createAccountabilityChallenge = mutation({
 
     if (!user) throw new Error("User not found");
 
+    // Validate inputs
+    if (args.durationDays < 2 || args.durationDays > 365) {
+      throw new Error("Duration must be between 2 and 365 days");
+    }
+    if (args.minDailyPomos < 1 || args.minDailyPomos > 50) {
+      throw new Error("Minimum daily pomos must be between 1 and 50");
+    }
+
     // Validate start date is in the future
     const startDate = new Date(args.startDate);
     const today = new Date();
@@ -293,10 +304,15 @@ export const createAccountabilityChallenge = mutation({
       throw new Error("Start date must be in the future");
     }
 
-    // Calculate end date (4 days after start)
+    // Calculate end date based on duration
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 3); // +3 because start date is day 1
+    endDate.setDate(endDate.getDate() + args.durationDays - 1); // -1 because start date is day 1
     const endDateStr = endDate.toISOString().split("T")[0];
+
+    // Generate name if not provided: "7 Days · 3 Pomos Daily"
+    const name =
+      args.name ||
+      `${args.durationDays} Day${args.durationDays !== 1 ? "s" : ""} · ${args.minDailyPomos} Pomo${args.minDailyPomos !== 1 ? "s" : ""} Daily`;
 
     // Generate unique join code
     let joinCode = generateJoinCode();
@@ -317,12 +333,14 @@ export const createAccountabilityChallenge = mutation({
     // Create challenge
     const challengeId = await ctx.db.insert("accountabilityChallenges", {
       creatorId: user._id,
-      name: args.name || "Focus Challenge",
+      name,
+      description: args.description,
       joinCode,
       startDate: args.startDate,
       endDate: endDateStr,
+      durationDays: args.durationDays,
       status: "pending",
-      requiredPomosPerDay: 1,
+      requiredPomosPerDay: args.minDailyPomos,
       createdAt: Date.now(),
     });
 
@@ -335,6 +353,100 @@ export const createAccountabilityChallenge = mutation({
     });
 
     return { challengeId, joinCode };
+  },
+});
+
+/**
+ * Update a challenge's settings (only before it starts)
+ */
+export const updateAccountabilityChallenge = mutation({
+  args: {
+    challengeId: v.id("accountabilityChallenges"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    durationDays: v.optional(v.number()),
+    minDailyPomos: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    const challenge = await ctx.db.get(args.challengeId);
+    if (!challenge) throw new Error("Challenge not found");
+
+    // Only creator can edit
+    if (challenge.creatorId !== user._id) {
+      throw new Error("Only the creator can edit this pact");
+    }
+
+    // Can't edit if challenge has already started
+    if (challenge.status !== "pending") {
+      throw new Error("Cannot edit a pact that has already started");
+    }
+
+    // Validate inputs if provided
+    if (args.durationDays !== undefined && (args.durationDays < 2 || args.durationDays > 365)) {
+      throw new Error("Duration must be between 2 and 365 days");
+    }
+    if (args.minDailyPomos !== undefined && (args.minDailyPomos < 1 || args.minDailyPomos > 50)) {
+      throw new Error("Minimum daily pomos must be between 1 and 50");
+    }
+
+    // Validate start date if provided
+    if (args.startDate) {
+      const startDate = new Date(args.startDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (startDate < today) {
+        throw new Error("Start date must be in the future");
+      }
+    }
+
+    // Calculate new values with backwards compatibility
+    const startDate = args.startDate || challenge.startDate;
+
+    // For old pacts without durationDays, calculate from dates
+    const oldDuration =
+      challenge.durationDays ||
+      Math.ceil(
+        (new Date(challenge.endDate).getTime() - new Date(challenge.startDate).getTime()) /
+          (24 * 60 * 60 * 1000)
+      ) + 1;
+
+    const durationDays = (args.durationDays ?? oldDuration) as number;
+    const minDailyPomos = (args.minDailyPomos ?? challenge.requiredPomosPerDay ?? 1) as number;
+
+    // Calculate end date
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + durationDays - 1);
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    // Generate name if not provided and no custom name set
+    let name = args.name !== undefined ? args.name : challenge.name;
+    if (!name) {
+      name = `${durationDays} Day${durationDays !== 1 ? "s" : ""} · ${minDailyPomos} Pomo${minDailyPomos !== 1 ? "s" : ""} Daily`;
+    }
+
+    // Update challenge
+    await ctx.db.patch(args.challengeId, {
+      name,
+      description: args.description !== undefined ? args.description : challenge.description,
+      startDate,
+      endDate: endDateStr,
+      durationDays,
+      requiredPomosPerDay: minDailyPomos,
+    });
+
+    return { success: true };
   },
 });
 
@@ -615,7 +727,7 @@ export const checkAndUpdateChallengeStatus = internalMutation({
           challenge._id,
           args.userId,
           completedDate,
-          challenge.requiredPomosPerDay
+          (challenge.requiredPomosPerDay ?? 1) as number
         );
 
         // Check if challenge should fail or complete

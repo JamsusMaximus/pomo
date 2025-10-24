@@ -14,6 +14,7 @@ interface TagInputProps {
   isPrivate?: boolean;
   onPrivacyChange?: (isPrivate: boolean) => void;
   isSignedIn?: boolean;
+  onEnterPress?: () => void;
 }
 
 export function TagInput({
@@ -24,6 +25,7 @@ export function TagInput({
   isPrivate = false,
   onPrivacyChange,
   isSignedIn = false,
+  onEnterPress,
 }: TagInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -81,6 +83,17 @@ export function TagInput({
     if (tagSuggestions && tagSuggestions.length > 0) {
       setShowSuggestions(true);
     }
+    // Scroll input into view on mobile to prevent keyboard obstruction
+    // Use 'start' to position input near top of visible area (above keyboard)
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+      // Additional scroll to add padding above input
+      window.scrollBy({ top: -60, behavior: "smooth" });
+    }, 350); // Delay to allow keyboard animation
   };
 
   const handleBlur = () => {
@@ -94,6 +107,15 @@ export function TagInput({
     onChange(tag);
     setShowSuggestions(false);
     inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && onEnterPress) {
+      e.preventDefault();
+      setShowSuggestions(false);
+      inputRef.current?.blur(); // Close keyboard on mobile
+      onEnterPress();
+    }
   };
 
   const filteredSuggestions =
@@ -126,6 +148,7 @@ export function TagInput({
           onChange={(e) => onChange(e.target.value)}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
           className="h-12 text-sm text-center font-medium bg-muted/30 focus:bg-background transition-all duration-200 placeholder:text-muted-foreground/50 px-12 border-0 rounded-md"
         />

@@ -62,18 +62,17 @@ After making ANY code change, you MUST check and update relevant documentation. 
 3. Ensure consistency with code reality
 4. Update "Last Updated" timestamp
 
-### 3. convex/README.md
+### 3. Convex Documentation
 
 **When to update:**
 
-| Change Type                       | Action Required                                   |
-| --------------------------------- | ------------------------------------------------- |
-| Modify `convex/schema.ts`         | Update "Schema Overview" with table relationships |
-| Add/remove Convex function        | Update API reference section                      |
-| Add/change indexes                | Update "Index Strategy" section                   |
-| Modify auth patterns              | Update "Authentication Patterns" section          |
-| Change query/mutation conventions | Update "Conventions" section                      |
-| Add scheduler usage               | Update "Scheduler Usage" section                  |
+| Change Type                       | Files to Update                               |
+| --------------------------------- | --------------------------------------------- |
+| Modify `convex/schema.ts`         | `convex/SCHEMA.md`, `ARCHITECTURE.md`         |
+| Add/remove Convex function        | `convex/API.md`, `convex/QUICK_LOOKUP.md`     |
+| Add/change indexes                | `convex/SCHEMA.md`, `convex/PATTERNS.md`      |
+| Modify auth patterns              | `convex/PATTERNS.md` → Authentication section |
+| Change query/mutation conventions | `convex/PATTERNS.md` → Naming Conventions     |
 
 **Critical:** If you add a new Convex function, document:
 
@@ -82,6 +81,11 @@ After making ANY code change, you MUST check and update relevant documentation. 
 - Return type
 - Purpose and when to use it
 - Error cases
+
+**Update both:**
+
+- `convex/API.md` - Full documentation
+- `convex/QUICK_LOOKUP.md` - One-line reference
 
 ### 4. Using TodoWrite for Documentation
 
@@ -290,11 +294,48 @@ Before completing any task:
 
 ## 🔗 Related Documentation
 
-- `ARCHITECTURE.md` - System design and technical decisions
-- `convex/README.md` - Backend API and schema reference
-- `README.md` - User-facing project overview
-- `SETUP.md` - Development environment setup
-- `CONVENTIONS.md` - Detailed coding standards
+### Core Documentation
+
+- **ARCHITECTURE.md** - System design and technical decisions
+- **CONTRIBUTING.md** - Contribution guidelines and standards
+- **README.md** - User-facing project overview
+
+### Setup & Deployment
+
+- **docs/setup/development.md** - Local development setup
+- **docs/setup/production.md** - Production deployment guide
+
+### Backend Documentation
+
+- **convex/README.md** - Backend overview and navigation
+- **convex/SCHEMA.md** - Database schema reference
+- **convex/API.md** - Complete API reference
+- **convex/PATTERNS.md** - Best practices and conventions
+- **convex/QUICK_LOOKUP.md** - Fast API reference
+
+### Testing
+
+- **docs/testing/guide.md** - Complete testing documentation
+
+### For AI Agents
+
+- **.claude/PROJECT_CONTEXT.md** - One-page project summary
+- **.claude/QUICK_REFERENCE.md** - Ultra-condensed reference
+- **.claude/documentation-map.json** - Documentation update triggers
+- **.claude/commands/** - Slash commands for common tasks
+- **.claude/decision-trees/** - Step-by-step guides
+
+---
+
+## 🎯 Quick Start for New Agents
+
+**First time working on this project?**
+
+1. Read **.claude/PROJECT_CONTEXT.md** (5 min read)
+2. Check **.claude/QUICK_REFERENCE.md** for common patterns
+3. Use **.claude/documentation-map.json** to know what to update
+4. Follow **.claude/decision-trees/** for step-by-step guidance
+5. Use slash commands: `/setup`, `/feature`, `/schema`, `/debug`, `/deploy`
 
 ---
 
@@ -302,8 +343,10 @@ Before completing any task:
 
 If uncertain about documentation requirements:
 
-1. Check existing docs for patterns
-2. When in doubt, over-document rather than under-document
-3. Ask the user if truly ambiguous
+1. Check **.claude/documentation-map.json** for update triggers
+2. Review existing docs for patterns
+3. Follow decision trees in **.claude/decision-trees/**
+4. When in doubt, over-document rather than under-document
+5. Ask the user if truly ambiguous
 
 **Remember:** Good documentation is part of good code. Future you (and future agents) will thank you.

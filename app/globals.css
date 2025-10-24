@@ -97,6 +97,17 @@
     background: rgba(249, 115, 22, 0.5);
   }
 
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    /* Firefox */
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    /* Webkit browsers */
+    display: none;
+  }
+
   @keyframes shimmer {
     0% {
       transform: translateX(-200%);

@@ -1,0 +1,103 @@
+{
+  "description": "Map of code changes to documentation updates required",
+  "version": "1.0.0",
+  "last_updated": "2025-10-23",
+  "update_triggers": {
+    "schema_changes": {
+      "trigger": "Modify convex/schema.ts (add/remove/change tables or fields)",
+      "update": [
+        "ARCHITECTURE.md#data-model",
+        "convex/SCHEMA.md",
+        "convex/README.md#schema-overview"
+      ]
+    },
+    "new_convex_function": {
+      "trigger": "Add new query/mutation/action in convex/*.ts",
+      "update": ["convex/API.md", "convex/QUICK_LOOKUP.md"]
+    },
+    "auth_flow_changes": {
+      "trigger": "Modify middleware.ts or convex/users.ts authentication logic",
+      "update": [
+        "ARCHITECTURE.md#authentication--authorization",
+        "convex/PATTERNS.md#authentication"
+      ]
+    },
+    "offline_sync_changes": {
+      "trigger": "Modify lib/storage/* or sync logic in app/page.tsx",
+      "update": [
+        "ARCHITECTURE.md#offline-first-design",
+        ".claude/PROJECT_CONTEXT.md#key-architectural-decisions"
+      ]
+    },
+    "state_management_changes": {
+      "trigger": "Change how state is managed (hooks, context, etc.)",
+      "update": ["ARCHITECTURE.md#state-management"]
+    },
+    "new_external_service": {
+      "trigger": "Add integration with new service (API, SDK, etc.)",
+      "update": [
+        "ARCHITECTURE.md#tech-stack",
+        "docs/setup/development.md#service-configuration",
+        "docs/setup/production.md"
+      ]
+    },
+    "performance_optimization": {
+      "trigger": "Major performance improvements or new indexes",
+      "update": [
+        "ARCHITECTURE.md#performance-considerations",
+        "docs/platform/OPTIMIZATION_GUIDE.md",
+        "convex/PATTERNS.md#index-strategy"
+      ]
+    },
+    "new_architectural_pattern": {
+      "trigger": "Introduce new design pattern or architecture change",
+      "update": [
+        "ARCHITECTURE.md#architecture-patterns",
+        ".claude/PROJECT_CONTEXT.md#key-architectural-decisions"
+      ]
+    },
+    "new_feature": {
+      "trigger": "Add major user-facing feature",
+      "update": ["README.md#features", "ARCHITECTURE.md (relevant section)"]
+    },
+    "new_major_file": {
+      "trigger": "Create significant new file in app/, components/, lib/, or convex/",
+      "update": [
+        "Add @fileoverview header to new file",
+        "Update .claude/QUICK_REFERENCE.md if location commonly referenced"
+      ]
+    },
+    "dependency_changes": {
+      "trigger": "Add/remove major dependency in package.json",
+      "update": [
+        "ARCHITECTURE.md#tech-stack",
+        "README.md#tech-stack",
+        "docs/setup/development.md#prerequisites"
+      ]
+    },
+    "testing_changes": {
+      "trigger": "Add new test type or change testing strategy",
+      "update": ["docs/testing/guide.md"]
+    },
+    "deployment_changes": {
+      "trigger": "Change deployment process or infrastructure",
+      "update": ["docs/setup/production.md", "README.md#deployment"]
+    }
+  },
+  "file_header_required": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "convex/**/*.ts",
+    "lib/**/*.ts",
+    "hooks/**/*.ts"
+  ],
+  "documentation_checklist": [
+    "All modified files have accurate @fileoverview headers",
+    "ARCHITECTURE.md reflects current system design (if architecture changed)",
+    "convex/ docs match actual schema/functions (if backend changed)",
+    "No orphaned documentation (references to deleted code)",
+    "All documentation todos marked as completed in TodoWrite",
+    "Types updated if schema changed",
+    "Tests updated if behavior changed"
+  ]
+}

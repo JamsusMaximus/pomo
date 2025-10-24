@@ -86,6 +86,7 @@ function HomeContent() {
   const hasAutostartedRef = useRef(false);
   const hasFadedForCompletionRef = useRef(false);
   const savedVolumesRef = useRef<Record<string, number>>({});
+  const shouldAutoStartAfterResetRef = useRef(false);
 
   // Timer context for navbar
   const { setIsTimerRunning } = useTimerContext();
@@ -96,9 +97,17 @@ function HomeContent() {
   // Convex integration (optional - only when signed in)
   const { user, isSignedIn } = useUser();
   const nextChallenge = useQuery(api.challenges.getNextChallenge);
+  const convexTodayCount = useQuery(api.pomodoros.getTodayCount);
+  const convexTimer = useQuery(api.timers.getMyTimer);
 
   // Memoize today's pomodoro count to avoid recalculating on every render
-  const cyclesCompleted = useMemo(() => calculatePomosToday(sessions), [sessions]);
+  // Use Convex count when signed in, localStorage when not signed in
+  const cyclesCompleted = useMemo(() => {
+    if (isSignedIn && convexTodayCount !== undefined) {
+      return convexTodayCount;
+    }
+    return calculatePomosToday(sessions);
+  }, [isSignedIn, convexTodayCount, sessions]);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const savePrefs = useMutation(api.timers.savePreferences);
@@ -420,7 +429,7 @@ function HomeContent() {
       seedTestPomodoros();
     }
 
-    // Load preferences
+    // Load preferences from localStorage initially (will be overridden by Convex if signed in)
     const prefs = loadPreferences();
     if (prefs) {
       setFocusDuration(prefs.focusDuration);
@@ -449,6 +458,15 @@ function HomeContent() {
     };
   }, []);
 
+  // Load preferences from Convex when signed in (overrides localStorage)
+  useEffect(() => {
+    if (isSignedIn && convexTimer && isHydrated) {
+      setFocusDuration(convexTimer.focusDuration);
+      setBreakDuration(convexTimer.breakDuration);
+      console.log("✅ Loaded preferences from Convex");
+    }
+  }, [isSignedIn, convexTimer, isHydrated]);
+
   // Persist to localStorage when preferences change
   useEffect(() => {
     if (!isHydrated) return;
@@ -468,8 +486,8 @@ function HomeContent() {
         lastName: user.lastName || undefined,
         avatarUrl: user.imageUrl,
       })
-        .then((result) => {
-          console.log(`✅ User ensured in Convex: ${result.username}`);
+        .then(() => {
+          // User successfully ensured in Convex
         })
         .catch((err) => {
           console.error("Failed to ensure user:", err);
@@ -570,12 +588,10 @@ function HomeContent() {
   useEffect(() => {
     // Sync when user transitions from signed out to signed in (show toast)
     if (isSignedIn && !prevIsSignedIn.current && isHydrated) {
-      console.log("User just signed in, syncing local sessions...");
       syncLocalSessions({ silent: false }); // Show toast for sign-in
     }
     // Also sync when app loads and user is already signed in (silent)
     else if (isSignedIn && isHydrated && prevIsSignedIn.current === undefined) {
-      console.log("App loaded with signed-in user, checking for unsynced sessions...");
       syncLocalSessions({ silent: true }); // Silent sync on load
     }
 
@@ -670,6 +686,19 @@ function HomeContent() {
     }
   }, [autostart, isHydrated, isRunning, start]);
 
+  // Auto-start timer after reset when coming from break screen
+  useEffect(() => {
+    if (
+      shouldAutoStartAfterResetRef.current &&
+      mode === "focus" &&
+      !isRunning &&
+      remaining === duration
+    ) {
+      shouldAutoStartAfterResetRef.current = false;
+      start();
+    }
+  }, [mode, isRunning, remaining, duration, start]);
+
   // Fade ambient sounds before timer completes (normal mode only)
   useEffect(() => {
     if (
@@ -762,6 +791,12 @@ function HomeContent() {
 
     setFlowSessionId(null);
     reset();
+  };
+
+  // Handle starting next pomo from break screen
+  const handleStartNextPomo = () => {
+    shouldAutoStartAfterResetRef.current = true;
+    reset(); // Reset to focus mode - will trigger auto-start via useEffect
   };
 
   return (
@@ -1037,6 +1072,7 @@ function HomeContent() {
                 isPrivate={currentTagPrivate}
                 onPrivacyChange={setCurrentTagPrivate}
                 isSignedIn={isSignedIn}
+                onEnterPress={!isRunning ? start : undefined}
               />
             </div>
           )}
@@ -1052,14 +1088,26 @@ function HomeContent() {
                   whileHover={{ scale: 1.01 }}
                 >
                   <Button
-                    onClick={isRunning ? pause : start}
+                    onClick={mode === "break" ? handleStartNextPomo : isRunning ? pause : start}
                     size="lg"
                     className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
                   >
                     <div className="flex items-center gap-2">
-                      {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                      {mode === "break" ? (
+                        <Play className="w-5 h-5" />
+                      ) : isRunning ? (
+                        <Pause className="w-5 h-5" />
+                      ) : (
+                        <Play className="w-5 h-5" />
+                      )}
                       <span>
-                        {isPaused ? "Paused: Click to Resume" : isRunning ? "Pause" : "Start"}
+                        {mode === "break"
+                          ? "Start next pomo"
+                          : isPaused
+                            ? "Paused: Click to Resume"
+                            : isRunning
+                              ? "Pause"
+                              : "Start"}
                       </span>
                     </div>
                     {/* Space bar hint inside button */}
@@ -1138,7 +1186,7 @@ function HomeContent() {
                   >
                     <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
                       <Button variant="outline" onClick={reset} size="default" className="w-full">
-                        Reset
+                        {mode === "break" ? "End break" : "Reset"}
                       </Button>
                     </motion.div>
                   </motion.div>
