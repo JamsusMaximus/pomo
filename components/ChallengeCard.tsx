@@ -214,7 +214,9 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                     </span>
                     {/* Scrollable container for 30+ days */}
                     <div
-                      ref={(el) => (scrollContainerRefs.current[participantIndex] = el)}
+                      ref={(el) => {
+                        scrollContainerRefs.current[participantIndex] = el;
+                      }}
                       onScroll={handleScroll(participantIndex)}
                       className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll" : ""}`}
                       style={
@@ -299,7 +301,9 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
               <div className="w-6 h-6 shrink-0" />
               <div className="w-20" />
               <div
-                ref={(el) => (scrollContainerRefs.current[details.participants.length] = el)}
+                ref={(el) => {
+                  scrollContainerRefs.current[details.participants.length] = el;
+                }}
                 onScroll={handleScroll(details.participants.length)}
                 className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll scrollbar-hide" : ""}`}
                 style={

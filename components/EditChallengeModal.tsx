@@ -14,8 +14,8 @@ interface Challenge {
   description?: string;
   startDate: string;
   endDate: string;
-  durationDays: number;
-  requiredPomosPerDay: number;
+  durationDays?: number;
+  requiredPomosPerDay?: number;
   status: "pending" | "active" | "completed" | "failed";
 }
 
@@ -28,8 +28,8 @@ export function EditChallengeModal({ challenge, onClose }: EditChallengeModalPro
   const [name, setName] = useState(challenge.name);
   const [description, setDescription] = useState(challenge.description || "");
   const [startDate, setStartDate] = useState(challenge.startDate);
-  const [durationDays, setDurationDays] = useState(challenge.durationDays);
-  const [minDailyPomos, setMinDailyPomos] = useState(challenge.requiredPomosPerDay);
+  const [durationDays, setDurationDays] = useState(challenge.durationDays || 7);
+  const [minDailyPomos, setMinDailyPomos] = useState(challenge.requiredPomosPerDay || 1);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const updateChallenge = useMutation(api.accountabilityChallenges.updateAccountabilityChallenge);
