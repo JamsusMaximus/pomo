@@ -113,12 +113,6 @@ function HomeContent() {
   // Store AudioContext in ref to prevent memory leaks
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Handle starting timer from landing page CTA
-  const handleStartTimer = useCallback(() => {
-    start();
-    setShowSpaceHint(false);
-  }, [start]);
-
   // Cleanup AudioContext on unmount
   useEffect(() => {
     return () => {
@@ -387,6 +381,12 @@ function HomeContent() {
       setPreviousMode(newMode);
     },
   });
+
+  // Handle starting timer from landing page CTA
+  const handleStartTimer = useCallback(() => {
+    start();
+    setShowSpaceHint(false);
+  }, [start]);
 
   // Request notification permission on mount
   useEffect(() => {
