@@ -1218,8 +1218,8 @@ function HomeContent() {
       {!isSignedIn && isHydrated && !isRunning && (
         <>
           {/* Hero Section */}
-          <section className="flex flex-col items-center justify-center px-6 py-32 bg-gradient-to-b from-orange-50 to-white">
-            <div className="max-w-5xl w-full text-center">
+          <section className="flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
+            <div className="max-w-5xl w-full text-center px-6">
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1273,8 +1273,8 @@ function HomeContent() {
           </section>
 
           {/* Pacts Section */}
-          <section className="pt-16 pb-32 px-6 bg-white">
-            <div className="max-w-6xl mx-auto">
+          <section className="pt-16 pb-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
               <div className="grid md:grid-cols-2 gap-16 items-center">
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
@@ -1377,8 +1377,8 @@ function HomeContent() {
           </section>
 
           {/* Progress Tracking Section - Light theme only */}
-          <section className="py-32 px-6 bg-white">
-            <div className="max-w-6xl mx-auto">
+          <section className="py-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1482,8 +1482,8 @@ function HomeContent() {
           </section>
 
           {/* Friends Section */}
-          <section className="py-32 px-6 bg-gray-50">
-            <div className="max-w-4xl mx-auto">
+          <section className="py-32 bg-gray-50">
+            <div className="max-w-4xl mx-auto px-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}

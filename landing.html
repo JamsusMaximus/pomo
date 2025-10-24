@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lock.in - Strava for Focus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .shimmer {
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            background-size: 200% 100%;
+            animation: shimmer 7s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+
+        @keyframes draw-line {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .draw-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+        }
+
+        .draw-line.active {
+            animation: draw-line 2s ease forwards;
+        }
+
+        .heatmap-cell {
+            transition: all 0.2s ease;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .heatmap-cell.animate {
+            animation: popIn 0.3s ease forwards;
+        }
+
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .fill-orange-500 {
+            fill: #f97316;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+
+    <!-- Hero Section -->
+    <section class="flex flex-col items-center justify-center px-6 py-32 bg-gradient-to-b from-orange-50 to-white">
+        <div class="max-w-5xl w-full text-center reveal">
+            <h1 class="text-7xl md:text-8xl font-bold mb-6 tracking-tight">
+                <span class="gradient-text">Strava</span> for Focus
+            </h1>
+
+            <p class="text-2xl md:text-3xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Drop into flow, spend your time on the activities that matter to you
+            </p>
+
+            <button class="shimmer relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xl font-semibold px-12 py-6 rounded-lg hover:scale-105 transition-transform shadow-lg hover:shadow-xl">
+                Start the timer and lock in
+            </button>
+
+            <p class="mt-6 text-gray-500">For work, hobbies, or life admin</p>
+        </div>
+    </section>
+
+    <!-- Accountability Section -->
+    <section class="pt-16 pb-32 px-6 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="order-2 md:order-1">
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
+                        <div class="bg-white rounded-xl p-6 shadow-sm mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-xl font-bold">Study Sprint 2025</h3>
+                                    <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <span class="text-sm text-gray-500">3/4 on track</span>
+                            </div>
+                            <div class="flex gap-2 mb-3">
+                                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Participant"
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Sarah"
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Marcus"
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Participant"
+                                     class="w-10 h-10 rounded-full object-cover">
+                            </div>
+                            <p class="text-gray-600">5 pomos per day for a week</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-xl font-bold">Indie Hackers</h3>
+                                    <i data-lucide="sun" class="w-5 h-5 text-yellow-500"></i>
+                                </div>
+                                <span class="text-sm text-orange-600 font-semibold">All crushing it!</span>
+                            </div>
+                            <div class="flex gap-2 mb-3">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Participant"
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Participant"
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                                     alt="Alex"
+                                     class="w-10 h-10 rounded-full object-cover">
+                            </div>
+                            <p class="text-gray-600">25mins per day on your project</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 md:order-2">
+                    <h2 class="text-6xl font-bold mb-6 leading-tight">
+                        Make pacts with friends
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Turn focus into a team sport and see who's following through on their intentions.
+                    </p>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        When you know your friends are watching, you show up.
+                    </p>
+                    <button class="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors">
+                        Sign up to save your progress
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Friends Section -->
+    <section class="py-32 px-6 bg-gray-50">
+        <div class="max-w-4xl mx-auto reveal">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-3xl font-bold">Friends</h2>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Friend Card 1 - Active Today -->
+                <div class="p-4 rounded-xl border border-l-4 border-l-orange-500 border-t-gray-200 border-r-gray-200 border-b-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer">
+                    <div class="flex items-start gap-4 mb-3">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                             alt="Sarah"
+                             class="w-12 h-12 rounded-full object-cover shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold">sarah_chen</h3>
+                                <span class="flex h-2 w-2 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-orange-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                </span>
+                                <span class="text-xs text-orange-500 font-medium">active today</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Lv 12 · Focus Master</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-orange-500">3</p>
+                                <p class="text-[10px] text-gray-500">today</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold">847</p>
+                                <p class="text-[10px] text-gray-500">total</p>
+                            </div>
+                            <div class="text-center flex flex-col items-center">
+                                <div class="flex items-center gap-0.5">
+                                    <i data-lucide="flame" class="w-4 h-4 text-orange-500 fill-orange-500"></i>
+                                    <p class="text-lg font-bold text-orange-500">32</p>
+                                </div>
+                                <p class="text-[10px] text-gray-500">streak</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-start gap-3">
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="px-2 py-0.5 rounded-full bg-gray-100">thesis-writing</span>
+                                <span>·</span>
+                                <span class="shrink-0">25m</span>
+                                <span>·</span>
+                                <span class="shrink-0 text-[10px]">2 hours ago</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="px-2 py-0.5 rounded-full bg-gray-100">deep-work</span>
+                                <span>·</span>
+                                <span class="shrink-0">50m</span>
+                                <span>·</span>
+                                <span class="shrink-0 text-[10px]">5 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-64 md:shrink-0">
+                            <div class="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                                    <i data-lucide="crown" class="w-4 h-4 text-orange-500"></i>
+                                </div>
+                                <div class="flex flex-col gap-1 min-w-0 flex-1">
+                                    <p class="text-xs font-medium text-orange-600">Elite Performer</p>
+                                    <p class="text-[11px] text-gray-600 leading-snug">Complete 500 total pomodoros</p>
+                                    <p class="text-[10px] text-gray-500">1 week ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friend Card 2 -->
+                <div class="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div class="flex items-start gap-4 mb-3">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                             alt="Marcus"
+                             class="w-12 h-12 rounded-full object-cover shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold">marcus_codes</h3>
+                            </div>
+                            <p class="text-xs text-gray-500">Lv 9 · Productivity Enthusiast</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <div class="text-center">
+                                <p class="text-lg font-bold">0</p>
+                                <p class="text-[10px] text-gray-500">today</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold">523</p>
+                                <p class="text-[10px] text-gray-500">total</p>
+                            </div>
+                            <div class="text-center flex flex-col items-center">
+                                <div class="flex items-center gap-0.5">
+                                    <i data-lucide="flame" class="w-4 h-4 text-orange-500 fill-orange-500"></i>
+                                    <p class="text-lg font-bold text-orange-500">18</p>
+                                </div>
+                                <p class="text-[10px] text-gray-500">streak</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-start gap-3">
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="px-2 py-0.5 rounded-full bg-gray-100">code-review</span>
+                                <span>·</span>
+                                <span class="shrink-0">25m</span>
+                                <span>·</span>
+                                <span class="shrink-0 text-[10px]">yesterday</span>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-64 md:shrink-0">
+                            <div class="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                                    <i data-lucide="trophy" class="w-4 h-4 text-orange-500"></i>
+                                </div>
+                                <div class="flex flex-col gap-1 min-w-0 flex-1">
+                                    <p class="text-xs font-medium text-orange-600">Century Club</p>
+                                    <p class="text-[11px] text-gray-600 leading-snug">Complete 100 total pomodoros</p>
+                                    <p class="text-[10px] text-gray-500">2 months ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friend Card 3 -->
+                <div class="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div class="flex items-start gap-4 mb-3">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                             alt="Alex"
+                             class="w-12 h-12 rounded-full object-cover shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold">alex_kim</h3>
+                            </div>
+                            <p class="text-xs text-gray-500">Lv 15 · Zen Master</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <div class="text-center">
+                                <p class="text-lg font-bold">0</p>
+                                <p class="text-[10px] text-gray-500">today</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold">1205</p>
+                                <p class="text-[10px] text-gray-500">total</p>
+                            </div>
+                            <div class="text-center flex flex-col items-center">
+                                <div class="flex items-center gap-0.5">
+                                    <i data-lucide="flame" class="w-4 h-4 text-orange-500 fill-orange-500"></i>
+                                    <p class="text-lg font-bold text-orange-500">47</p>
+                                </div>
+                                <p class="text-[10px] text-gray-500">streak</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-start gap-3">
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="px-2 py-0.5 rounded-full bg-gray-100">guitar-practice</span>
+                                <span>·</span>
+                                <span class="shrink-0">30m</span>
+                                <span>·</span>
+                                <span class="shrink-0 text-[10px]">yesterday</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="px-2 py-0.5 rounded-full bg-gray-100">meditation</span>
+                                <span>·</span>
+                                <span class="shrink-0">15m</span>
+                                <span>·</span>
+                                <span class="shrink-0 text-[10px]">2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-64 md:shrink-0">
+                            <div class="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                                    <i data-lucide="zap" class="w-4 h-4 text-orange-500"></i>
+                                </div>
+                                <div class="flex flex-col gap-1 min-w-0 flex-1">
+                                    <p class="text-xs font-medium text-orange-600">Streak Warrior</p>
+                                    <p class="text-[11px] text-gray-600 leading-snug">Maintain a 30-day streak</p>
+                                    <p class="text-[10px] text-gray-500">17 days ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button class="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors">
+                    Sign up to follow friends
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Tracking Section -->
+    <section class="py-32 px-6 bg-gray-900 text-white">
+        <div class="max-w-6xl mx-auto reveal">
+            <h2 class="text-5xl md:text-6xl font-bold text-center mb-6">
+                Track your focus like an athlete
+            </h2>
+            <p class="text-xl text-gray-400 text-center mb-20 max-w-3xl mx-auto">
+                See your progress with beautiful charts and heatmaps. It's Strava for your brain.
+            </p>
+
+            <!-- Activity Heatmap Demo -->
+            <div class="mb-20">
+                <h3 class="text-2xl font-bold mb-6">Activity Heatmap</h3>
+                <div class="bg-gray-800 rounded-2xl p-8">
+                    <div id="heatmap-demo" class="overflow-x-auto">
+                        <!-- Heatmap will be generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Focus Graph Demo -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-bold mb-6">Focus Score Over Time</h3>
+                <div class="bg-gray-800 rounded-2xl p-8">
+                    <svg id="focus-graph" viewBox="0 0 800 200" class="w-full h-auto">
+                        <defs>
+                            <linearGradient id="graphGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#fb923c" />
+                                <stop offset="50%" style="stop-color:#f97316" />
+                                <stop offset="100%" style="stop-color:#ea580c" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Grid lines -->
+                        <line x1="20" y1="20" x2="780" y2="20" stroke="#374151" stroke-width="1"/>
+                        <line x1="20" y1="60" x2="780" y2="60" stroke="#374151" stroke-width="1"/>
+                        <line x1="20" y1="100" x2="780" y2="100" stroke="#374151" stroke-width="1"/>
+                        <line x1="20" y1="140" x2="780" y2="140" stroke="#374151" stroke-width="1"/>
+                        <line x1="20" y1="180" x2="780" y2="180" stroke="#374151" stroke-width="1"/>
+
+                        <!-- Area fill -->
+                        <path id="area-path" d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40 L 780,180 L 20,180 Z"
+                              fill="url(#graphGradient)" opacity="0.2"/>
+
+                        <!-- Line -->
+                        <path id="line-path" class="draw-line" d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40"
+                              fill="none" stroke="url(#graphGradient)" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                    <div class="flex justify-between text-sm text-gray-400 mt-2 px-2">
+                        <span>30 days ago</span>
+                        <span>Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button class="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg">
+                    Sign up to save your progress
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Streaks Section -->
+    <section class="py-32 px-6 bg-white">
+        <div class="max-w-6xl mx-auto reveal">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-6xl font-bold mb-6 leading-tight">
+                        Build unstoppable momentum
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Protect your streak and stay locked in. 
+                    </p>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        25mins a day keeps the streak alive.
+                    </p>
+                </div>
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-12 text-center text-white">
+                    <div class="text-9xl font-bold mb-4">47</div>
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <p class="text-3xl font-semibold">Day Streak</p>
+                        <i data-lucide="flame" class="w-8 h-8"></i>
+                    </div>
+                    <p class="text-xl opacity-90">Don't break the chain</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <script>
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+
+        const revealOnScroll = () => {
+            const windowHeight = window.innerHeight;
+            revealElements.forEach(el => {
+                const elementTop = el.getBoundingClientRect().top;
+                if (elementTop < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+
+            // Trigger graph animation
+            const graph = document.getElementById('line-path');
+            if (graph) {
+                const graphTop = graph.getBoundingClientRect().top;
+                if (graphTop < windowHeight * 0.85) {
+                    graph.classList.add('active');
+                }
+            }
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        // Generate heatmap
+        function generateHeatmap() {
+            const container = document.getElementById('heatmap-demo');
+            const weeks = 52;
+            const days = 7;
+
+            let html = '<div class="flex gap-1">';
+
+            // Day labels - aligned properly with cells
+            html += '<div class="flex flex-col gap-1 pr-2 text-xs justify-between" style="height: 100%;">';
+            const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            for (let i = 0; i < days; i++) {
+                if (i === 1 || i === 3 || i === 5) {
+                    html += `<div class="flex items-center" style="height: calc((100% - 6px) / 7);">${dayLabels[i]}</div>`;
+                } else {
+                    html += `<div style="height: calc((100% - 6px) / 7);"></div>`;
+                }
+            }
+            html += '</div>';
+
+            // Heatmap grid
+            html += '<div class="flex gap-1 flex-1">';
+            for (let week = 0; week < weeks; week++) {
+                html += '<div class="flex flex-col gap-1 flex-1">';
+                for (let day = 0; day < days; day++) {
+                    // Random intensity (higher for recent weeks)
+                    const recencyBoost = week > 40 ? Math.random() * 2 : 1;
+                    const intensity = Math.floor(Math.random() * 5 * recencyBoost);
+                    const colors = [
+                        'bg-gray-700',
+                        'bg-orange-900',
+                        'bg-orange-700',
+                        'bg-orange-600',
+                        'bg-orange-500'
+                    ];
+                    const color = colors[Math.min(intensity, 4)];
+                    const delay = week * 15; // Stagger animation per week
+                    html += `<div class="heatmap-cell aspect-square rounded-sm ${color} border border-gray-600" style="animation-delay: ${delay}ms;"></div>`;
+                }
+                html += '</div>';
+            }
+            html += '</div></div>';
+
+            container.innerHTML = html;
+
+            // Trigger animation when heatmap comes into view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const cells = container.querySelectorAll('.heatmap-cell');
+                        cells.forEach(cell => cell.classList.add('animate'));
+                        observer.disconnect();
+                    }
+                });
+            }, { threshold: 0.2 });
+
+            observer.observe(container);
+        }
+
+        generateHeatmap();
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>

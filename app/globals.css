@@ -96,4 +96,220 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(249, 115, 22, 0.5);
   }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-200%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  @keyframes heatmapFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Heatmap animations - animate squares from left to right */
+  .heatmap-container svg g g {
+    animation: heatmapFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+
+  /* Stagger animation for each week column (left to right) */
+  .heatmap-container svg g g:nth-child(1) {
+    animation-delay: 0.02s;
+  }
+  .heatmap-container svg g g:nth-child(2) {
+    animation-delay: 0.04s;
+  }
+  .heatmap-container svg g g:nth-child(3) {
+    animation-delay: 0.06s;
+  }
+  .heatmap-container svg g g:nth-child(4) {
+    animation-delay: 0.08s;
+  }
+  .heatmap-container svg g g:nth-child(5) {
+    animation-delay: 0.1s;
+  }
+  .heatmap-container svg g g:nth-child(6) {
+    animation-delay: 0.12s;
+  }
+  .heatmap-container svg g g:nth-child(7) {
+    animation-delay: 0.14s;
+  }
+  .heatmap-container svg g g:nth-child(8) {
+    animation-delay: 0.16s;
+  }
+  .heatmap-container svg g g:nth-child(9) {
+    animation-delay: 0.18s;
+  }
+  .heatmap-container svg g g:nth-child(10) {
+    animation-delay: 0.2s;
+  }
+  .heatmap-container svg g g:nth-child(11) {
+    animation-delay: 0.22s;
+  }
+  .heatmap-container svg g g:nth-child(12) {
+    animation-delay: 0.24s;
+  }
+  .heatmap-container svg g g:nth-child(13) {
+    animation-delay: 0.26s;
+  }
+  .heatmap-container svg g g:nth-child(14) {
+    animation-delay: 0.28s;
+  }
+  .heatmap-container svg g g:nth-child(15) {
+    animation-delay: 0.3s;
+  }
+  .heatmap-container svg g g:nth-child(16) {
+    animation-delay: 0.32s;
+  }
+  .heatmap-container svg g g:nth-child(17) {
+    animation-delay: 0.34s;
+  }
+  .heatmap-container svg g g:nth-child(18) {
+    animation-delay: 0.36s;
+  }
+  .heatmap-container svg g g:nth-child(19) {
+    animation-delay: 0.38s;
+  }
+  .heatmap-container svg g g:nth-child(20) {
+    animation-delay: 0.4s;
+  }
+  .heatmap-container svg g g:nth-child(21) {
+    animation-delay: 0.42s;
+  }
+  .heatmap-container svg g g:nth-child(22) {
+    animation-delay: 0.44s;
+  }
+  .heatmap-container svg g g:nth-child(23) {
+    animation-delay: 0.46s;
+  }
+  .heatmap-container svg g g:nth-child(24) {
+    animation-delay: 0.48s;
+  }
+  .heatmap-container svg g g:nth-child(25) {
+    animation-delay: 0.5s;
+  }
+  .heatmap-container svg g g:nth-child(26) {
+    animation-delay: 0.52s;
+  }
+  .heatmap-container svg g g:nth-child(27) {
+    animation-delay: 0.54s;
+  }
+  .heatmap-container svg g g:nth-child(28) {
+    animation-delay: 0.56s;
+  }
+  .heatmap-container svg g g:nth-child(29) {
+    animation-delay: 0.58s;
+  }
+  .heatmap-container svg g g:nth-child(30) {
+    animation-delay: 0.6s;
+  }
+  .heatmap-container svg g g:nth-child(31) {
+    animation-delay: 0.62s;
+  }
+  .heatmap-container svg g g:nth-child(32) {
+    animation-delay: 0.64s;
+  }
+  .heatmap-container svg g g:nth-child(33) {
+    animation-delay: 0.66s;
+  }
+  .heatmap-container svg g g:nth-child(34) {
+    animation-delay: 0.68s;
+  }
+  .heatmap-container svg g g:nth-child(35) {
+    animation-delay: 0.7s;
+  }
+  .heatmap-container svg g g:nth-child(36) {
+    animation-delay: 0.72s;
+  }
+  .heatmap-container svg g g:nth-child(37) {
+    animation-delay: 0.74s;
+  }
+  .heatmap-container svg g g:nth-child(38) {
+    animation-delay: 0.76s;
+  }
+  .heatmap-container svg g g:nth-child(39) {
+    animation-delay: 0.78s;
+  }
+  .heatmap-container svg g g:nth-child(40) {
+    animation-delay: 0.8s;
+  }
+  .heatmap-container svg g g:nth-child(41) {
+    animation-delay: 0.82s;
+  }
+  .heatmap-container svg g g:nth-child(42) {
+    animation-delay: 0.84s;
+  }
+  .heatmap-container svg g g:nth-child(43) {
+    animation-delay: 0.86s;
+  }
+  .heatmap-container svg g g:nth-child(44) {
+    animation-delay: 0.88s;
+  }
+  .heatmap-container svg g g:nth-child(45) {
+    animation-delay: 0.9s;
+  }
+  .heatmap-container svg g g:nth-child(46) {
+    animation-delay: 0.92s;
+  }
+  .heatmap-container svg g g:nth-child(47) {
+    animation-delay: 0.94s;
+  }
+  .heatmap-container svg g g:nth-child(48) {
+    animation-delay: 0.96s;
+  }
+  .heatmap-container svg g g:nth-child(49) {
+    animation-delay: 0.98s;
+  }
+  .heatmap-container svg g g:nth-child(50) {
+    animation-delay: 1s;
+  }
+  .heatmap-container svg g g:nth-child(51) {
+    animation-delay: 1.02s;
+  }
+  .heatmap-container svg g g:nth-child(52) {
+    animation-delay: 1.04s;
+  }
+  .heatmap-container svg g g:nth-child(53) {
+    animation-delay: 1.06s;
+  }
+
+  /* Graph animations */
+  @keyframes graphDraw {
+    0% {
+      stroke-dashoffset: 2000;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes graphFillIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0.2;
+    }
+  }
+
+  .graph-container .graph-line {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    animation: graphDraw 2s cubic-bezier(0.47, 0, 0.745, 0.715) forwards;
+  }
+
+  .graph-container .graph-fill {
+    animation: graphFillIn 1s ease-out 1s forwards;
+    opacity: 0;
+  }
 }
