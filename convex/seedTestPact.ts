@@ -57,6 +57,7 @@ export const seedTestPact = mutation({
       joinCode,
       startDate,
       endDate,
+      durationDays: 4,
       status: "active",
       requiredPomosPerDay: 1,
       createdAt: yesterday.getTime(),

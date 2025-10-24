@@ -82,7 +82,7 @@ export function ActiveChallengesWidget() {
                       animate={{
                         width: isCompleted
                           ? "100%"
-                          : `${(challenge.pomosToday / challenge.requiredPomosPerDay) * 100}%`,
+                          : `${(challenge.pomosToday / (challenge.requiredPomosPerDay || 1)) * 100}%`,
                       }}
                       transition={{ duration: 0.5, delay: idx * 0.1 }}
                     />

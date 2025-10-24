@@ -70,7 +70,9 @@ function PacktsPageContent() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold">Accountability Pacts</h1>
-            <p className="text-muted-foreground mt-1">Team up with friends for 4-day focus pacts</p>
+            <p className="text-muted-foreground mt-1">
+              Create custom group challenges and stay accountable together
+            </p>
           </div>
 
           <div className="flex gap-2">
@@ -145,7 +147,7 @@ function PacktsPageContent() {
           </motion.div>
         )}
 
-        {/* Past Pacts */}
+        {/* Completed Pacts */}
         {challenges && challenges.past.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -155,7 +157,7 @@ function PacktsPageContent() {
           >
             <div className="flex items-center gap-2 mb-4">
               <XCircle className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-bold">Past Pacts</h2>
+              <h2 className="text-xl font-bold">Completed Pacts</h2>
               <span className="text-sm text-muted-foreground">({challenges.past.length})</span>
             </div>
             <div className="space-y-4">

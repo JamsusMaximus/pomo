@@ -1,22 +1,27 @@
 "use client";
 
-import { Check, X, Clock, Trophy, Users, Copy, CheckCheck } from "lucide-react";
+import { Check, X, Clock, Trophy, Users, Copy, CheckCheck, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { EditChallengeModal } from "./EditChallengeModal";
+import { useUser } from "@clerk/nextjs";
 
 interface Challenge {
   _id: Id<"accountabilityChallenges">;
   name: string;
+  description?: string;
   joinCode: string;
   startDate: string;
   endDate: string;
+  durationDays?: number; // Optional for backwards compatibility
   status: "pending" | "active" | "completed" | "failed";
-  requiredPomosPerDay: number;
+  requiredPomosPerDay?: number; // Optional for backwards compatibility
   createdAt: number;
+  creatorId: Id<"users">;
   completedAt?: number;
   failedOn?: string;
   failedByUserId?: Id<"users">;
@@ -28,9 +33,23 @@ interface ChallengeCardProps {
 
 export function ChallengeCard({ challenge }: ChallengeCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const { user: clerkUser } = useUser();
+  const scrollContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const details = useQuery(api.accountabilityChallenges.getChallengeDetails, {
     challengeId: challenge._id,
   });
+
+  // Sync scroll positions across all containers
+  const handleScroll = (index: number) => (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    scrollContainerRefs.current.forEach((ref, i) => {
+      if (ref && i !== index) {
+        ref.scrollLeft = scrollLeft;
+      }
+    });
+  };
 
   const copyJoinCode = () => {
     navigator.clipboard.writeText(challenge.joinCode);
@@ -45,6 +64,10 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     challengeDates.push(d.toISOString().split("T")[0]);
   }
+
+  // Calculate duration from dates if not provided (backwards compatibility)
+  const durationDays = challenge.durationDays || challengeDates.length;
+  const requiredPomosPerDay = challenge.requiredPomosPerDay || 1;
 
   // Status colors and labels
   const statusConfig = {
@@ -95,192 +118,261 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // Check if current user is the creator
+  const isCreator =
+    clerkUser &&
+    details?.participants.find((p) => p.role === "creator" && p.username === clerkUser.username);
+
   return (
-    <div
-      className={`bg-card rounded-xl shadow-lg border p-5 ${config.bg} ${config.border} hover:border-opacity-40 transition-colors`}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-bold">{challenge.name}</h3>
-            <div
-              className={`px-2 py-0.5 rounded-md text-xs font-medium ${config.bg} ${config.text}`}
+    <>
+      <div
+        className={`bg-card rounded-xl shadow-lg border p-5 ${config.bg} ${config.border} hover:border-opacity-40 transition-colors`}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold">{challenge.name}</h3>
+              <div
+                className={`px-2 py-0.5 rounded-md text-xs font-medium ${config.bg} ${config.text}`}
+              >
+                <div className="flex items-center gap-1">
+                  <StatusIcon className="w-3 h-3" />
+                  {config.label}
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {formatDate(challenge.startDate)} - {formatDate(challenge.endDate)} ({durationDays}{" "}
+              day{durationDays !== 1 ? "s" : ""})
+            </p>
+            {challenge.description && (
+              <p className="text-sm text-muted-foreground mt-1">{challenge.description}</p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            {/* Edit Button - only for creator and pending status */}
+            {isCreator && challenge.status === "pending" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEditModal(true)}
+                className="min-h-[36px]"
+                title="Edit pact settings"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+
+            {/* Join Code */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyJoinCode}
+              className="min-h-[36px]"
+              title="Copy join code"
             >
-              <div className="flex items-center gap-1">
-                <StatusIcon className="w-3 h-3" />
-                {config.label}
+              {copiedCode ? (
+                <>
+                  <Check className="w-4 h-4 mr-1" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-1" />
+                  {challenge.joinCode}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress Grid - show for all statuses */}
+        {details && details.participants && (
+          <div className="space-y-2 overflow-hidden">
+            <p className="text-sm font-medium mb-2">
+              Daily Progress ({requiredPomosPerDay} pomo{requiredPomosPerDay !== 1 ? "s" : ""}{" "}
+              minimum)
+            </p>
+            <div className="grid gap-2 overflow-hidden">
+              {details.participants.map((participant, participantIndex) => {
+                const userProgress = details.progressByUser?.[participant.userId];
+                const isPending = challenge.status === "pending";
+
+                return (
+                  <div key={participant.userId} className="flex items-center gap-2 overflow-hidden">
+                    <Avatar className="w-6 h-6 shrink-0">
+                      <AvatarImage src={participant.avatarUrl} alt={participant.username} />
+                      <AvatarFallback className="text-xs">
+                        {participant.username[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground w-20 truncate">
+                      {participant.username}
+                    </span>
+                    {/* Scrollable container for 30+ days */}
+                    <div
+                      ref={(el) => {
+                        scrollContainerRefs.current[participantIndex] = el;
+                      }}
+                      onScroll={handleScroll(participantIndex)}
+                      className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll" : ""}`}
+                      style={
+                        durationDays >= 30
+                          ? {
+                              overflowX: "scroll",
+                              scrollbarWidth: "thin",
+                            }
+                          : undefined
+                      }
+                    >
+                      {challengeDates.map((date) => {
+                        // For pending pacts, show all boxes as neutral/future state
+                        if (isPending) {
+                          return (
+                            <div
+                              key={date}
+                              className="h-10 rounded flex items-center justify-center border shrink-0"
+                              style={{
+                                minWidth:
+                                  durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                                width: durationDays >= 30 ? "32px" : undefined,
+                                flex: durationDays < 30 ? 1 : undefined,
+                                backgroundColor: "rgba(107, 114, 128, 0.05)",
+                                borderColor: "rgba(107, 114, 128, 0.1)",
+                              }}
+                              title={`${getDayAbbr(date)} ${formatDate(date)}`}
+                            />
+                          );
+                        }
+
+                        // For active/completed/failed pacts, show progress
+                        const dayProgress = userProgress?.[date];
+                        const isCompleted = dayProgress?.completed;
+                        const isFuture = date > today;
+                        const isFailed =
+                          challenge.status === "failed" &&
+                          challenge.failedOn === date &&
+                          challenge.failedByUserId === participant.userId;
+
+                        return (
+                          <div
+                            key={date}
+                            className="h-10 rounded flex items-center justify-center border shrink-0"
+                            style={{
+                              minWidth:
+                                durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                              width: durationDays >= 30 ? "32px" : undefined,
+                              flex: durationDays < 30 ? 1 : undefined,
+                              backgroundColor: isFailed
+                                ? "rgba(239, 68, 68, 0.1)"
+                                : isCompleted
+                                  ? "rgba(34, 197, 94, 0.1)"
+                                  : isFuture
+                                    ? "rgba(107, 114, 128, 0.05)"
+                                    : "rgba(249, 115, 22, 0.05)",
+                              borderColor: isFailed
+                                ? "rgba(239, 68, 68, 0.3)"
+                                : isCompleted
+                                  ? "rgba(34, 197, 94, 0.3)"
+                                  : isFuture
+                                    ? "rgba(107, 114, 128, 0.1)"
+                                    : "rgba(249, 115, 22, 0.2)",
+                            }}
+                            title={`${getDayAbbr(date)} ${formatDate(date)}: ${isCompleted ? `${dayProgress.pomosCompleted} pomos` : isFuture ? "Not started" : "Incomplete"}`}
+                          >
+                            {isFailed ? (
+                              <X className="w-4 h-4 text-red-500" />
+                            ) : isCompleted ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Date labels */}
+            <div className="flex items-center gap-2 mt-1 overflow-hidden">
+              <div className="w-6 h-6 shrink-0" />
+              <div className="w-20" />
+              <div
+                ref={(el) => {
+                  scrollContainerRefs.current[details.participants.length] = el;
+                }}
+                onScroll={handleScroll(details.participants.length)}
+                className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll scrollbar-hide" : ""}`}
+                style={
+                  durationDays >= 30
+                    ? {
+                        overflowX: "scroll",
+                      }
+                    : undefined
+                }
+              >
+                {challengeDates.map((date) => {
+                  const d = new Date(date);
+                  const dayNum = d.getDate();
+                  return (
+                    <div
+                      key={date}
+                      className="text-center shrink-0"
+                      style={{
+                        minWidth: durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                        width: durationDays >= 30 ? "32px" : undefined,
+                        flex: durationDays < 30 ? 1 : undefined,
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground leading-tight">
+                        {getDayAbbr(date)}
+                        <br />
+                        {dayNum}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {formatDate(challenge.startDate)} - {formatDate(challenge.endDate)} (4 days)
-          </p>
-        </div>
+        )}
 
-        {/* Join Code */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={copyJoinCode}
-          className="min-h-[36px]"
-          title="Copy join code"
-        >
-          {copiedCode ? (
-            <>
-              <Check className="w-4 h-4 mr-1" />
-              Copied
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4 mr-1" />
-              {challenge.joinCode}
-            </>
-          )}
-        </Button>
+        {/* Pending state message */}
+        {challenge.status === "pending" && (
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+            <p className="text-sm text-muted-foreground text-center">
+              Pact starts on {formatDate(challenge.startDate)}. Share the join code to invite
+              friends!
+            </p>
+          </div>
+        )}
+
+        {/* Failed message */}
+        {challenge.status === "failed" && challenge.failedOn && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-600 dark:text-red-400 text-center">
+              Pact failed on {formatDate(challenge.failedOn)}
+            </p>
+          </div>
+        )}
+
+        {/* Completed message */}
+        {challenge.status === "completed" && (
+          <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <p className="text-sm text-green-600 dark:text-green-400 text-center font-medium">
+              🎉 Pact completed! Everyone earned the Team Player badge!
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Participants - only show avatars when not active (pending status) */}
-      {details && details.participants && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {details.participants.length} participant
-              {details.participants.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          {challenge.status === "pending" && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {details.participants.slice(0, 8).map((participant) => (
-                <div
-                  key={participant.userId}
-                  className="flex items-center gap-1"
-                  title={participant.username}
-                >
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={participant.avatarUrl} alt={participant.username} />
-                    <AvatarFallback className="text-xs">
-                      {participant.username[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground">{participant.username}</span>
-                </div>
-              ))}
-              {details.participants.length > 8 && (
-                <span className="text-xs text-muted-foreground">
-                  +{details.participants.length - 8} more
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+      {/* Edit Modal */}
+      {showEditModal && (
+        <EditChallengeModal challenge={challenge} onClose={() => setShowEditModal(false)} />
       )}
-
-      {/* Progress Grid */}
-      {details && details.progressByUser && challenge.status !== "pending" && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium mb-2">Daily Progress</p>
-          <div className="grid gap-2">
-            {details.participants.map((participant) => {
-              const userProgress = details.progressByUser[participant.userId];
-              return (
-                <div key={participant.userId} className="flex items-center gap-2">
-                  <Avatar className="w-6 h-6 shrink-0">
-                    <AvatarImage src={participant.avatarUrl} alt={participant.username} />
-                    <AvatarFallback className="text-xs">
-                      {participant.username[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground w-20 truncate">
-                    {participant.username}
-                  </span>
-                  <div className="flex gap-1 flex-1">
-                    {challengeDates.map((date) => {
-                      const dayProgress = userProgress?.[date];
-                      const isCompleted = dayProgress?.completed;
-                      const isFuture = date > today;
-                      const isFailed =
-                        challenge.status === "failed" &&
-                        challenge.failedOn === date &&
-                        challenge.failedByUserId === participant.userId;
-
-                      return (
-                        <div
-                          key={date}
-                          className="flex-1 h-8 rounded flex items-center justify-center border"
-                          style={{
-                            backgroundColor: isFailed
-                              ? "rgba(239, 68, 68, 0.1)"
-                              : isCompleted
-                                ? "rgba(34, 197, 94, 0.1)"
-                                : isFuture
-                                  ? "rgba(107, 114, 128, 0.05)"
-                                  : "rgba(249, 115, 22, 0.05)",
-                            borderColor: isFailed
-                              ? "rgba(239, 68, 68, 0.3)"
-                              : isCompleted
-                                ? "rgba(34, 197, 94, 0.3)"
-                                : isFuture
-                                  ? "rgba(107, 114, 128, 0.1)"
-                                  : "rgba(249, 115, 22, 0.2)",
-                          }}
-                          title={`${getDayAbbr(date)} ${formatDate(date)}: ${isCompleted ? `${dayProgress.pomosCompleted} pomos` : isFuture ? "Not started" : "Incomplete"}`}
-                        >
-                          {isFailed ? (
-                            <X className="w-4 h-4 text-red-500" />
-                          ) : isCompleted ? (
-                            <Check className="w-4 h-4 text-green-500" />
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {/* Date labels */}
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-6 h-6 shrink-0" />
-            <div className="w-20" />
-            <div className="flex gap-1 flex-1">
-              {challengeDates.map((date) => (
-                <div key={date} className="flex-1 text-center">
-                  <p className="text-xs text-muted-foreground">{getDayAbbr(date)}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pending state message */}
-      {challenge.status === "pending" && (
-        <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-          <p className="text-sm text-muted-foreground text-center">
-            Pact starts on {formatDate(challenge.startDate)}. Share the join code to invite friends!
-          </p>
-        </div>
-      )}
-
-      {/* Failed message */}
-      {challenge.status === "failed" && challenge.failedOn && (
-        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400 text-center">
-            Pact failed on {formatDate(challenge.failedOn)}
-          </p>
-        </div>
-      )}
-
-      {/* Completed message */}
-      {challenge.status === "completed" && (
-        <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-          <p className="text-sm text-green-600 dark:text-green-400 text-center font-medium">
-            🎉 Pact completed! Everyone earned the Team Player badge!
-          </p>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
