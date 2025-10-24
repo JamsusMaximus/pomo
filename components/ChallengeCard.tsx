@@ -3,7 +3,7 @@
 import { Check, X, Clock, Trophy, Users, Copy, CheckCheck, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -35,10 +35,21 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const { user: clerkUser } = useUser();
+  const scrollContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const details = useQuery(api.accountabilityChallenges.getChallengeDetails, {
     challengeId: challenge._id,
   });
+
+  // Sync scroll positions across all containers
+  const handleScroll = (index: number) => (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    scrollContainerRefs.current.forEach((ref, i) => {
+      if (ref && i !== index) {
+        ref.scrollLeft = scrollLeft;
+      }
+    });
+  };
 
   const copyJoinCode = () => {
     navigator.clipboard.writeText(challenge.joinCode);
@@ -178,55 +189,20 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
           </div>
         </div>
 
-        {/* Participants - only show avatars when not active (pending status) */}
+        {/* Progress Grid - show for all statuses */}
         {details && details.participants && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                {details.participants.length} participant
-                {details.participants.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            {challenge.status === "pending" && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {details.participants.slice(0, 8).map((participant) => (
-                  <div
-                    key={participant.userId}
-                    className="flex items-center gap-1"
-                    title={participant.username}
-                  >
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={participant.avatarUrl} alt={participant.username} />
-                      <AvatarFallback className="text-xs">
-                        {participant.username[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">{participant.username}</span>
-                  </div>
-                ))}
-                {details.participants.length > 8 && (
-                  <span className="text-xs text-muted-foreground">
-                    +{details.participants.length - 8} more
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Progress Grid */}
-        {details && details.progressByUser && challenge.status !== "pending" && (
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-hidden">
             <p className="text-sm font-medium mb-2">
               Daily Progress ({requiredPomosPerDay} pomo{requiredPomosPerDay !== 1 ? "s" : ""}{" "}
               minimum)
             </p>
-            <div className="grid gap-2">
-              {details.participants.map((participant) => {
-                const userProgress = details.progressByUser[participant.userId];
+            <div className="grid gap-2 overflow-hidden">
+              {details.participants.map((participant, participantIndex) => {
+                const userProgress = details.progressByUser?.[participant.userId];
+                const isPending = challenge.status === "pending";
+
                 return (
-                  <div key={participant.userId} className="flex items-center gap-2">
+                  <div key={participant.userId} className="flex items-center gap-2 overflow-hidden">
                     <Avatar className="w-6 h-6 shrink-0">
                       <AvatarImage src={participant.avatarUrl} alt={participant.username} />
                       <AvatarFallback className="text-xs">
@@ -236,12 +212,41 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                     <span className="text-xs text-muted-foreground w-20 truncate">
                       {participant.username}
                     </span>
-                    {/* Scrollable container for >30 days */}
+                    {/* Scrollable container for 30+ days */}
                     <div
-                      className={`flex gap-1 flex-1 ${durationDays > 30 ? "overflow-x-auto" : ""}`}
-                      style={durationDays > 30 ? { maxWidth: "calc(100vw - 240px)" } : undefined}
+                      ref={(el) => (scrollContainerRefs.current[participantIndex] = el)}
+                      onScroll={handleScroll(participantIndex)}
+                      className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll" : ""}`}
+                      style={
+                        durationDays >= 30
+                          ? {
+                              overflowX: "scroll",
+                              scrollbarWidth: "thin",
+                            }
+                          : undefined
+                      }
                     >
                       {challengeDates.map((date) => {
+                        // For pending pacts, show all boxes as neutral/future state
+                        if (isPending) {
+                          return (
+                            <div
+                              key={date}
+                              className="h-10 rounded flex items-center justify-center border shrink-0"
+                              style={{
+                                minWidth:
+                                  durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                                width: durationDays >= 30 ? "32px" : undefined,
+                                flex: durationDays < 30 ? 1 : undefined,
+                                backgroundColor: "rgba(107, 114, 128, 0.05)",
+                                borderColor: "rgba(107, 114, 128, 0.1)",
+                              }}
+                              title={`${getDayAbbr(date)} ${formatDate(date)}`}
+                            />
+                          );
+                        }
+
+                        // For active/completed/failed pacts, show progress
                         const dayProgress = userProgress?.[date];
                         const isCompleted = dayProgress?.completed;
                         const isFuture = date > today;
@@ -256,9 +261,9 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                             className="h-10 rounded flex items-center justify-center border shrink-0"
                             style={{
                               minWidth:
-                                durationDays > 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
-                              width: durationDays > 30 ? "32px" : undefined,
-                              flex: durationDays <= 30 ? 1 : undefined,
+                                durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                              width: durationDays >= 30 ? "32px" : undefined,
+                              flex: durationDays < 30 ? 1 : undefined,
                               backgroundColor: isFailed
                                 ? "rgba(239, 68, 68, 0.1)"
                                 : isCompleted
@@ -290,26 +295,42 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
               })}
             </div>
             {/* Date labels */}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 overflow-hidden">
               <div className="w-6 h-6 shrink-0" />
               <div className="w-20" />
               <div
-                className={`flex gap-1 flex-1 ${durationDays > 30 ? "overflow-x-auto" : ""}`}
-                style={durationDays > 30 ? { maxWidth: "calc(100vw - 240px)" } : undefined}
+                ref={(el) => (scrollContainerRefs.current[details.participants.length] = el)}
+                onScroll={handleScroll(details.participants.length)}
+                className={`flex gap-1 flex-1 min-w-0 ${durationDays >= 30 ? "overflow-x-scroll scrollbar-hide" : ""}`}
+                style={
+                  durationDays >= 30
+                    ? {
+                        overflowX: "scroll",
+                      }
+                    : undefined
+                }
               >
-                {challengeDates.map((date) => (
-                  <div
-                    key={date}
-                    className="text-center shrink-0"
-                    style={{
-                      minWidth: durationDays > 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
-                      width: durationDays > 30 ? "32px" : undefined,
-                      flex: durationDays <= 30 ? 1 : undefined,
-                    }}
-                  >
-                    <p className="text-xs text-muted-foreground">{getDayAbbr(date)}</p>
-                  </div>
-                ))}
+                {challengeDates.map((date) => {
+                  const d = new Date(date);
+                  const dayNum = d.getDate();
+                  return (
+                    <div
+                      key={date}
+                      className="text-center shrink-0"
+                      style={{
+                        minWidth: durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                        width: durationDays >= 30 ? "32px" : undefined,
+                        flex: durationDays < 30 ? 1 : undefined,
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground leading-tight">
+                        {getDayAbbr(date)}
+                        <br />
+                        {dayNum}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
