@@ -43,7 +43,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, BookOpen, Sun, Crown, Trophy, Zap, Flame } from "lucide-react";
+import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -111,6 +112,12 @@ function HomeContent() {
 
   // Store AudioContext in ref to prevent memory leaks
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Handle starting timer from landing page CTA
+  const handleStartTimer = useCallback(() => {
+    start();
+    setShowSpaceHint(false);
+  }, [start]);
 
   // Cleanup AudioContext on unmount
   useEffect(() => {
@@ -1206,6 +1213,400 @@ function HomeContent() {
           </motion.div>
         )}
       </div>
+
+      {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
+      {!isSignedIn && isHydrated && !isRunning && (
+        <>
+          {/* Hero Section */}
+          <section className="flex flex-col items-center justify-center px-6 py-32 bg-gradient-to-b from-orange-50 to-white">
+            <div className="max-w-5xl w-full text-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-7xl md:text-8xl font-bold mb-6 tracking-tight"
+              >
+                <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
+                  Strava
+                </span>{" "}
+                for Focus
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-2xl md:text-3xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+              >
+                Drop into flow, spend your time on the activities that matter to you
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Button
+                  onClick={handleStartTimer}
+                  size="lg"
+                  className="relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xl font-semibold px-12 py-6 rounded-lg hover:scale-105 transition-transform shadow-lg hover:shadow-xl"
+                >
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    style={{ backgroundSize: "200% 100%" }}
+                    animate={{ backgroundPosition: ["200% 0%", "-200% 0%"] }}
+                    transition={{ duration: 7, ease: "linear", repeat: Infinity }}
+                  />
+                  Start the timer and lock in
+                </Button>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="mt-6 text-gray-500"
+              >
+                For work, hobbies, or life admin
+              </motion.p>
+            </div>
+          </section>
+
+          {/* Pacts Section */}
+          <section className="pt-16 pb-32 px-6 bg-white">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-16 items-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6 }}
+                  className="order-2 md:order-1"
+                >
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 shadow-sm mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold">Study Sprint 2025</h3>
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <span className="text-sm text-gray-500">3/4 on track</span>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <img
+                          src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                          alt="Sarah"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                          alt="Marcus"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      </div>
+                      <p className="text-gray-600">5 pomos per day for a week</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold">Indie Hackers</h3>
+                          <Sun className="w-5 h-5 text-yellow-500" />
+                        </div>
+                        <span className="text-sm text-orange-600 font-semibold">
+                          All crushing it!
+                        </span>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <img
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                          alt="Alex"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      </div>
+                      <p className="text-gray-600">25mins per day on your project</p>
+                    </div>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="order-1 md:order-2"
+                >
+                  <h2 className="text-6xl font-bold mb-6 leading-tight">Make pacts with friends</h2>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    Turn focus into a team sport and see who&apos;s following through on their
+                    intentions.
+                  </p>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    When you know your friends are watching, you show up.
+                  </p>
+                  <SignUpButton mode="modal">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors"
+                    >
+                      Sign up to save your progress
+                    </Button>
+                  </SignUpButton>
+                </motion.div>
+              </div>
+            </div>
+          </section>
+
+          {/* Friends Section */}
+          <section className="py-32 px-6 bg-gray-50">
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold">Friends</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Friend Card 1 - Active Today */}
+                  <div className="p-4 rounded-xl border border-l-4 border-l-orange-500 border-t-gray-200 border-r-gray-200 border-b-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                        alt="Sarah"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">sarah_chen</h3>
+                          <span className="flex h-2 w-2 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-orange-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                          </span>
+                          <span className="text-xs text-orange-500 font-medium">active today</span>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 12 · Focus Master</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-orange-500">3</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">847</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">32</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                            thesis-writing
+                          </span>
+                          <span>·</span>
+                          <span className="shrink-0">25m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">2 hours ago</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">deep-work</span>
+                          <span>·</span>
+                          <span className="shrink-0">50m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">5 hours ago</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Crown className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Elite Performer</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Complete 500 total pomodoros
+                            </p>
+                            <p className="text-[10px] text-gray-500">1 week ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friend Card 2 */}
+                  <div className="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                        alt="Marcus"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">marcus_codes</h3>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 9 · Productivity Enthusiast</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold">0</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">523</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">18</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">code-review</span>
+                          <span>·</span>
+                          <span className="shrink-0">25m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">yesterday</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Trophy className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Century Club</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Complete 100 total pomodoros
+                            </p>
+                            <p className="text-[10px] text-gray-500">2 months ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friend Card 3 */}
+                  <div className="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                        alt="Alex"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">alex_kim</h3>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 15 · Zen Master</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold">0</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">1205</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">47</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                            guitar-practice
+                          </span>
+                          <span>·</span>
+                          <span className="shrink-0">30m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">yesterday</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">meditation</span>
+                          <span>·</span>
+                          <span className="shrink-0">15m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">2 days ago</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Zap className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Streak Warrior</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Maintain a 30-day streak
+                            </p>
+                            <p className="text-[10px] text-gray-500">17 days ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mt-12">
+                  <SignUpButton mode="modal">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors"
+                    >
+                      Sign up to follow friends
+                    </Button>
+                  </SignUpButton>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }
