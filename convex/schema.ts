@@ -105,17 +105,19 @@ export default defineSchema({
 
   accountabilityChallenges: defineTable({
     creatorId: v.id("users"),
-    name: v.string(), // "Team Focus Week"
+    name: v.string(), // "Team Focus Week" or auto-generated "7 Days · 3 Pomos Daily"
+    description: v.optional(v.string()), // Optional pact description (max 250 chars)
     joinCode: v.string(), // "ABC123" (6-char unique)
     startDate: v.string(), // "2025-10-21" (YYYY-MM-DD)
-    endDate: v.string(), // "2025-10-24" (calculated: 4 days)
+    endDate: v.string(), // Calculated based on durationDays
+    durationDays: v.optional(v.number()), // 2-365 days (optional for backwards compatibility)
     status: v.union(
       v.literal("pending"), // Not started yet
       v.literal("active"), // Currently in progress
       v.literal("completed"), // All participants completed all days
       v.literal("failed") // Someone missed a day
     ),
-    requiredPomosPerDay: v.number(), // 1 for MVP
+    requiredPomosPerDay: v.optional(v.number()), // 1-50 pomos per day (optional for backwards compatibility, defaults to 1)
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
     failedOn: v.optional(v.string()), // "2025-10-22" (which day it failed)
