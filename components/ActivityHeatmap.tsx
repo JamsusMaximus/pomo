@@ -133,11 +133,14 @@ export function ActivityHeatmap({ data, compact = false }: ActivityHeatmapProps)
         {/* Day labels + grid */}
         <div className={`flex ${compact ? "gap-[1px]" : "gap-1"}`}>
           {/* Day of week labels */}
-          <div className={`flex flex-col ${compact ? "gap-[1px]" : "gap-[2px]"} pr-2`}>
+          <div
+            className={`flex flex-col ${compact ? "gap-[1px]" : "gap-[2px]"} pr-2 justify-start`}
+          >
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
               <div
                 key={day}
-                className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
+                className={`${compact ? "text-[10px]" : "text-xs"} text-muted-foreground flex items-center flex-1`}
+                style={{ minHeight: compact ? "8px" : "12px" }}
               >
                 {index % 2 === 1 ? day : ""}
               </div>

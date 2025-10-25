@@ -43,7 +43,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
-import { Play, Pause, BookOpen, Sun, Crown, Trophy, Zap, Flame } from "lucide-react";
+import { Play, Pause, BookOpen, Sun, Crown, Trophy, Zap, Flame, Check } from "lucide-react";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 
 // Calculate pomos completed today from sessions
@@ -1234,32 +1234,10 @@ function HomeContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="w-full"
+          className="w-full mb-32"
         >
           <AmbientSoundControls />
         </motion.div>
-
-        {/* Sign In CTA - Only show when signed out */}
-        {!isSignedIn && isHydrated && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            className="w-full"
-          >
-            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl border border-orange-500/20 p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">Track Your Progress</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Sign in to save your pomodoros, earn badges, and compete with friends
-              </p>
-              <SignUpButton mode="modal">
-                <Button size="lg" className="w-full sm:w-auto min-h-[44px]">
-                  Sign In / Sign Up
-                </Button>
-              </SignUpButton>
-            </div>
-          </motion.div>
-        )}
       </div>
 
       {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
@@ -1714,6 +1692,9 @@ function HomeContent() {
                           <stop offset="50%" style={{ stopColor: "#f97316" }} />
                           <stop offset="100%" style={{ stopColor: "#ea580c" }} />
                         </linearGradient>
+                        <clipPath id="revealClip">
+                          <rect x="0" y="0" width="800" height="200" className="reveal-rect" />
+                        </clipPath>
                       </defs>
                       {/* Grid lines */}
                       <line x1="20" y1="20" x2="780" y2="20" stroke="#d1d5db" strokeWidth="1" />
@@ -1722,22 +1703,51 @@ function HomeContent() {
                       <line x1="20" y1="140" x2="780" y2="140" stroke="#d1d5db" strokeWidth="1" />
                       <line x1="20" y1="180" x2="780" y2="180" stroke="#d1d5db" strokeWidth="1" />
 
-                      {/* Area fill */}
-                      <path
-                        className="graph-fill"
-                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40 L 780,180 L 20,180 Z"
-                        fill="url(#graphGradient)"
-                      />
+                      <g clipPath="url(#revealClip)">
+                        {/* Area fill - 30 days of data */}
+                        <path
+                          className="graph-fill"
+                          d="M 20,160 L 46,155 L 72,148 L 98,152 L 124,145 L 150,140 L 176,138 L 202,142 L 228,135 L 254,130 L 280,125 L 306,128 L 332,122 L 358,118 L 384,112 L 410,108 L 436,105 L 462,110 L 488,102 L 514,95 L 540,92 L 566,88 L 592,85 L 618,82 L 644,78 L 670,72 L 696,68 L 722,62 L 748,55 L 774,48 L 780,180 L 20,180 Z"
+                          fill="url(#graphGradient)"
+                        />
 
-                      {/* Line */}
-                      <path
-                        className="graph-line"
-                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40"
-                        fill="none"
-                        stroke="url(#graphGradient)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
+                        {/* Line - 30 days of data */}
+                        <path
+                          className="graph-line"
+                          d="M 20,160 L 46,155 L 72,148 L 98,152 L 124,145 L 150,140 L 176,138 L 202,142 L 228,135 L 254,130 L 280,125 L 306,128 L 332,122 L 358,118 L 384,112 L 410,108 L 436,105 L 462,110 L 488,102 L 514,95 L 540,92 L 566,88 L 592,85 L 618,82 L 644,78 L 670,72 L 696,68 L 722,62 L 748,55 L 774,48"
+                          fill="none"
+                          stroke="url(#graphGradient)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+
+                        {/* Level 5 Unlocked Notification - positioned at day 15 */}
+                        <g className="graph-notification" transform="translate(384, 82)">
+                          {/* Background pill */}
+                          <rect
+                            x="-60"
+                            y="-15"
+                            width="120"
+                            height="30"
+                            rx="15"
+                            fill="#f97316"
+                            opacity="0.95"
+                          />
+                          {/* Text */}
+                          <text
+                            x="0"
+                            y="5"
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="12"
+                            fontWeight="600"
+                          >
+                            Level 5 unlocked!
+                          </text>
+                          {/* Pointer/arrow pointing down to the graph */}
+                          <path d="M 0,15 L -5,20 L 5,20 Z" fill="#f97316" opacity="0.95" />
+                        </g>
+                      </g>
                     </svg>
                     <div className="flex justify-between text-sm text-gray-600 mt-2 px-2">
                       <span>30 days ago</span>
@@ -1760,8 +1770,12 @@ function HomeContent() {
           </section>
 
           {/* Streaks Section */}
-          <section className="w-full py-32 bg-white">
-            <div className="max-w-6xl mx-auto px-6">
+          <section className="w-full py-32 bg-gradient-to-b from-white via-orange-50/30 to-white relative overflow-hidden">
+            {/* Background gradient orbs */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl" />
+
+            <div className="max-w-6xl mx-auto px-6 relative">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1770,24 +1784,114 @@ function HomeContent() {
                 className="grid md:grid-cols-2 gap-16 items-center"
               >
                 <div>
-                  <h2 className="text-6xl font-bold mb-6 leading-tight">
-                    Build unstoppable momentum
-                  </h2>
-                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                  >
+                    <h2 className="text-6xl font-bold mb-6 leading-tight bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+                      Build unstoppable momentum
+                    </h2>
+                  </motion.div>
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="text-xl text-gray-600 mb-4 leading-relaxed"
+                  >
                     Protect your streak and stay locked in.
-                  </p>
-                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                  </motion.p>
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="text-xl text-gray-600 mb-8 leading-relaxed"
+                  >
                     25mins a day keeps the streak alive.
-                  </p>
+                  </motion.p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-12 text-center text-white">
-                  <div className="text-9xl font-bold mb-4">47</div>
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <p className="text-3xl font-semibold">Day Streak</p>
-                    <Flame className="w-8 h-8 fill-white" />
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                  className="relative group"
+                >
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
+
+                  {/* Main card */}
+                  <div className="relative bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 rounded-3xl p-8 shadow-2xl overflow-hidden">
+                    {/* Subtle pattern overlay */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                          backgroundSize: "32px 32px",
+                        }}
+                      />
+                    </div>
+
+                    {/* Glass morphism overlay */}
+                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent" />
+
+                    <div className="relative">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                        className="flex items-center justify-center gap-3 mb-4"
+                      >
+                        <Flame className="w-10 h-10 fill-white stroke-none" />
+                        <p className="text-5xl font-bold text-white">47 Days</p>
+                      </motion.div>
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.5 }}
+                        className="text-lg text-white/90 mb-8 text-center font-medium"
+                      >
+                        Don&apos;t break the chain
+                      </motion.p>
+
+                      {/* Grid of 47 completed days */}
+                      <div className="grid grid-cols-7 gap-2.5">
+                        {Array.from({ length: 47 }).map((_, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{
+                              duration: 0.5,
+                              delay: 0.6 + index * 0.015,
+                              ease: [0.34, 1.56, 0.64, 1],
+                            }}
+                            whileHover={{ scale: 1.15, rotate: 5 }}
+                            className="aspect-square rounded-xl bg-gradient-to-br from-white/95 to-white/80 backdrop-blur-sm shadow-lg cursor-pointer relative group/circle border border-white/40 flex items-center justify-center"
+                          >
+                            {/* Subtle inner glow */}
+                            <div className="absolute inset-[2px] rounded-xl bg-gradient-to-br from-white/40 to-transparent" />
+
+                            {/* Checkmark */}
+                            <Check className="w-4 h-4 text-orange-600 relative z-10 stroke-[3]" />
+
+                            {/* Hover glow */}
+                            <div className="absolute inset-0 rounded-xl bg-white/50 blur-md opacity-0 group-hover/circle:opacity-100 transition-opacity duration-300 -z-10" />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xl opacity-90">Don&apos;t break the chain</p>
-                </div>
+                </motion.div>
               </motion.div>
             </div>
           </section>
