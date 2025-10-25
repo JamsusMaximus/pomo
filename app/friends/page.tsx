@@ -24,9 +24,16 @@ function FriendsPageContent() {
     );
   }
 
-  // Show nothing while loading
+  // Show loading state while loading
   if (friendsActivity === undefined || suggestedFriends === undefined) {
-    return null;
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent mb-4"></div>
+          <h1 className="text-xl font-semibold">Loading friends...</h1>
+        </div>
+      </main>
+    );
   }
 
   return (
