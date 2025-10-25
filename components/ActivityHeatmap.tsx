@@ -133,26 +133,15 @@ export function ActivityHeatmap({ data, compact = false }: ActivityHeatmapProps)
         {/* Day labels + grid */}
         <div className={`flex ${compact ? "gap-[1px]" : "gap-1"}`}>
           {/* Day of week labels */}
-          <div className={`flex flex-col ${compact ? "gap-[1px]" : "gap-1"} pr-2`}>
-            <div className={compact ? "h-2" : "h-3"} />
-            <div
-              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
-            >
-              Mon
-            </div>
-            <div className={compact ? "h-2" : "h-3"} />
-            <div
-              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
-            >
-              Wed
-            </div>
-            <div className={compact ? "h-2" : "h-3"} />
-            <div
-              className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
-            >
-              Fri
-            </div>
-            <div className={compact ? "h-2" : "h-3"} />
+          <div className={`flex flex-col ${compact ? "gap-[1px]" : "gap-[2px]"} pr-2`}>
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
+              <div
+                key={day}
+                className={`${compact ? "text-[10px] h-2" : "text-xs h-3"} text-muted-foreground flex items-center`}
+              >
+                {index % 2 === 1 ? day : ""}
+              </div>
+            ))}
           </div>
 
           {/* Heatmap grid */}
@@ -177,9 +166,14 @@ export function ActivityHeatmap({ data, compact = false }: ActivityHeatmapProps)
                   return (
                     <motion.div
                       key={dayIndex}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, delay: (weekIndex * 7 + dayIndex) * 0.001 }}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{
+                        duration: 0.4,
+                        delay: weekIndex * 0.02,
+                        ease: [0.34, 1.56, 0.64, 1],
+                      }}
                       className={`aspect-square ${compact ? "rounded-[1px]" : "rounded-sm"} ${color} border border-border/50 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
                       title={tooltip}
                     />

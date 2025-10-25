@@ -44,8 +44,7 @@ import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
 import { Play, Pause, BookOpen, Sun, Crown, Trophy, Zap, Flame } from "lucide-react";
-import ActivityCalendar from "react-activity-calendar";
-import "react-activity-calendar/dist/style.css";
+import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -1677,7 +1676,7 @@ function HomeContent() {
                   <h3 className="text-2xl font-bold mb-6 text-gray-900">Activity Heatmap</h3>
                   <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
                     <div className="heatmap-container">
-                      <ActivityCalendar
+                      <ActivityHeatmap
                         data={(() => {
                           // Generate mock data for past year
                           const data = [];
@@ -1688,24 +1687,17 @@ function HomeContent() {
                             const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
                             // More activity in recent weeks
                             const recencyBoost = i < 60 ? 2 : 1;
-                            const level = Math.floor(Math.random() * 5 * recencyBoost);
-                            data.push({
-                              date: dateStr,
-                              count: level,
-                              level: level > 0 ? Math.min(4, level) : 0,
-                            });
+                            const count = Math.floor(Math.random() * 5 * recencyBoost);
+                            if (count > 0) {
+                              data.push({
+                                date: dateStr,
+                                count: count,
+                                minutes: count * 25,
+                              });
+                            }
                           }
                           return data;
                         })()}
-                        theme={{
-                          light: ["#f3f4f6", "#fed7aa", "#fdba74", "#fb923c", "#f97316"],
-                          dark: ["#1f2937", "#fed7aa", "#fdba74", "#fb923c", "#f97316"],
-                        }}
-                        colorScheme="light"
-                        blockSize={12}
-                        blockMargin={4}
-                        fontSize={14}
-                        showWeekdayLabels
                       />
                     </div>
                   </div>
