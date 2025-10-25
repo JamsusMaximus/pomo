@@ -1243,6 +1243,7 @@ function HomeContent() {
       {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
       {!isSignedIn && isHydrated && !isRunning && (
         <div className="light">
+          {/* eslint-disable @next/next/no-img-element */}
           {/* Hero Section */}
           <section className="w-full flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
             <div className="max-w-5xl w-full text-center px-6">
@@ -1895,6 +1896,7 @@ function HomeContent() {
               </motion.div>
             </div>
           </section>
+          {/* eslint-enable @next/next/no-img-element */}
         </div>
       )}
     </main>
