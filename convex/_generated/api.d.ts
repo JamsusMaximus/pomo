@@ -16,6 +16,7 @@ import type * as dateHelpers from "../dateHelpers.js";
 import type * as deleteTestFriend from "../deleteTestFriend.js";
 import type * as flowSessions from "../flowSessions.js";
 import type * as follows from "../follows.js";
+import type * as grantPomodoros from "../grantPomodoros.js";
 import type * as levels from "../levels.js";
 import type * as migrateChallenges from "../migrateChallenges.js";
 import type * as notificationRules from "../notificationRules.js";
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   deleteTestFriend: typeof deleteTestFriend;
   flowSessions: typeof flowSessions;
   follows: typeof follows;
+  grantPomodoros: typeof grantPomodoros;
   levels: typeof levels;
   migrateChallenges: typeof migrateChallenges;
   notificationRules: typeof notificationRules;

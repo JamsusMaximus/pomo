@@ -853,3 +853,47 @@ export const activatePendingPacts = mutation({
     return { activatedCount };
   },
 });
+
+/**
+ * Mutation: Check and complete finished pacts
+ * Call this on page load to mark completed pacts
+ */
+export const checkCompletedPacts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    // Find all active challenges that have ended
+    const activeChallenges = await ctx.db
+      .query("accountabilityChallenges")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    let completedCount = 0;
+    let failedCount = 0;
+
+    for (const challenge of activeChallenges) {
+      // Skip if end date hasn't passed
+      if (challenge.endDate >= today) continue;
+
+      // Check if challenge should fail or complete
+      await checkIfChallengeFailed(ctx, challenge);
+
+      // Refresh challenge data after potential status change
+      const updatedChallenge = await ctx.db.get(challenge._id);
+      if (updatedChallenge && updatedChallenge.status === "active") {
+        await checkIfChallengeCompleted(ctx, updatedChallenge);
+
+        // Check final status
+        const finalChallenge = await ctx.db.get(challenge._id);
+        if (finalChallenge?.status === "completed") {
+          completedCount++;
+        } else if (finalChallenge?.status === "failed") {
+          failedCount++;
+        }
+      }
+    }
+
+    return { completedCount, failedCount };
+  },
+});
