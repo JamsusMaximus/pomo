@@ -1266,7 +1266,7 @@ function HomeContent() {
       {!isSignedIn && isHydrated && !isRunning && (
         <>
           {/* Hero Section */}
-          <section className="flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
+          <section className="w-full flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
             <div className="max-w-5xl w-full text-center px-6">
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
@@ -1321,7 +1321,7 @@ function HomeContent() {
           </section>
 
           {/* Pacts Section */}
-          <section className="pt-16 pb-32 bg-white">
+          <section className="w-full pt-16 pb-32 bg-white">
             <div className="max-w-6xl mx-auto px-6">
               <div className="grid md:grid-cols-2 gap-16 items-center">
                 <motion.div
@@ -1424,113 +1424,8 @@ function HomeContent() {
             </div>
           </section>
 
-          {/* Progress Tracking Section - Light theme only */}
-          <section className="py-32 bg-white">
-            <div className="max-w-6xl mx-auto px-6">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-              >
-                <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-gray-900">
-                  Track your focus like an athlete
-                </h2>
-                <p className="text-xl text-gray-600 text-center mb-20 max-w-3xl mx-auto">
-                  See your progress with beautiful charts and heatmaps. It&apos;s Strava for your
-                  brain.
-                </p>
-
-                {/* Activity Heatmap Demo */}
-                <div className="mb-20">
-                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Activity Heatmap</h3>
-                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
-                    <div className="heatmap-container">
-                      <ActivityHeatmap
-                        data={(() => {
-                          // Generate mock data for past year
-                          const data = [];
-                          const today = new Date();
-                          for (let i = 364; i >= 0; i--) {
-                            const date = new Date(today);
-                            date.setDate(date.getDate() - i);
-                            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-                            // More activity in recent weeks
-                            const recencyBoost = i < 60 ? 2 : 1;
-                            const count = Math.floor(Math.random() * 5 * recencyBoost);
-                            if (count > 0) {
-                              data.push({
-                                date: dateStr,
-                                count: count,
-                                minutes: count * 25,
-                              });
-                            }
-                          }
-                          return data;
-                        })()}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Focus Graph Demo */}
-                <div className="mb-12">
-                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Focus Score Over Time</h3>
-                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200 graph-container">
-                    <svg viewBox="0 0 800 200" className="w-full h-auto">
-                      <defs>
-                        <linearGradient id="graphGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" style={{ stopColor: "#fb923c" }} />
-                          <stop offset="50%" style={{ stopColor: "#f97316" }} />
-                          <stop offset="100%" style={{ stopColor: "#ea580c" }} />
-                        </linearGradient>
-                      </defs>
-                      {/* Grid lines */}
-                      <line x1="20" y1="20" x2="780" y2="20" stroke="#d1d5db" strokeWidth="1" />
-                      <line x1="20" y1="60" x2="780" y2="60" stroke="#d1d5db" strokeWidth="1" />
-                      <line x1="20" y1="100" x2="780" y2="100" stroke="#d1d5db" strokeWidth="1" />
-                      <line x1="20" y1="140" x2="780" y2="140" stroke="#d1d5db" strokeWidth="1" />
-                      <line x1="20" y1="180" x2="780" y2="180" stroke="#d1d5db" strokeWidth="1" />
-
-                      {/* Area fill */}
-                      <path
-                        className="graph-fill"
-                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40 L 780,180 L 20,180 Z"
-                        fill="url(#graphGradient)"
-                      />
-
-                      {/* Line */}
-                      <path
-                        className="graph-line"
-                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40"
-                        fill="none"
-                        stroke="url(#graphGradient)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="flex justify-between text-sm text-gray-600 mt-2 px-2">
-                      <span>30 days ago</span>
-                      <span>Today</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center">
-                  <Button
-                    onClick={handleStartTimer}
-                    size="lg"
-                    className="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg"
-                  >
-                    Start the timer and lock in
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
-          </section>
-
           {/* Friends Section */}
-          <section className="py-32 bg-gray-50">
+          <section className="w-full py-32 bg-gray-50">
             <div className="max-w-4xl mx-auto px-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -1754,6 +1649,145 @@ function HomeContent() {
                       Sign up to follow friends
                     </Button>
                   </SignUpButton>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Progress Tracking Section - Dark theme */}
+          <section className="w-full py-32 bg-gray-900 text-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+              >
+                <h2 className="text-5xl md:text-6xl font-bold text-center mb-6">
+                  Track your focus like an athlete
+                </h2>
+                <p className="text-xl text-gray-400 text-center mb-20 max-w-3xl mx-auto">
+                  See your progress with beautiful charts and heatmaps. It&apos;s Strava for your
+                  brain.
+                </p>
+
+                {/* Activity Heatmap Demo */}
+                <div className="mb-20">
+                  <h3 className="text-2xl font-bold mb-6">Activity Heatmap</h3>
+                  <div className="bg-gray-800 rounded-2xl p-8">
+                    <div className="heatmap-container">
+                      <ActivityHeatmap
+                        data={(() => {
+                          // Generate mock data for past year
+                          const data = [];
+                          const today = new Date();
+                          for (let i = 364; i >= 0; i--) {
+                            const date = new Date(today);
+                            date.setDate(date.getDate() - i);
+                            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+                            // More activity in recent weeks
+                            const recencyBoost = i < 60 ? 2 : 1;
+                            const count = Math.floor(Math.random() * 5 * recencyBoost);
+                            if (count > 0) {
+                              data.push({
+                                date: dateStr,
+                                count: count,
+                                minutes: count * 25,
+                              });
+                            }
+                          }
+                          return data;
+                        })()}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Focus Graph Demo */}
+                <div className="mb-12">
+                  <h3 className="text-2xl font-bold mb-6">Focus Score Over Time</h3>
+                  <div className="bg-gray-800 rounded-2xl p-8 graph-container">
+                    <svg viewBox="0 0 800 200" className="w-full h-auto">
+                      <defs>
+                        <linearGradient id="graphGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style={{ stopColor: "#fb923c" }} />
+                          <stop offset="50%" style={{ stopColor: "#f97316" }} />
+                          <stop offset="100%" style={{ stopColor: "#ea580c" }} />
+                        </linearGradient>
+                      </defs>
+                      {/* Grid lines */}
+                      <line x1="20" y1="20" x2="780" y2="20" stroke="#374151" strokeWidth="1" />
+                      <line x1="20" y1="60" x2="780" y2="60" stroke="#374151" strokeWidth="1" />
+                      <line x1="20" y1="100" x2="780" y2="100" stroke="#374151" strokeWidth="1" />
+                      <line x1="20" y1="140" x2="780" y2="140" stroke="#374151" strokeWidth="1" />
+                      <line x1="20" y1="180" x2="780" y2="180" stroke="#374151" strokeWidth="1" />
+
+                      {/* Area fill */}
+                      <path
+                        className="graph-fill"
+                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40 L 780,180 L 20,180 Z"
+                        fill="url(#graphGradient)"
+                      />
+
+                      {/* Line */}
+                      <path
+                        className="graph-line"
+                        d="M 20,160 L 100,140 L 180,120 L 260,130 L 340,100 L 420,90 L 500,70 L 580,60 L 660,50 L 740,40"
+                        fill="none"
+                        stroke="url(#graphGradient)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="flex justify-between text-sm text-gray-400 mt-2 px-2">
+                      <span>30 days ago</span>
+                      <span>Today</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <SignUpButton mode="modal">
+                    <Button
+                      size="lg"
+                      className="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg"
+                    >
+                      Sign up to save your progress
+                    </Button>
+                  </SignUpButton>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Streaks Section */}
+          <section className="w-full py-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+                className="grid md:grid-cols-2 gap-16 items-center"
+              >
+                <div>
+                  <h2 className="text-6xl font-bold mb-6 leading-tight">
+                    Build unstoppable momentum
+                  </h2>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    Protect your streak and stay locked in.
+                  </p>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    25mins a day keeps the streak alive.
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-12 text-center text-white">
+                  <div className="text-9xl font-bold mb-4">47</div>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <p className="text-3xl font-semibold">Day Streak</p>
+                    <Flame className="w-8 h-8 fill-white" />
+                  </div>
+                  <p className="text-xl opacity-90">Don&apos;t break the chain</p>
                 </div>
               </motion.div>
             </div>
