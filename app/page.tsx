@@ -1654,8 +1654,8 @@ function HomeContent() {
             </div>
           </section>
 
-          {/* Progress Tracking Section - Dark theme */}
-          <section className="w-full py-32 bg-gray-900 text-white">
+          {/* Progress Tracking Section */}
+          <section className="w-full py-32 bg-white">
             <div className="max-w-6xl mx-auto px-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -1663,18 +1663,18 @@ function HomeContent() {
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.6 }}
               >
-                <h2 className="text-5xl md:text-6xl font-bold text-center mb-6">
+                <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-gray-900">
                   Track your focus like an athlete
                 </h2>
-                <p className="text-xl text-gray-400 text-center mb-20 max-w-3xl mx-auto">
+                <p className="text-xl text-gray-600 text-center mb-20 max-w-3xl mx-auto">
                   See your progress with beautiful charts and heatmaps. It&apos;s Strava for your
                   brain.
                 </p>
 
                 {/* Activity Heatmap Demo */}
                 <div className="mb-20">
-                  <h3 className="text-2xl font-bold mb-6">Activity Heatmap</h3>
-                  <div className="bg-gray-800 rounded-2xl p-8">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Activity Heatmap</h3>
+                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
                     <div className="heatmap-container">
                       <ActivityHeatmap
                         data={(() => {
@@ -1705,8 +1705,8 @@ function HomeContent() {
 
                 {/* Focus Graph Demo */}
                 <div className="mb-12">
-                  <h3 className="text-2xl font-bold mb-6">Focus Score Over Time</h3>
-                  <div className="bg-gray-800 rounded-2xl p-8 graph-container">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Focus Score Over Time</h3>
+                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200 graph-container">
                     <svg viewBox="0 0 800 200" className="w-full h-auto">
                       <defs>
                         <linearGradient id="graphGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1716,11 +1716,11 @@ function HomeContent() {
                         </linearGradient>
                       </defs>
                       {/* Grid lines */}
-                      <line x1="20" y1="20" x2="780" y2="20" stroke="#374151" strokeWidth="1" />
-                      <line x1="20" y1="60" x2="780" y2="60" stroke="#374151" strokeWidth="1" />
-                      <line x1="20" y1="100" x2="780" y2="100" stroke="#374151" strokeWidth="1" />
-                      <line x1="20" y1="140" x2="780" y2="140" stroke="#374151" strokeWidth="1" />
-                      <line x1="20" y1="180" x2="780" y2="180" stroke="#374151" strokeWidth="1" />
+                      <line x1="20" y1="20" x2="780" y2="20" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="60" x2="780" y2="60" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="100" x2="780" y2="100" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="140" x2="780" y2="140" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="180" x2="780" y2="180" stroke="#d1d5db" strokeWidth="1" />
 
                       {/* Area fill */}
                       <path
@@ -1739,7 +1739,7 @@ function HomeContent() {
                         strokeLinecap="round"
                       />
                     </svg>
-                    <div className="flex justify-between text-sm text-gray-400 mt-2 px-2">
+                    <div className="flex justify-between text-sm text-gray-600 mt-2 px-2">
                       <span>30 days ago</span>
                       <span>Today</span>
                     </div>
@@ -1747,14 +1747,13 @@ function HomeContent() {
                 </div>
 
                 <div className="text-center">
-                  <SignUpButton mode="modal">
-                    <Button
-                      size="lg"
-                      className="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg"
-                    >
-                      Sign up to save your progress
-                    </Button>
-                  </SignUpButton>
+                  <Button
+                    onClick={handleStartTimer}
+                    size="lg"
+                    className="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg"
+                  >
+                    Start the timer and lock in
+                  </Button>
                 </div>
               </motion.div>
             </div>
