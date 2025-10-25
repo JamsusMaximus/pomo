@@ -258,9 +258,16 @@ function ProfilePageContent() {
     );
   }
 
-  // Show nothing while profile data is loading (immediate render for speed)
+  // Show loading state while profile data is loading
   if (!profileData) {
-    return null; // Render nothing - fast load
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent mb-4"></div>
+          <h1 className="text-xl font-semibold">Loading profile...</h1>
+        </div>
+      </main>
+    );
   }
 
   // Extract data from profile
