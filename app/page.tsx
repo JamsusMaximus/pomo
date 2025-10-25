@@ -800,7 +800,13 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24">
+    <main
+      className={
+        !isSignedIn && isHydrated && !isRunning
+          ? "min-h-screen" // Full width for landing page
+          : "min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24" // Centered for timer
+      }
+    >
       {/* Sync Status Toast */}
       {syncStatus !== "idle" && (
         <motion.div
@@ -1242,7 +1248,7 @@ function HomeContent() {
 
       {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
       {!isSignedIn && isHydrated && !isRunning && (
-        <div className="light fixed inset-0 overflow-y-auto">
+        <div className="light">
           {/* Hero Section */}
           <section className="w-full flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
             <div className="max-w-5xl w-full text-center px-6">
