@@ -800,7 +800,13 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24">
+    <main
+      className={
+        !isSignedIn && isHydrated && !isRunning
+          ? "min-h-screen" // Full width for landing page
+          : "min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24" // Centered for timer
+      }
+    >
       {/* Sync Status Toast */}
       {syncStatus !== "idle" && (
         <motion.div

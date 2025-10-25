@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "@/components/motion";
-import { SignedIn, useUser } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -141,6 +142,16 @@ export function Navbar({ isTimerRunning = false }: NavbarProps) {
               </div>
             </Link>
           </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button size="sm">Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
           <ThemeToggle />
         </div>
       </div>
