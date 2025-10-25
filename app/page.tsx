@@ -799,451 +799,457 @@ function HomeContent() {
     reset(); // Reset to focus mode - will trigger auto-start via useEffect
   };
 
+  // Determine if we should show landing page
+  const showLandingPage = !isSignedIn && isHydrated && !isRunning;
+
   return (
-    <main
-      className={
-        !isSignedIn && isHydrated && !isRunning
-          ? "min-h-screen" // Full width for landing page
-          : "min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24" // Centered for timer
-      }
-    >
-      {/* Sync Status Toast */}
-      {syncStatus !== "idle" && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed top-20 right-4 z-50 bg-card border border-border rounded-lg shadow-lg p-3 max-w-xs"
-        >
-          {syncStatus === "syncing" && (
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span>Syncing sessions...</span>
-            </div>
-          )}
-          {syncStatus === "success" && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Sessions synced!</span>
-            </div>
-          )}
-          {syncStatus === "error" && (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-sm text-destructive">
+    <main className="min-h-screen">
+      {/* Timer Section - Always centered */}
+      <div
+        className={
+          showLandingPage
+            ? "flex flex-col items-center justify-center py-8 md:py-12" // Less padding when landing page shown
+            : "flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24"
+        }
+      >
+        {/* Sync Status Toast */}
+        {syncStatus !== "idle" && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 right-4 z-50 bg-card border border-border rounded-lg shadow-lg p-3 max-w-xs"
+          >
+            {syncStatus === "syncing" && (
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <span>Syncing sessions...</span>
+              </div>
+            )}
+            {syncStatus === "success" && (
+              <div className="flex items-center gap-2 text-sm text-green-600">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Sync failed</span>
+                <span>Sessions synced!</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSyncRetryCount(0);
-                  syncLocalSessions();
-                }}
-                className="text-xs"
-              >
-                Retry Now
-              </Button>
-            </div>
-          )}
-        </motion.div>
-      )}
-
-      {/* Flow Completion Toast */}
-      {showFlowCompleteToast && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-orange-500 text-white rounded-lg border border-orange-600 p-4 flex items-center gap-3"
-        >
-          <div>
-            <p className="font-bold text-lg">Pomo Complete!</p>
-            <p className="text-sm opacity-90">{flowToastCount} in this flow</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Challenge Progress Toast */}
-      <AnimatePresence>
-        {showChallengeToast && nextChallenge && (
-          <ChallengeToast
-            challenge={nextChallenge}
-            onDismiss={() => setShowChallengeToast(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      <div className="w-full max-w-md flex flex-col items-center gap-8 px-4">
-        {/* Timer Card Container */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-          className="relative w-full bg-card rounded-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
-        >
-          {/* Header */}
-          <div className="text-center space-y-2 mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              {isFlowMode ? "Flow Mode" : "Pomodoro"}
-            </h1>
-            {isFlowMode ? (
-              <div className="flex flex-col gap-1">
-                <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
-                  {flowCompletedPomos} pomos completed
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Total time: {flowTime.mm}:{flowTime.ss}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Pomos Today:{" "}
-                <span className="font-semibold text-foreground">{cyclesCompleted}</span>
-              </p>
             )}
-          </div>
-
-          {/* Debug Button - DEV ONLY */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="absolute top-2 left-2 flex flex-col gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDebugTime(4);
-                }}
-                className="text-xs opacity-50 hover:opacity-100"
-              >
-                Debug: 4s
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDebugTime(2);
-                }}
-                className="text-xs opacity-50 hover:opacity-100"
-              >
-                Debug: 2s
-              </Button>
-              {notificationPermission !== "granted" && (
+            {syncStatus === "error" && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Sync failed</span>
+                </div>
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    if ("Notification" in window) {
-                      const permission = await Notification.requestPermission();
-                      setNotificationPermission(permission);
-                      alert(`Notification permission: ${permission}`);
-                    }
+                  variant="outline"
+                  onClick={() => {
+                    setSyncRetryCount(0);
+                    syncLocalSessions();
                   }}
-                  className="text-xs opacity-50 hover:opacity-100"
+                  className="text-xs"
                 >
-                  🔔 Enable
+                  Retry Now
                 </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  showNotification(
-                    "Test Notification",
-                    "If you can see this, notifications are working!"
-                  );
-                }}
-                className="text-xs opacity-50 hover:opacity-100"
-              >
-                Test 🔔
-              </Button>
-            </div>
-          )}
-
-          {/* Circular Progress Ring */}
-          <div className="relative mb-8">
-            <svg className="w-64 h-64 sm:w-80 sm:h-80 -rotate-90" viewBox="0 0 200 200">
-              <defs>
-                {/* Focus mode gradient (calm orange/coral) */}
-                <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#f97316" stopOpacity="0.8" />
-                </linearGradient>
-                {/* Break mode gradient (green/teal) */}
-                <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#14b8a6" stopOpacity="0.7" />
-                </linearGradient>
-                {/* Flow mode gradient (intense orange/red) */}
-                <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f97316" stopOpacity="1" />
-                  <stop offset="50%" stopColor="#ef4444" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#dc2626" stopOpacity="1" />
-                </linearGradient>
-              </defs>
-
-              {/* Background circle - transparent/subtle */}
-              <circle
-                cx="100"
-                cy="100"
-                r="85"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className="text-border opacity-0"
-              />
-
-              {/* Animated progress circle */}
-              <motion.circle
-                cx="100"
-                cy="100"
-                r="85"
-                fill="none"
-                stroke={
-                  isFlowMode
-                    ? "url(#flowGradient)"
-                    : mode === "break"
-                      ? "url(#breakGradient)"
-                      : "url(#focusGradient)"
-                }
-                strokeWidth="8"
-                strokeLinecap="round"
-                initial={{ strokeDasharray: 534.07, strokeDashoffset: 534.07 }}
-                animate={{
-                  strokeDashoffset: 534.07 * (1 - percent / 100),
-                }}
-                transition={
-                  hasAnimatedProgress
-                    ? { duration: 0.5, ease: "easeInOut" }
-                    : { duration: 1.4, delay: 0.4, ease: [0.65, 0, 0.35, 1] }
-                }
-              />
-            </svg>
-
-            {/* Timer in center of ring */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <motion.div
-                className="text-6xl sm:text-7xl font-semibold tabular-nums tracking-tighter"
-                style={{
-                  fontFamily:
-                    'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
-                  fontVariantNumeric: "tabular-nums",
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={
-                  hasAnimatedProgress
-                    ? { duration: 0 }
-                    : { duration: 1.4, delay: 0.4, ease: "easeOut" }
-                }
-              >
-                {mm}:{ss}
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Break mode indicator */}
-          {mode === "break" && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="text-center mb-6"
-            >
-              <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
-                <span className="text-2xl">☕️</span>
-                <span>Break</span>
-              </p>
-            </motion.div>
-          )}
-
-          {/* Tag Input - only show during focus mode */}
-          {mode === "focus" && (
-            <div className="w-full max-w-xs mb-6">
-              <TagInput
-                value={currentTag}
-                onChange={setCurrentTag}
-                disabled={isRunning}
-                isPrivate={currentTagPrivate}
-                onPrivacyChange={setCurrentTagPrivate}
-                isSignedIn={isSignedIn}
-                onEnterPress={!isRunning ? start : undefined}
-              />
-            </div>
-          )}
-
-          {/* Controls */}
-          <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-            {!isFlowMode ? (
-              <>
-                {/* Normal mode: Start/Pause/Resume button */}
-                <motion.div
-                  className="w-full"
-                  whileTap={{ scale: 0.98 }}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Button
-                    onClick={mode === "break" ? handleStartNextPomo : isRunning ? pause : start}
-                    size="lg"
-                    className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
-                  >
-                    <div className="flex items-center gap-2">
-                      {mode === "break" ? (
-                        <Play className="w-5 h-5" />
-                      ) : isRunning ? (
-                        <Pause className="w-5 h-5" />
-                      ) : (
-                        <Play className="w-5 h-5" />
-                      )}
-                      <span>
-                        {mode === "break"
-                          ? "Start next pomo"
-                          : isPaused
-                            ? "Paused: Click to Resume"
-                            : isRunning
-                              ? "Pause"
-                              : "Start"}
-                      </span>
-                    </div>
-                    {/* Space bar hint inside button */}
-                    {showSpaceHint && !isRunning && !isPaused && !isMobile && (
-                      <motion.kbd
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="px-1.5 py-0 text-[10px] text-muted-foreground/70 bg-transparent border border-muted-foreground/30 rounded font-mono font-normal"
-                      >
-                        Space
-                      </motion.kbd>
-                    )}
-                    {/* Shimmer effect - only on initial load when showing "Start" */}
-                    {showStartShimmer && !isRunning && !isPaused && (
-                      <motion.div
-                        className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent"
-                        style={{
-                          backgroundSize: "200% 100%",
-                        }}
-                        animate={{
-                          backgroundPosition: ["200% 0%", "-200% 0%"],
-                        }}
-                        transition={{
-                          duration: 7,
-                          ease: "linear",
-                          repeat: Infinity,
-                        }}
-                      />
-                    )}
-                  </Button>
-                </motion.div>
-
-                {/* Enter FLOW button - show when not in flow mode */}
-                {(isRunning || !isPaused) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full flex flex-col items-center gap-3"
-                  >
-                    {!isRunning && !isPaused && (
-                      <span className="text-xs text-muted-foreground">or</span>
-                    )}
-                    <div className="w-full flex flex-col items-center gap-2">
-                      <motion.div
-                        whileTap={{ scale: 0.98 }}
-                        whileHover={{ scale: 1.01 }}
-                        className="w-full"
-                      >
-                        <Button
-                          variant="outline"
-                          onClick={handleEnterFlowMode}
-                          size="lg"
-                          className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground flex items-center justify-center gap-2"
-                        >
-                          <span className="text-lg">∞</span>
-                          <span>Enter Flow Mode</span>
-                        </Button>
-                      </motion.div>
-                      <span className="text-xs text-muted-foreground text-center">
-                        {isRunning
-                          ? "Continue this pomo then keep going"
-                          : "Back to back pomos, no breaks"}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Reset button - fade in when timer is running or paused */}
-                {(isRunning || isPaused) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full"
-                  >
-                    <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
-                      <Button variant="outline" onClick={reset} size="default" className="w-full">
-                        {mode === "break" ? "End break" : "Reset"}
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </>
-            ) : (
-              <>
-                {/* Flow mode: Stop button */}
-                <motion.div
-                  className="w-full"
-                  whileTap={{ scale: 0.98 }}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Button
-                    onClick={handleStopFlowMode}
-                    size="lg"
-                    variant="destructive"
-                    className="w-full py-6 text-lg font-semibold"
-                  >
-                    Stop Flow
-                  </Button>
-                </motion.div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Timer continues automatically after each pomo
-                </p>
-              </>
+              </div>
             )}
-          </div>
-        </motion.div>
-
-        {/* Active Challenges Widget */}
-        {isSignedIn && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-            className="w-full"
-          >
-            <ActiveChallengesWidget />
           </motion.div>
         )}
 
-        {/* Ambient Sound Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="w-full mb-32"
-        >
-          <AmbientSoundControls />
-        </motion.div>
+        {/* Flow Completion Toast */}
+        {showFlowCompleteToast && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-orange-500 text-white rounded-lg border border-orange-600 p-4 flex items-center gap-3"
+          >
+            <div>
+              <p className="font-bold text-lg">Pomo Complete!</p>
+              <p className="text-sm opacity-90">{flowToastCount} in this flow</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Challenge Progress Toast */}
+        <AnimatePresence>
+          {showChallengeToast && nextChallenge && (
+            <ChallengeToast
+              challenge={nextChallenge}
+              onDismiss={() => setShowChallengeToast(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        <div className="w-full max-w-md flex flex-col items-center gap-8 px-4">
+          {/* Timer Card Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+            className="relative w-full bg-card rounded-2xl border border-border p-8 sm:p-12 flex flex-col items-center"
+          >
+            {/* Header */}
+            <div className="text-center space-y-2 mb-6">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                {isFlowMode ? "Flow Mode" : "Pomodoro"}
+              </h1>
+              {isFlowMode ? (
+                <div className="flex flex-col gap-1">
+                  <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                    {flowCompletedPomos} pomos completed
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Total time: {flowTime.mm}:{flowTime.ss}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Pomos Today:{" "}
+                  <span className="font-semibold text-foreground">{cyclesCompleted}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Debug Button - DEV ONLY */}
+            {process.env.NODE_ENV === "development" && (
+              <div className="absolute top-2 left-2 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDebugTime(4);
+                  }}
+                  className="text-xs opacity-50 hover:opacity-100"
+                >
+                  Debug: 4s
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDebugTime(2);
+                  }}
+                  className="text-xs opacity-50 hover:opacity-100"
+                >
+                  Debug: 2s
+                </Button>
+                {notificationPermission !== "granted" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if ("Notification" in window) {
+                        const permission = await Notification.requestPermission();
+                        setNotificationPermission(permission);
+                        alert(`Notification permission: ${permission}`);
+                      }
+                    }}
+                    className="text-xs opacity-50 hover:opacity-100"
+                  >
+                    🔔 Enable
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    showNotification(
+                      "Test Notification",
+                      "If you can see this, notifications are working!"
+                    );
+                  }}
+                  className="text-xs opacity-50 hover:opacity-100"
+                >
+                  Test 🔔
+                </Button>
+              </div>
+            )}
+
+            {/* Circular Progress Ring */}
+            <div className="relative mb-8">
+              <svg className="w-64 h-64 sm:w-80 sm:h-80 -rotate-90" viewBox="0 0 200 200">
+                <defs>
+                  {/* Focus mode gradient (calm orange/coral) */}
+                  <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fb923c" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#f97316" stopOpacity="0.8" />
+                  </linearGradient>
+                  {/* Break mode gradient (green/teal) */}
+                  <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#14b8a6" stopOpacity="0.7" />
+                  </linearGradient>
+                  {/* Flow mode gradient (intense orange/red) */}
+                  <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="1" />
+                    <stop offset="50%" stopColor="#ef4444" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#dc2626" stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+
+                {/* Background circle - transparent/subtle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="85"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  className="text-border opacity-0"
+                />
+
+                {/* Animated progress circle */}
+                <motion.circle
+                  cx="100"
+                  cy="100"
+                  r="85"
+                  fill="none"
+                  stroke={
+                    isFlowMode
+                      ? "url(#flowGradient)"
+                      : mode === "break"
+                        ? "url(#breakGradient)"
+                        : "url(#focusGradient)"
+                  }
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  initial={{ strokeDasharray: 534.07, strokeDashoffset: 534.07 }}
+                  animate={{
+                    strokeDashoffset: 534.07 * (1 - percent / 100),
+                  }}
+                  transition={
+                    hasAnimatedProgress
+                      ? { duration: 0.5, ease: "easeInOut" }
+                      : { duration: 1.4, delay: 0.4, ease: [0.65, 0, 0.35, 1] }
+                  }
+                />
+              </svg>
+
+              {/* Timer in center of ring */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  className="text-6xl sm:text-7xl font-semibold tabular-nums tracking-tighter"
+                  style={{
+                    fontFamily:
+                      'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif',
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={
+                    hasAnimatedProgress
+                      ? { duration: 0 }
+                      : { duration: 1.4, delay: 0.4, ease: "easeOut" }
+                  }
+                >
+                  {mm}:{ss}
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Break mode indicator */}
+            {mode === "break" && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-center mb-6"
+              >
+                <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
+                  <span className="text-2xl">☕️</span>
+                  <span>Break</span>
+                </p>
+              </motion.div>
+            )}
+
+            {/* Tag Input - only show during focus mode */}
+            {mode === "focus" && (
+              <div className="w-full max-w-xs mb-6">
+                <TagInput
+                  value={currentTag}
+                  onChange={setCurrentTag}
+                  disabled={isRunning}
+                  isPrivate={currentTagPrivate}
+                  onPrivacyChange={setCurrentTagPrivate}
+                  isSignedIn={isSignedIn}
+                  onEnterPress={!isRunning ? start : undefined}
+                />
+              </div>
+            )}
+
+            {/* Controls */}
+            <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+              {!isFlowMode ? (
+                <>
+                  {/* Normal mode: Start/Pause/Resume button */}
+                  <motion.div
+                    className="w-full"
+                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                  >
+                    <Button
+                      onClick={mode === "break" ? handleStartNextPomo : isRunning ? pause : start}
+                      size="lg"
+                      className="w-full py-8 text-lg font-semibold relative overflow-hidden flex flex-col items-center justify-center gap-0.5 border-2 border-orange-500/40 dark:border-orange-500/60"
+                    >
+                      <div className="flex items-center gap-2">
+                        {mode === "break" ? (
+                          <Play className="w-5 h-5" />
+                        ) : isRunning ? (
+                          <Pause className="w-5 h-5" />
+                        ) : (
+                          <Play className="w-5 h-5" />
+                        )}
+                        <span>
+                          {mode === "break"
+                            ? "Start next pomo"
+                            : isPaused
+                              ? "Paused: Click to Resume"
+                              : isRunning
+                                ? "Pause"
+                                : "Start"}
+                        </span>
+                      </div>
+                      {/* Space bar hint inside button */}
+                      {showSpaceHint && !isRunning && !isPaused && !isMobile && (
+                        <motion.kbd
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="px-1.5 py-0 text-[10px] text-muted-foreground/70 bg-transparent border border-muted-foreground/30 rounded font-mono font-normal"
+                        >
+                          Space
+                        </motion.kbd>
+                      )}
+                      {/* Shimmer effect - only on initial load when showing "Start" */}
+                      {showStartShimmer && !isRunning && !isPaused && (
+                        <motion.div
+                          className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent"
+                          style={{
+                            backgroundSize: "200% 100%",
+                          }}
+                          animate={{
+                            backgroundPosition: ["200% 0%", "-200% 0%"],
+                          }}
+                          transition={{
+                            duration: 7,
+                            ease: "linear",
+                            repeat: Infinity,
+                          }}
+                        />
+                      )}
+                    </Button>
+                  </motion.div>
+
+                  {/* Enter FLOW button - show when not in flow mode */}
+                  {(isRunning || !isPaused) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full flex flex-col items-center gap-3"
+                    >
+                      {!isRunning && !isPaused && (
+                        <span className="text-xs text-muted-foreground">or</span>
+                      )}
+                      <div className="w-full flex flex-col items-center gap-2">
+                        <motion.div
+                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.01 }}
+                          className="w-full"
+                        >
+                          <Button
+                            variant="outline"
+                            onClick={handleEnterFlowMode}
+                            size="lg"
+                            className="w-full py-3 min-h-[44px] border-orange-500/60 dark:border-orange-500/80 hover:border-orange-500 hover:bg-orange-500/10 text-foreground flex items-center justify-center gap-2"
+                          >
+                            <span className="text-lg">∞</span>
+                            <span>Enter Flow Mode</span>
+                          </Button>
+                        </motion.div>
+                        <span className="text-xs text-muted-foreground text-center">
+                          {isRunning
+                            ? "Continue this pomo then keep going"
+                            : "Back to back pomos, no breaks"}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Reset button - fade in when timer is running or paused */}
+                  {(isRunning || isPaused) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full"
+                    >
+                      <motion.div whileTap={{ scale: 0.98 }} whileHover={{ scale: 1.01 }}>
+                        <Button variant="outline" onClick={reset} size="default" className="w-full">
+                          {mode === "break" ? "End break" : "Reset"}
+                        </Button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Flow mode: Stop button */}
+                  <motion.div
+                    className="w-full"
+                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                  >
+                    <Button
+                      onClick={handleStopFlowMode}
+                      size="lg"
+                      variant="destructive"
+                      className="w-full py-6 text-lg font-semibold"
+                    >
+                      Stop Flow
+                    </Button>
+                  </motion.div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Timer continues automatically after each pomo
+                  </p>
+                </>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Active Challenges Widget */}
+          {isSignedIn && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+              className="w-full"
+            >
+              <ActiveChallengesWidget />
+            </motion.div>
+          )}
+
+          {/* Ambient Sound Controls */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+            className="w-full mb-32"
+          >
+            <AmbientSoundControls />
+          </motion.div>
+        </div>
       </div>
 
       {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
