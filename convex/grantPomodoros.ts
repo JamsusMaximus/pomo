@@ -8,7 +8,6 @@
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 
 /**
  * Helper query to list all users
@@ -64,7 +63,6 @@ export const grantPomodoros = mutation({
       throw new Error(`User ${args.username} not found`);
     }
 
-    const now = Date.now();
     const today = new Date().toISOString().split("T")[0];
     const startOfDay = new Date(today).getTime();
 
