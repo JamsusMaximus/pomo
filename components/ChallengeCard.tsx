@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X, Clock, Trophy, Users, Copy, CheckCheck, Edit } from "lucide-react";
+import { Check, X, Clock, Trophy, Copy, CheckCheck, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";

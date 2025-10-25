@@ -33,16 +33,17 @@ function PacktsPageContent() {
   const { user } = useUser();
   const challenges = useQuery(api.accountabilityChallenges.getMyAccountabilityChallenges);
   const activatePendingPacts = useMutation(api.accountabilityChallenges.activatePendingPacts);
+  const checkCompletedPacts = useMutation(api.accountabilityChallenges.checkCompletedPacts);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
 
-  // Activate pacts that should start today when page loads
+  // Activate pacts that should start today and complete finished pacts when page loads
   useEffect(() => {
-    activatePendingPacts().catch((error) => {
-      console.error("Failed to activate pending pacts:", error);
+    Promise.all([activatePendingPacts(), checkCompletedPacts()]).catch((error) => {
+      console.error("Failed to update pact statuses:", error);
     });
-  }, [activatePendingPacts]);
+  }, [activatePendingPacts, checkCompletedPacts]);
 
   if (!user) {
     return (
