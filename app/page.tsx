@@ -43,7 +43,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTimerContext } from "@/components/NavbarWrapper";
 import { AnimatePresence } from "@/components/motion";
 import { useSearchParams } from "next/navigation";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, BookOpen, Sun, Crown, Trophy, Zap, Flame, Check } from "lucide-react";
+import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 
 // Calculate pomos completed today from sessions
 const calculatePomosToday = (sessions: PomodoroSession[]) => {
@@ -389,6 +390,12 @@ function HomeContent() {
       setPreviousMode(newMode);
     },
   });
+
+  // Handle starting timer from landing page CTA
+  const handleStartTimer = useCallback(() => {
+    start();
+    setShowSpaceHint(false);
+  }, [start]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -793,7 +800,7 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-24 pb-24 md:pb-24">
+    <main className="min-h-screen flex flex-col items-center justify-center py-8 md:py-24 pb-24 md:pb-24">
       {/* Sync Status Toast */}
       {syncStatus !== "idle" && (
         <motion.div
@@ -873,7 +880,7 @@ function HomeContent() {
         )}
       </AnimatePresence>
 
-      <div className="w-full max-w-md flex flex-col items-center gap-8">
+      <div className="w-full max-w-md flex flex-col items-center gap-8 px-4">
         {/* Timer Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1227,33 +1234,669 @@ function HomeContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="w-full"
+          className="w-full mb-32"
         >
           <AmbientSoundControls />
         </motion.div>
-
-        {/* Sign In CTA - Only show when signed out */}
-        {!isSignedIn && isHydrated && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            className="w-full"
-          >
-            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 rounded-2xl border border-orange-500/20 p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">Track Your Progress</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Sign in to save your pomodoros, earn badges, and compete with friends
-              </p>
-              <SignUpButton mode="modal">
-                <Button size="lg" className="w-full sm:w-auto min-h-[44px]">
-                  Sign In / Sign Up
-                </Button>
-              </SignUpButton>
-            </div>
-          </motion.div>
-        )}
       </div>
+
+      {/* Landing Page Sections - Only show when signed out, hydrated, and timer not running */}
+      {!isSignedIn && isHydrated && !isRunning && (
+        <>
+          {/* Hero Section */}
+          <section className="w-full flex flex-col items-center justify-center py-32 bg-gradient-to-b from-orange-50 to-white">
+            <div className="max-w-5xl w-full text-center px-6">
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-7xl md:text-8xl font-bold mb-6 tracking-tight"
+              >
+                <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
+                  Strava
+                </span>{" "}
+                for Focus
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-2xl md:text-3xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+              >
+                Drop into flow, spend your time on the activities that matter to you
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Button
+                  onClick={handleStartTimer}
+                  size="lg"
+                  className="relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xl font-semibold px-12 py-6 rounded-lg hover:scale-105 transition-transform shadow-lg hover:shadow-xl"
+                >
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    style={{ backgroundSize: "200% 100%" }}
+                    animate={{ backgroundPosition: ["200% 0%", "-200% 0%"] }}
+                    transition={{ duration: 7, ease: "linear", repeat: Infinity }}
+                  />
+                  Start the timer and lock in
+                </Button>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="mt-6 text-gray-500"
+              >
+                For work, hobbies, or life admin
+              </motion.p>
+            </div>
+          </section>
+
+          {/* Pacts Section */}
+          <section className="w-full pt-16 pb-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="grid md:grid-cols-2 gap-16 items-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6 }}
+                  className="order-2 md:order-1"
+                >
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 shadow-sm mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold">Study Sprint 2025</h3>
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <span className="text-sm text-gray-500">3/4 on track</span>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <img
+                          src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                          alt="Sarah"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                          alt="Marcus"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      </div>
+                      <p className="text-gray-600">5 pomos per day for a week</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold">Indie Hackers</h3>
+                          <Sun className="w-5 h-5 text-yellow-500" />
+                        </div>
+                        <span className="text-sm text-orange-600 font-semibold">
+                          All crushing it!
+                        </span>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <img
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=faces"
+                          alt="Participant"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <img
+                          src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                          alt="Alex"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      </div>
+                      <p className="text-gray-600">25mins per day on your project</p>
+                    </div>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="order-1 md:order-2"
+                >
+                  <h2 className="text-6xl font-bold mb-6 leading-tight">Make pacts with friends</h2>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    Turn focus into a team sport and see who&apos;s following through on their
+                    intentions.
+                  </p>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    When you know your friends are watching, you show up.
+                  </p>
+                  <SignUpButton mode="modal">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors"
+                    >
+                      Sign up to save your progress
+                    </Button>
+                  </SignUpButton>
+                </motion.div>
+              </div>
+            </div>
+          </section>
+
+          {/* Friends Section */}
+          <section className="w-full py-32 bg-gray-50">
+            <div className="max-w-4xl mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold">Friends</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Friend Card 1 - Active Today */}
+                  <div className="p-4 rounded-xl border border-l-4 border-l-orange-500 border-t-gray-200 border-r-gray-200 border-b-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                        alt="Sarah"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">sarah_chen</h3>
+                          <span className="flex h-2 w-2 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-orange-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                          </span>
+                          <span className="text-xs text-orange-500 font-medium">active today</span>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 12 · Focus Master</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-orange-500">3</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">847</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">32</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                            thesis-writing
+                          </span>
+                          <span>·</span>
+                          <span className="shrink-0">25m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">2 hours ago</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">deep-work</span>
+                          <span>·</span>
+                          <span className="shrink-0">50m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">5 hours ago</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Crown className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Elite Performer</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Complete 500 total pomodoros
+                            </p>
+                            <p className="text-[10px] text-gray-500">1 week ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friend Card 2 */}
+                  <div className="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                        alt="Marcus"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">marcus_codes</h3>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 9 · Productivity Enthusiast</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold">0</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">523</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">18</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">code-review</span>
+                          <span>·</span>
+                          <span className="shrink-0">25m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">yesterday</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Trophy className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Century Club</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Complete 100 total pomodoros
+                            </p>
+                            <p className="text-[10px] text-gray-500">2 months ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friend Card 3 */}
+                  <div className="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all cursor-pointer hover:border-orange-500/20">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                        alt="Alex"
+                        className="w-12 h-12 rounded-full object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">alex_kim</h3>
+                        </div>
+                        <p className="text-xs text-gray-500">Lv 15 · Zen Master</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-center">
+                          <p className="text-lg font-bold">0</p>
+                          <p className="text-[10px] text-gray-500">today</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold">1205</p>
+                          <p className="text-[10px] text-gray-500">total</p>
+                        </div>
+                        <div className="text-center flex flex-col items-center">
+                          <div className="flex items-center gap-0.5">
+                            <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <p className="text-lg font-bold text-orange-500">47</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500">streak</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                            guitar-practice
+                          </span>
+                          <span>·</span>
+                          <span className="shrink-0">30m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">yesterday</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100">meditation</span>
+                          <span>·</span>
+                          <span className="shrink-0">15m</span>
+                          <span>·</span>
+                          <span className="shrink-0 text-[10px]">2 days ago</span>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-64 md:shrink-0">
+                        <div className="flex items-start gap-3 px-3 py-2 bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 shrink-0">
+                            <Zap className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <p className="text-xs font-medium text-orange-600">Streak Warrior</p>
+                            <p className="text-[11px] text-gray-600 leading-snug">
+                              Maintain a 30-day streak
+                            </p>
+                            <p className="text-[10px] text-gray-500">17 days ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mt-12">
+                  <SignUpButton mode="modal">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-2 border-orange-500 text-orange-600 text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-50 transition-colors"
+                    >
+                      Sign up to follow friends
+                    </Button>
+                  </SignUpButton>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Progress Tracking Section */}
+          <section className="w-full py-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+              >
+                <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-gray-900">
+                  Track your focus like an athlete
+                </h2>
+                <p className="text-xl text-gray-600 text-center mb-20 max-w-3xl mx-auto">
+                  See your progress with beautiful charts and heatmaps. It&apos;s Strava for your
+                  brain.
+                </p>
+
+                {/* Activity Heatmap Demo */}
+                <div className="mb-20">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Activity Heatmap</h3>
+                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+                    <div className="heatmap-container">
+                      <ActivityHeatmap
+                        data={(() => {
+                          // Generate mock data for past year
+                          const data = [];
+                          const today = new Date();
+                          for (let i = 364; i >= 0; i--) {
+                            const date = new Date(today);
+                            date.setDate(date.getDate() - i);
+                            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+                            // More activity in recent weeks
+                            const recencyBoost = i < 60 ? 2 : 1;
+                            const count = Math.floor(Math.random() * 5 * recencyBoost);
+                            if (count > 0) {
+                              data.push({
+                                date: dateStr,
+                                count: count,
+                                minutes: count * 25,
+                              });
+                            }
+                          }
+                          return data;
+                        })()}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Focus Graph Demo */}
+                <div className="mb-12">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Focus Score Over Time</h3>
+                  <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200 graph-container">
+                    <svg viewBox="0 0 800 200" className="w-full h-auto">
+                      <defs>
+                        <linearGradient id="graphGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style={{ stopColor: "#fb923c" }} />
+                          <stop offset="50%" style={{ stopColor: "#f97316" }} />
+                          <stop offset="100%" style={{ stopColor: "#ea580c" }} />
+                        </linearGradient>
+                        <clipPath id="revealClip">
+                          <rect x="0" y="0" width="800" height="200" className="reveal-rect" />
+                        </clipPath>
+                      </defs>
+                      {/* Grid lines */}
+                      <line x1="20" y1="20" x2="780" y2="20" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="60" x2="780" y2="60" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="100" x2="780" y2="100" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="140" x2="780" y2="140" stroke="#d1d5db" strokeWidth="1" />
+                      <line x1="20" y1="180" x2="780" y2="180" stroke="#d1d5db" strokeWidth="1" />
+
+                      <g clipPath="url(#revealClip)">
+                        {/* Area fill - 30 days of data */}
+                        <path
+                          className="graph-fill"
+                          d="M 20,160 L 46,155 L 72,148 L 98,152 L 124,145 L 150,140 L 176,138 L 202,142 L 228,135 L 254,130 L 280,125 L 306,128 L 332,122 L 358,118 L 384,112 L 410,108 L 436,105 L 462,110 L 488,102 L 514,95 L 540,92 L 566,88 L 592,85 L 618,82 L 644,78 L 670,72 L 696,68 L 722,62 L 748,55 L 774,48 L 780,180 L 20,180 Z"
+                          fill="url(#graphGradient)"
+                        />
+
+                        {/* Line - 30 days of data */}
+                        <path
+                          className="graph-line"
+                          d="M 20,160 L 46,155 L 72,148 L 98,152 L 124,145 L 150,140 L 176,138 L 202,142 L 228,135 L 254,130 L 280,125 L 306,128 L 332,122 L 358,118 L 384,112 L 410,108 L 436,105 L 462,110 L 488,102 L 514,95 L 540,92 L 566,88 L 592,85 L 618,82 L 644,78 L 670,72 L 696,68 L 722,62 L 748,55 L 774,48"
+                          fill="none"
+                          stroke="url(#graphGradient)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+
+                        {/* Level 5 Unlocked Notification - positioned at day 15 */}
+                        <g className="graph-notification" transform="translate(384, 82)">
+                          {/* Background pill */}
+                          <rect
+                            x="-60"
+                            y="-15"
+                            width="120"
+                            height="30"
+                            rx="15"
+                            fill="#f97316"
+                            opacity="0.95"
+                          />
+                          {/* Text */}
+                          <text
+                            x="0"
+                            y="5"
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="12"
+                            fontWeight="600"
+                          >
+                            Level 5 unlocked!
+                          </text>
+                          {/* Pointer/arrow pointing down to the graph */}
+                          <path d="M 0,15 L -5,20 L 5,20 Z" fill="#f97316" opacity="0.95" />
+                        </g>
+                      </g>
+                    </svg>
+                    <div className="flex justify-between text-sm text-gray-600 mt-2 px-2">
+                      <span>30 days ago</span>
+                      <span>Today</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <Button
+                    onClick={handleStartTimer}
+                    size="lg"
+                    className="bg-orange-500 text-white text-lg font-semibold px-10 py-4 rounded-lg hover:bg-orange-600 transition-colors shadow-lg"
+                  >
+                    Start the timer and lock in
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Streaks Section */}
+          <section className="w-full py-32 bg-gradient-to-b from-white via-orange-50/30 to-white relative overflow-hidden">
+            {/* Background gradient orbs */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl" />
+
+            <div className="max-w-6xl mx-auto px-6 relative">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+                className="grid md:grid-cols-2 gap-16 items-center"
+              >
+                <div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                  >
+                    <h2 className="text-6xl font-bold mb-6 leading-tight bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+                      Build unstoppable momentum
+                    </h2>
+                  </motion.div>
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="text-xl text-gray-600 mb-4 leading-relaxed"
+                  >
+                    Protect your streak and stay locked in.
+                  </motion.p>
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="text-xl text-gray-600 mb-8 leading-relaxed"
+                  >
+                    25mins a day keeps the streak alive.
+                  </motion.p>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                  className="relative group"
+                >
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
+
+                  {/* Main card */}
+                  <div className="relative bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 rounded-3xl p-8 shadow-2xl overflow-hidden">
+                    {/* Subtle pattern overlay */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                          backgroundSize: "32px 32px",
+                        }}
+                      />
+                    </div>
+
+                    {/* Glass morphism overlay */}
+                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent" />
+
+                    <div className="relative">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                        className="flex items-center justify-center gap-3 mb-4"
+                      >
+                        <Flame className="w-10 h-10 fill-white stroke-none" />
+                        <p className="text-5xl font-bold text-white">47 Days</p>
+                      </motion.div>
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.5 }}
+                        className="text-lg text-white/90 mb-8 text-center font-medium"
+                      >
+                        Don&apos;t break the chain
+                      </motion.p>
+
+                      {/* Grid of 47 completed days */}
+                      <div className="grid grid-cols-7 gap-2.5">
+                        {Array.from({ length: 47 }).map((_, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{
+                              duration: 0.5,
+                              delay: 0.6 + index * 0.015,
+                              ease: [0.34, 1.56, 0.64, 1],
+                            }}
+                            whileHover={{ scale: 1.15, rotate: 5 }}
+                            className="aspect-square rounded-xl bg-gradient-to-br from-white/95 to-white/80 backdrop-blur-sm shadow-lg cursor-pointer relative group/circle border border-white/40 flex items-center justify-center"
+                          >
+                            {/* Subtle inner glow */}
+                            <div className="absolute inset-[2px] rounded-xl bg-gradient-to-br from-white/40 to-transparent" />
+
+                            {/* Checkmark */}
+                            <Check className="w-4 h-4 text-orange-600 relative z-10 stroke-[3]" />
+
+                            {/* Hover glow */}
+                            <div className="absolute inset-0 rounded-xl bg-white/50 blur-md opacity-0 group-hover/circle:opacity-100 transition-opacity duration-300 -z-10" />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "@/components/motion";
-import { SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import { SignedIn, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
@@ -105,15 +104,6 @@ export function Navbar({ isTimerRunning = false }: NavbarProps) {
 
         {/* Right: Profile, Level, Dark Mode */}
         <div className="flex items-center gap-3">
-          <SignedOut>
-            <div className="flex items-center">
-              <SignUpButton mode="modal">
-                <Button variant="ghost" size="sm" className="h-10 flex items-center">
-                  Sign up / Sign in
-                </Button>
-              </SignUpButton>
-            </div>
-          </SignedOut>
           <SignedIn>
             <Link
               href="/profile"
