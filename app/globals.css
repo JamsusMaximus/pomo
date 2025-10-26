@@ -343,33 +343,60 @@
     animation: notificationPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
   }
 
-  /* Fix Clerk modal input visibility issues */
+  /* Fix Clerk modal input visibility issues - Comprehensive */
+  [class*="cl-modal"] input[type="text"],
+  [class*="cl-card"] input[type="text"],
+  [class*="cl-formField"] input[type="text"],
+  .cl-formFieldInput input[type="text"],
   .cl-formFieldInput,
-  .cl-formFieldInput input,
   .cl-formField input,
   .cl-input,
-  [class*="cl-formField"] input,
-  [class*="cl-input"] {
+  [class*="cl-input"],
+  .cl-internal-1qzhs7f,
+  .cl-internal-b3fm6y {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
     height: auto !important;
     min-height: 2.5rem !important;
     width: 100% !important;
-    padding: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    margin: 0 !important;
     background-color: white !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 0.375rem !important;
-    color: #1f2937 !important;
+    background-image: none !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    color: #111827 !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
   }
 
-  .dark .cl-formFieldInput input,
+  [class*="cl-modal"] input[type="text"]:focus,
+  [class*="cl-card"] input[type="text"]:focus,
+  [class*="cl-formField"] input[type="text"]:focus,
+  .cl-formFieldInput input[type="text"]:focus {
+    outline: 2px solid #f97316 !important;
+    outline-offset: 2px !important;
+    border-color: #f97316 !important;
+  }
+
+  .dark [class*="cl-modal"] input[type="text"],
+  .dark [class*="cl-card"] input[type="text"],
+  .dark [class*="cl-formField"] input[type="text"],
+  .dark .cl-formFieldInput input[type="text"],
+  .dark .cl-formFieldInput,
   .dark .cl-formField input,
   .dark .cl-input,
-  .dark [class*="cl-formField"] input,
   .dark [class*="cl-input"] {
     background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+  }
+
+  .dark [class*="cl-modal"] input[type="text"]:focus,
+  .dark [class*="cl-card"] input[type="text"]:focus,
+  .dark [class*="cl-formField"] input[type="text"]:focus {
+    border-color: #fb923c !important;
   }
 }
