@@ -15,7 +15,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       signUpFallbackRedirectUrl="/"
       appearance={{
         elements: {
-          // Hide first name, last name, and username fields
+          // Hide first name and last name fields in sign-up
           formFieldInput__firstName: { display: "none !important" },
           formFieldInput__lastName: { display: "none !important" },
           formFieldRow__firstName: { display: "none !important" },
@@ -24,10 +24,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           formFieldLabel__lastName: { display: "none !important" },
           formField__firstName: { display: "none !important" },
           formField__lastName: { display: "none !important" },
-          formFieldInput__username: { display: "none !important" },
-          formFieldRow__username: { display: "none !important" },
-          formFieldLabel__username: { display: "none !important" },
-          formField__username: { display: "none !important" },
           // Custom layout for social buttons
           socialButtonsBlockButton: {
             fontSize: "16px",
