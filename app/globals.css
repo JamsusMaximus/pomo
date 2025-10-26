@@ -342,4 +342,14 @@
     transform-origin: center;
     animation: notificationPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
   }
+
+  /* Fix Clerk modal input visibility issues */
+  .cl-formFieldInput,
+  .cl-formFieldInput input {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 2.5rem !important;
+  }
 }
