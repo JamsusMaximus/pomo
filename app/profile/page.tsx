@@ -48,7 +48,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ShareProfileButton } from "@/components/ShareProfileButton";
 import { PrivacySettings } from "@/components/PrivacySettings";
 import { PomodoroFeed } from "@/components/PomodoroFeed";
-import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 
 // Helper to get week view data for Duolingo-style display
 function getWeekViewData(activity: Array<{ date: string; count: number }> | undefined) {
@@ -59,8 +58,8 @@ function getWeekViewData(activity: Array<{ date: string; count: number }> | unde
 
   const weekView = [];
 
-  // Generate 7 days: last 5 days + today + next day
-  for (let i = -5; i <= 1; i++) {
+  // Generate 7 days: last 6 days + today (no future days)
+  for (let i = -6; i <= 0; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -499,16 +498,6 @@ function ProfilePageContent() {
                   </div>
                 </motion.div>
 
-                {/* Push Notification Settings */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.03 }}
-                  className="mb-6"
-                >
-                  <PushNotificationSettings />
-                </motion.div>
-
                 {/* Duolingo-Style Daily Streak */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -927,16 +916,6 @@ function ProfilePageContent() {
                     </div>
                   </motion.div>
                 )}
-
-                {/* Push Notifications Settings */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  className="mb-6"
-                >
-                  <PushNotificationSettings />
-                </motion.div>
 
                 {/* Challenges & Recent Sessions Section */}
                 <motion.div
