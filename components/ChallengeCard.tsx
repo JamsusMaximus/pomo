@@ -41,22 +41,6 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
     challengeId: challenge._id,
   });
 
-  // Sync scroll positions across all containers
-  const handleScroll = (index: number) => (e: React.UIEvent<HTMLDivElement>) => {
-    const scrollLeft = e.currentTarget.scrollLeft;
-    scrollContainerRefs.current.forEach((ref, i) => {
-      if (ref && i !== index) {
-        ref.scrollLeft = scrollLeft;
-      }
-    });
-  };
-
-  const copyJoinCode = () => {
-    navigator.clipboard.writeText(challenge.joinCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
-
   // Get challenge dates - use UTC to avoid timezone issues
   const challengeDates: string[] = [];
   const start = new Date(challenge.startDate + "T00:00:00Z");
@@ -72,6 +56,24 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
   // Calculate duration from dates if not provided (backwards compatibility)
   const durationDays = challenge.durationDays || challengeDates.length;
   const requiredPomosPerDay = challenge.requiredPomosPerDay || 1;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  // Sync scroll positions across all containers
+  const handleScroll = (index: number) => (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    scrollContainerRefs.current.forEach((ref, i) => {
+      if (ref && i !== index) {
+        ref.scrollLeft = scrollLeft;
+      }
+    });
+  };
+
+  const copyJoinCode = () => {
+    navigator.clipboard.writeText(challenge.joinCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   // Status colors and labels
   const statusConfig = {
@@ -119,8 +121,6 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
     const date = new Date(dateStr);
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
   };
-
-  const today = new Date().toISOString().split("T")[0];
 
   // Check if current user is the creator
   const isCreator =
@@ -261,6 +261,74 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                           challenge.failedOn === date &&
                           challenge.failedByUserId === participant.userId;
 
+                        const pomosCompleted = dayProgress?.pomosCompleted || 0;
+                        const progressPercent = Math.min(
+                          100,
+                          (pomosCompleted / requiredPomosPerDay) * 100
+                        );
+
+                        // Multi-pomo pacts: show progress bar
+                        if (requiredPomosPerDay > 1) {
+                          return (
+                            <div
+                              key={date}
+                              className="h-10 rounded border shrink-0 relative overflow-hidden"
+                              style={{
+                                minWidth:
+                                  durationDays >= 30 ? "32px" : durationDays <= 5 ? "48px" : "40px",
+                                width: durationDays >= 30 ? "32px" : undefined,
+                                flex: durationDays < 30 ? 1 : undefined,
+                                backgroundColor: isFailed
+                                  ? "rgba(239, 68, 68, 0.1)"
+                                  : isCompleted
+                                    ? "rgba(34, 197, 94, 0.1)"
+                                    : isFuture
+                                      ? "rgba(107, 114, 128, 0.05)"
+                                      : pomosCompleted === 0
+                                        ? "rgba(107, 114, 128, 0.05)"
+                                        : "rgba(249, 115, 22, 0.05)",
+                                borderColor: isFailed
+                                  ? "rgba(239, 68, 68, 0.3)"
+                                  : isCompleted
+                                    ? "rgba(34, 197, 94, 0.3)"
+                                    : isFuture
+                                      ? "rgba(107, 114, 128, 0.1)"
+                                      : pomosCompleted === 0
+                                        ? "rgba(107, 114, 128, 0.1)"
+                                        : "rgba(249, 115, 22, 0.2)",
+                              }}
+                              title={`${getDayAbbr(date)} ${formatDate(date)}: ${isFailed ? "Failed" : isFuture ? "Not started" : `${pomosCompleted}/${requiredPomosPerDay} pomos`}`}
+                            >
+                              {/* Progress bar fill */}
+                              {!isFailed && !isFuture && pomosCompleted > 0 && (
+                                <div
+                                  className="absolute inset-0 transition-all duration-300"
+                                  style={{
+                                    width: `${progressPercent}%`,
+                                    background: isCompleted
+                                      ? "linear-gradient(90deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.5))"
+                                      : "linear-gradient(90deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.5))",
+                                  }}
+                                />
+                              )}
+
+                              {/* Content overlay */}
+                              <div className="relative flex items-center justify-center h-full">
+                                {isFailed ? (
+                                  <X className="w-4 h-4 text-red-500" />
+                                ) : isCompleted ? (
+                                  <Check className="w-4 h-4 text-green-500" />
+                                ) : !isFuture && pomosCompleted > 0 ? (
+                                  <span className="text-[10px] font-medium text-foreground">
+                                    {pomosCompleted}/{requiredPomosPerDay}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Single-pomo pacts: keep existing design
                         return (
                           <div
                             key={date}
@@ -285,7 +353,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                                     ? "rgba(107, 114, 128, 0.1)"
                                     : "rgba(249, 115, 22, 0.2)",
                             }}
-                            title={`${getDayAbbr(date)} ${formatDate(date)}: ${isCompleted ? `${dayProgress.pomosCompleted} pomos` : isFuture ? "Not started" : "Incomplete"}`}
+                            title={`${getDayAbbr(date)} ${formatDate(date)}: ${isCompleted ? `${pomosCompleted} pomos` : isFuture ? "Not started" : "Incomplete"}`}
                           >
                             {isFailed ? (
                               <X className="w-4 h-4 text-red-500" />
