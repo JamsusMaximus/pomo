@@ -57,12 +57,16 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // Get challenge dates
+  // Get challenge dates - use UTC to avoid timezone issues
   const challengeDates: string[] = [];
-  const start = new Date(challenge.startDate);
-  const end = new Date(challenge.endDate);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    challengeDates.push(d.toISOString().split("T")[0]);
+  const start = new Date(challenge.startDate + "T00:00:00Z");
+  const end = new Date(challenge.endDate + "T00:00:00Z");
+
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    challengeDates.push(`${year}-${month}-${day}`);
   }
 
   // Calculate duration from dates if not provided (backwards compatibility)
