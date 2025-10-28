@@ -17,18 +17,13 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { calculateUserStats, type UserStats } from "./stats_helpers";
 import type { Doc } from "./_generated/dataModel";
+import { ADMIN_EMAILS } from "./config";
 
 /**
- * Get admin emails from environment variable
- * Fallback to empty array if not configured
+ * Get admin emails from config
  */
 function getAdminEmails(): string[] {
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  if (!adminEmailsEnv) {
-    console.warn("ADMIN_EMAILS environment variable not set. No admins configured.");
-    return [];
-  }
-  return adminEmailsEnv.split(",").map((email) => email.trim());
+  return ADMIN_EMAILS;
 }
 
 /**
