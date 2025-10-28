@@ -11,6 +11,7 @@
 import type * as accountabilityChallenges from "../accountabilityChallenges.js";
 import type * as backfillChallenges from "../backfillChallenges.js";
 import type * as challenges from "../challenges.js";
+import type * as config from "../config.js";
 import type * as createTestFriend from "../createTestFriend.js";
 import type * as dateHelpers from "../dateHelpers.js";
 import type * as deleteTestFriend from "../deleteTestFriend.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   accountabilityChallenges: typeof accountabilityChallenges;
   backfillChallenges: typeof backfillChallenges;
   challenges: typeof challenges;
+  config: typeof config;
   createTestFriend: typeof createTestFriend;
   dateHelpers: typeof dateHelpers;
   deleteTestFriend: typeof deleteTestFriend;
